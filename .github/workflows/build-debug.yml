@@ -3,7 +3,8 @@ name: Build-Debug
 on:
   workflow_dispatch: {}
   push:
-    - 'src/**'
+    paths:
+      - 'src/**'
 
 jobs:
   build:
