@@ -3,8 +3,7 @@ name: Build-Debug
 on:
   workflow_dispatch: {}
   push:
-    branches:
-      - 'src/**'
+    - 'src/**'
 
 jobs:
   build:
