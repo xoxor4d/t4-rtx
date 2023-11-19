@@ -72,8 +72,8 @@ jobs:
           username: "GitHub Workflow"
           avatar-url: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
           embed-author-icon-url: "https://cdn2.steamgriddb.com/file/sgdb-cdn/icon_thumb/54ed85e7af8edc78637654cb4a89040e.png"
-          embed-author-name: "iw3-rtx"
+          embed-author-name: "t4-rtx"
           embed-author-url: "https://github.com/xoxor4d/t4-rtx"
-          embed-title: "T4-RTX: Successful build (debug)"
+          embed-title: "T4-RTX - Successful build (debug)"
           embed-color: 0xc680ff
-          embed-description: "${{ env.GIT_TAG }} [nightly link](https://nightly.link/xoxor4d/t4-rtx/workflows/build-debug/develop/debug-binaries-t4-rtx.zip)"
+          embed-description: "${{ env.GIT_TAG }} [nightly link](https://nightly.link/xoxor4d/t4-rtx/workflows/build-debug/develop/Debug-binaries-t4-rtx.zip)"
