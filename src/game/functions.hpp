@@ -8,10 +8,12 @@ namespace game
 	static inline float COLOR_WHITE[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	static inline float COLOR_BLACK[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	extern game::DxGlobals* dx;
+	extern DxGlobals* dx;
 
 	static DWORD* gfxCmdBufSourceState_ptr = (DWORD*)(0x829B04);
-	extern game::GfxCmdBufSourceState* get_cmdbufsourcestate();
+	extern GfxCmdBufSourceState* get_cmdbufsourcestate();
 	static DWORD* backEndDataOut_ptr = (DWORD*)(0x10CF9B5C);
-	extern game::GfxBackEndData* get_backenddata();
+	extern GfxBackEndData* get_backenddata();
+
+	static utils::function<Material* __fastcall (const char* name, int)>Material_RegisterHandle = 0x6BBA90;
 }

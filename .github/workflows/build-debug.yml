@@ -76,4 +76,4 @@ jobs:
           embed-author-url: "https://github.com/xoxor4d/t4-rtx"
           embed-title: "T4-RTX - Successful build (debug)"
           embed-color: 0xc680ff
-          embed-description: "${{ env.GIT_TAG }} [nightly link](https://nightly.link/xoxor4d/t4-rtx/workflows/build-debug/develop/Debug-binaries-t4-rtx.zip)"
+          embed-description: "${{ env.GIT_TAG }} [nightly link](https://nightly.link/xoxor4d/t4-rtx/workflows/build-debug/master/Debug-binaries-t4-rtx.zip)"

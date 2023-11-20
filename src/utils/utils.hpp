@@ -2,5 +2,5 @@
 
 namespace utils
 {
-	
+	bool starts_with(std::string haystack, std::string needle);
 }
