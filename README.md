@@ -6,10 +6,27 @@
 
 <br>
 
-Drop `nvapi.dll` and the contents of the `assets` folder into your CoDWaW root directory and start the game.  
-Use console command `devmap mp_mapname` and once in-game execute the cfg by using `exec rtx`  
-Your map will probably be black. Open remix, go to textures and hover with your mouse over what you think is the sky and
-select the sky category.
+## Usage
+
+Drop `nvapi.dll` and the contents of the `assets` folder into your CoDWaW root directory and start the game. The in-game console should show `t4-rtx >` if the dll was loaded correctly.
+
+There are 2 configs shipped with t4-rtx to help with stability.  
+
+Execute cfg 'rtx_load' by using `exec rtx_load` when in the main menu, then use console command `devmap mp_mapname` to load a map. (I'd suggest using `mp_hangar` as the first map) 
+
+Use console command `exec rtx_game` once you are spawned.
+If your map is mostly black, open remix and go to textures. Hover your mouse over what you think the sky is and select the sky category.
+
+<br>
+
+## Dvars / Commandline Arguments to further tweak the game to your liking:
+
+- disable all culling: use commandline argument `-disable_culling`.  
+eg: &ensp;`c:\path\CoDWaWmp.exe -disable_culling` 
+- use dvar `r_lodScaleRigid` to adjust static model draw distances
+- use dvar `r_warm_static` to force all static models to LOD0 (stable hashes)
+
+<br>
 
 Not required but makes life easier:   
 https://community.pcgamingwiki.com/files/file/714-call-of-duty-world-at-war-replacement-steam-multiplayer-executable/  
@@ -22,9 +39,15 @@ Note: Don't use shadermodel 2.0. The game itself "does not support" it.
 <br>
 
 ## Current issues:
-- no stable hashes
+- ~~no stable hashes~~ (depends on dvars and settings)
 - ~~no proper sky replacement yet~~
-- the gun gets more wobbly the further from 0 0 0 you are (tweak r_znear and r_znear_depthhack and let me know if you find values to fix that)
+- static models might look weird at times because motion vectors are not correct (remix issue?)
+- the gun gets more wobbly the further from 0 0 0 you are
+- > "fix" with following dvars:
+- > r_znear "40.0"
+- > r_znear_depthhack "39.9805"
+- > too heigh values will cause wrong volumetrics (visualize with Surface Volume Radiance)
+- > too low values will result in wobble
 - not yet SP compatible
 
 <br>

@@ -334,5 +334,89 @@ namespace game
 
 		MaterialTechniqueType technique_type;
 	};
+
+	enum dvar_flags : unsigned __int16
+	{
+		archive = 1 << 0,			// 0x0001
+		userinfo = 1 << 1,			// 0x0002
+		serverinfo = 1 << 2,		// 0x0004
+		systeminfo = 1 << 3,		// 0x0008
+		init = 1 << 4,				// 0x0010
+		latched = 1 << 5,			// 0x0020
+		readonly = 1 << 6,			// 0x0040
+		cheat = 1 << 7,				// 0x0080
+		developer = 1 << 8,			// 0x0100
+		saved = 1 << 9,				// 0x0200
+		no_restart = 1 << 10,		// 0x0400
+		changeable_reset = 1 << 12,	// 0x1000
+		external = 1 << 14,			// 0x4000
+		autoexec = 1 << 15,			// 0x8000
+	};
+
+	enum dvar_type : __int8
+	{
+		boolean = 0x0,
+		value = 0x1,
+		vec2 = 0x2,
+		vec3 = 0x3,
+		vec4 = 0x4,
+		integer = 0x5,
+		enumeration = 0x6,
+		string = 0x7,
+		color = 0x8,
+		rgb = 0x9,
+	};
+
+	union DvarValue
+	{
+		bool enabled;
+		int integer;
+		unsigned int unsignedInt;
+		float value;
+		float vector[4];
+		const char* string;
+		char color[4];
+	};
+
+	union DvarLimits
+	{
+		struct
+		{
+			int stringCount;
+			const char** strings;
+		} enumeration;
+		struct
+		{
+			int min;
+			int max;
+		} integer;
+		struct
+		{
+			float min;
+			float max;
+		} value;
+		struct
+		{
+			float min;
+			float max;
+		} vector;
+	};
+
+	struct dvar_s
+	{
+		const char* name;
+		const char* description;
+		dvar_flags flags;
+		dvar_type type;
+		bool modified;
+		char pad[4];
+		DvarValue current;
+		DvarValue latched;
+		DvarValue reset;
+		DvarValue saved;
+		DvarLimits domain;
+		dvar_s* hashNext;
+	};
+	STATIC_ASSERT_SIZE(dvar_s, 0x5C);
 }
 

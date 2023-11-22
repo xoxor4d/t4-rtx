@@ -15,5 +15,8 @@ namespace game
 	static DWORD* backEndDataOut_ptr = (DWORD*)(0x10CF9B5C);
 	extern GfxBackEndData* get_backenddata();
 
-	static utils::function<Material* __fastcall (const char* name, int)>Material_RegisterHandle = 0x6BBA90;
+	static utils::function<Material* __fastcall (const char* name, int)> Material_RegisterHandle = 0x6BBA90;
+
+	static utils::function<dvar_s* __cdecl (const char* name)> Dvar_FindVar = 0x5C4170;
+	static utils::function<dvar_s* __cdecl (dvar_s* dvar, const char* name, int dvar_type, int flags, const char* description, std::int64_t val, std::int64_t unk, float mins, float maxs)> Dvar_Reregister = 0x5C4DA0;
 }

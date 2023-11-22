@@ -183,6 +183,108 @@ namespace components
 		return 1;
 	}
 
+	void register_rtx_dvars()
+	{
+		if (const auto var = game::Dvar_FindVar("r_lodScaleRigid"); var)
+		{
+			var->current.value = 1.0f;
+			var->domain.value.min = 0.0f;
+			var->domain.value.max = FLT_MAX;
+			var->flags = game::dvar_flags::userinfo;
+		}
+
+		if (const auto var = game::Dvar_FindVar("r_lodScaleSkinned"); var)
+		{
+			var->domain.value.min = 0.0f;
+			var->domain.value.max = FLT_MAX;
+			var->flags = game::dvar_flags::userinfo;
+		}
+
+		if (const auto var = game::Dvar_FindVar("r_znear"); var)
+		{
+			var->current.value = 40.0f; // 10.0 works but still a little wobble at larger distances
+			var->domain.value.min = 0.0f;
+			var->domain.value.max = FLT_MAX;
+			var->flags = game::dvar_flags::userinfo;
+		}
+
+		if (const auto var = game::Dvar_FindVar("r_znear_depthhack"); var)
+		{
+			var->current.value = 39.9805f; // - 9.99512f see ^
+			var->domain.value.min = 0.0f;
+			var->domain.value.max = FLT_MAX;
+			var->flags = game::dvar_flags::userinfo;
+		}
+
+		if (const auto var = game::Dvar_FindVar("r_fullbright"); var)
+		{
+			var->current.enabled = true;
+			var->flags = game::dvar_flags::userinfo;
+		}
+
+		if (const auto var = game::Dvar_FindVar("fx_enable"); var)
+		{
+			var->current.enabled = false;
+			var->flags = game::dvar_flags::userinfo;
+		}
+
+		// enable via cfg when in-game
+		if (const auto var = game::Dvar_FindVar("r_warm_static"); var)
+		{
+			var->current.enabled = false;
+			var->flags = game::dvar_flags::userinfo;
+		}
+	}
+
+	__declspec(naked) void register_dvars_stub()
+	{
+		const static uint32_t stock_func = 0x6E13F0;
+		const static uint32_t retn_addr = 0x6AC0A9;
+		__asm
+		{
+			call	stock_func;
+
+			pushad;
+			call	register_rtx_dvars;
+			popad;
+
+			jmp		retn_addr;
+		}
+	}
+
+	// ------------------------------------------------------------------------
+
+	__declspec(naked) void force_lod_stub01()
+	{
+		const static uint32_t retn_addr = 0x70ACF9;
+		__asm
+		{
+			// esi = LOD for model
+			// eax = LOD count for model?
+
+			xor		esi, esi;	// clear
+			mov		esi, 0;		// LOD
+
+			jmp		retn_addr;
+		}
+	}
+
+	__declspec(naked) void force_lod_stub02()
+	{
+		const static uint32_t retn_addr = 0x70A74D;
+		__asm
+		{
+			// ebx = LOD for model
+			// eax = overwritten with r_warm_static dvar pointer here
+
+			xor		ebx, ebx;	// clear
+			mov		ebx, 0;		// LOD
+
+			jmp		retn_addr;
+		}
+	}
+
+
 	main_module::main_module()
 	{
 		// hook beginning of 'RB_Draw3DInternal' to setup general stuff required for rtx-remix
@@ -191,14 +293,61 @@ namespace components
 		// hook R_SetMaterial
 		utils::hook(0x717F9E, r_set_material, HOOK_CALL).install()->quick();
 
+
+		// ------------------------------------------------------------------------
+
+
+		// stub after 'R_InitGraphicsApi' (NVAPI Entry) to re-register stock dvars
+		utils::hook(0x6AC0A4, register_dvars_stub, HOOK_JUMP).install()->quick();
+
+		// un-cheat + userinfo flag for fx_enable
+		//utils::hook::set<BYTE>(0x4D1406 + 1, 0x01); // was 0x80
+
+
+		// ------------------------------------------------------------------------
+
+
+		if (flags::has_flag("disable_culling"))
+		{
+			// R_AddWorldSurfacesPortalWalk :: less culling
+			utils::hook::set<BYTE>(0x6A945E, 0xEB);
+
+			// R_AddAabbTreeSurfacesInFrustum_r :: disable all surface culling (bad fps)
+			utils::hook::nop(0x6F6F29, 6);
+			utils::hook::set<BYTE>(0x6F6F65, 0xEB);
+
+			// TODO: entities
+		}
+
+		// disable dynent drawing (could have stable hashes but no stable lods right now)
+		utils::hook::nop(0x6B624D, 5);
+
+		// force static model LOD via 'r_warm_static' dvar (R_AddAllStaticModelSurfacesRangeSunShadow)
+		utils::hook::nop(0x70ACF3, 6);
+		utils::hook(0x70ACF3, force_lod_stub01, HOOK_JUMP).install()->quick();
+
+		// ^ (R_AddAllStaticModelSurfacesCamera)
+		utils::hook::nop(0x70A747, 6);
+		utils::hook(0x70A747, force_lod_stub02, HOOK_JUMP).install()->quick();
+
+		// remove 'r_warm_static' check that adds all meshes to the scene no matter what 'r_lodScaleRigid' is set to (R_AddAllStaticModelSurfacesCamera)
+		// jz (0F 84 AC 01 00 00) to jmp (E9 AD 01 00 00 + 0x90)
+		utils::hook::set<BYTE>(0x70A5E5, 0xE9);
+		utils::hook::set<BYTE>(0x70A5E5 + 1, 0xAD); // < yes
+		utils::hook::set<BYTE>(0x70A5E5 + 2, 0x01);
+		utils::hook::set<BYTE>(0x70A5E5 + 3, 0x00);
+		utils::hook::set<BYTE>(0x70A5E5 + 4, 0x00);
+		utils::hook::set<BYTE>(0x70A5E5 + 5, 0x90);
+
+
+		// ------------------------------------------------------------------------
+
+
 		// console string ;)
 		utils::hook::set<const char*>(0x48AF32 + 1, "t4-rtx >");
 
 		// no forward/backslash for console cmds
 		utils::hook::nop(0x493DEF, 5);
-
-		// un-cheat + saved flag for fx_enable
-		utils::hook::set<BYTE>(0x4D1406 + 1, 0x01); // was 0x80
 
 		// remove improper quit popup - nvapi is imported to late for this
 		//utils::hook::set<BYTE>(0x5D03E6, 0xEB);

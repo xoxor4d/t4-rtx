@@ -26,5 +26,4 @@ namespace components
 }
 
 #include "modules/main_module.hpp"
-//#include "modules/patches.hpp"
-//#include "modules/renderer.hpp"
+#include "modules/flags.hpp"
