@@ -261,12 +261,81 @@ namespace game
 		MaterialTechniqueSet* remappedTechniqueSet;
 		MaterialTechnique* techniques[34];
 	};
+	enum MapType : __int32
+	{
+		MAPTYPE_NONE = 0x0,
+		MAPTYPE_INVALID1 = 0x1,
+		MAPTYPE_INVALID2 = 0x2,
+		MAPTYPE_2D = 0x3,
+		MAPTYPE_3D = 0x4,
+		MAPTYPE_CUBE = 0x5,
+		MAPTYPE_COUNT = 0x6,
+	};
+
+	struct CardMemory
+	{
+		int platform[1];
+	};
+
+	struct GfxImage
+	{
+		MapType mapType;
+		char par0[0x30];
+		unsigned __int8 semantic;
+		CardMemory cardMemory;
+		unsigned __int16 width;
+		unsigned __int16 height;
+		unsigned __int16 depth;
+		unsigned __int8 category;
+		bool delayLoadPixels;
+		unsigned __int8* pixels;
+		unsigned int baseSize;
+		unsigned __int16 streamSlot;
+		unsigned __int16 streaming;
+		char* name;
+	};
+
+	struct water_t
+	{
+		float floatTime;
+		float* H0X;
+		float* H0Y;
+		float* wTerm;
+		int M;
+		int N;
+		float Lx;
+		float Lz;
+		float gravity;
+		float windvel;
+		float winddir[2];
+		float amplitude;
+		float codeConstant[4];
+		GfxImage* image;
+	};
+
+	struct MaterialTextureDefInfo
+	{
+		water_t* water;
+	};
+
+	struct MaterialTextureDef
+	{
+		unsigned int nameHash;
+		char nameStart;
+		char nameEnd;
+		unsigned __int8 samplerState;
+		unsigned __int8 semantic;
+		unsigned __int8 isMatureContent;
+		unsigned __int8 pad[3];
+		MaterialTextureDefInfo u;
+	};
 
 	struct Material
 	{
 		MaterialInfo info;
 		char pad[88];
 		MaterialTechniqueSet* techniqueSet;
+		MaterialTextureDef* textureTable;
 	};
 
 	struct r_global_permanent_t

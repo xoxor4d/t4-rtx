@@ -101,6 +101,37 @@ namespace components
 		swm->material = swm->current_material;
 	}
 
+	void switch_technique(game::switch_material_t* swm, game::Material* material)
+	{
+		if (material)
+		{
+			swm->technique = nullptr;
+
+			if (is_valid_technique_for_type(material, swm->technique_type))
+			{
+				swm->technique = material->techniqueSet->remappedTechniqueSet->techniques[swm->technique_type];
+			}
+
+			swm->switch_technique = true;
+			return;
+		}
+
+		// return stock technique if the above failed
+		swm->technique = swm->current_technique;
+	}
+
+	game::MaterialTechnique* Material_RegisterTechnique(const char* name, int is_renderer_in_use /*esi*/)
+	{
+		const static uint32_t func_addr = 0x6EB220;
+		__asm
+		{
+			mov		esi, is_renderer_in_use;
+			push	name;
+			add     esp, 4;
+			call	func_addr;
+		}
+	}
+
 	int r_set_material(game::MaterialTechniqueType type, game::GfxCmdBufSourceState* src, game::GfxCmdBufState* state, game::GfxDrawSurf drawSurf)
 	{
 		const auto rgp = reinterpret_cast<game::r_global_permanent_t*>(0x1087BA80);
@@ -126,6 +157,12 @@ namespace components
 		{
 			return 0;
 		}
+		 
+		/*if (std::string_view(mat.current_material->techniqueSet->name) == std::string_view("wc_water"))
+		{
+			mat.switch_technique_type = true;
+			mat.technique_type = game::TECHNIQUE_LIT;
+		}*/
 
 		if (!mat.switch_material && !mat.switch_technique && !mat.switch_technique_type)
 		{
@@ -143,13 +180,10 @@ namespace components
 		state->origMaterial = state->material;
 
 		// only switch to a different technique_type
-		/*if (mat.switch_technique_type)
+		if (mat.switch_technique_type)
 		{
-			if (_renderer::is_valid_technique_for_type(mat.current_material, mat.technique_type))
-			{
-				_renderer::switch_technique(&mat, mat.current_material);
-			}
-		}*/
+			switch_technique(&mat, mat.current_material);
+		}
 
 		state->material = mat.material;
 		state->technique = mat.technique;
@@ -339,6 +373,9 @@ namespace components
 		utils::hook::set<BYTE>(0x70A5E5 + 4, 0x00);
 		utils::hook::set<BYTE>(0x70A5E5 + 5, 0x90);
 
+		// stop 'r_warm_dpvs' dvar from resetting itself je 0x74 -> jmp 0xEB
+		// can be used as anti cull
+		utils::hook::set<BYTE>(0x6B6988, 0xEB);
 
 		// ------------------------------------------------------------------------
 
