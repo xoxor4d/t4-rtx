@@ -9,22 +9,15 @@ namespace components
 	{
 		loader::mem_allocator_.clear();
 
-		loader::_register(new main_module());
-		//loader::_register(new patches());
-		//loader::_register(new renderer());
-
-		/* if(const auto	con = GET_GUI(ggui::console_dialog);
-						con)
+		if (game::is_sp)
 		{
-			game::printf_to_console("[Modules] ---------------------\n");
+			loader::_register(new main_module_sp());
+		}
 
-			for (const auto& str : game::glob::loadedModules)
-			{
-				game::printf_to_console(str.c_str());
-			}
-
-			game::printf_to_console("\n");
-		} */
+		if (game::is_mp)
+		{
+			loader::_register(new main_module_mp());
+		}
 	}
 
 	void loader::uninitialize()

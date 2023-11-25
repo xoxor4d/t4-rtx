@@ -6,10 +6,10 @@ namespace components
 	{
 	public:
 		static bool has_flag(const std::string& flag);
+		static void parse_flags();
 
 	private:
 		static std::vector<std::string> enabled_flags;
 
-		static void parse_flags();
 	};
 }

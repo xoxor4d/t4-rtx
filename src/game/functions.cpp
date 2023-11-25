@@ -2,19 +2,42 @@
 
 namespace game
 {
+	bool is_sp = false;
+	bool is_mp = false;
+
 	std::vector<std::string> loaded_modules;
 
-	game::DxGlobals* dx = reinterpret_cast<game::DxGlobals*>(0x1087DD04);
+	// ------------------------------------------------------------------------------------------------------------
+	// ############################################################################################################
+	// ------------------------------------------------------------------------------------------------------------
 
-	game::GfxCmdBufSourceState* get_cmdbufsourcestate()
+	namespace sp
 	{
-		const auto out = reinterpret_cast<game::GfxCmdBufSourceState*>(*game::gfxCmdBufSourceState_ptr);
+		DxGlobals* dx = reinterpret_cast<DxGlobals*>(0x3BF3B04);
+	}
+
+	// ------------------------------------------------------------------------------------------------------------
+	// ############################################################################################################
+	// ------------------------------------------------------------------------------------------------------------
+
+	namespace mp
+	{
+		DxGlobals* dx = reinterpret_cast<DxGlobals*>(0x1087DD04);
+	}
+
+	// ------------------------------------------------------------------------------------------------------------
+	// ############################################################################################################
+	// ------------------------------------------------------------------------------------------------------------
+
+	GfxCmdBufSourceState* get_cmdbufsourcestate()
+	{
+		const auto out = reinterpret_cast<GfxCmdBufSourceState*>(game::is_mp ? *game::mp::gfxCmdBufSourceState_ptr : *game::sp::gfxCmdBufSourceState_ptr);
 		return out;
 	}
 
-	game::GfxBackEndData* get_backenddata()
+	GfxBackEndData* get_backenddata()
 	{
-		const auto out = reinterpret_cast<game::GfxBackEndData*>(*game::backEndDataOut_ptr);
+		const auto out = reinterpret_cast<GfxBackEndData*>(game::is_mp ? *mp::backEndDataOut_ptr : *sp::backEndDataOut_ptr);
 		return out;
 	}
 }
