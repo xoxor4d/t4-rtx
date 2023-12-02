@@ -14,6 +14,7 @@ namespace game
 	namespace sp
 	{
 		DxGlobals* dx = reinterpret_cast<DxGlobals*>(0x3BF3B04);
+		clipMap_t* cm = reinterpret_cast<clipMap_t*>(0x1F41A00);
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -23,6 +24,7 @@ namespace game
 	namespace mp
 	{
 		DxGlobals* dx = reinterpret_cast<DxGlobals*>(0x1087DD04);
+		clipMap_t* cm = reinterpret_cast<clipMap_t*>(0x2223A80);
 	}
 
 	// ------------------------------------------------------------------------------------------------------------

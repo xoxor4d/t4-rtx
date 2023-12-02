@@ -350,6 +350,86 @@ namespace game
 	STATIC_ASSERT_OFFSET(GfxCmdBufState, material, 0xC8);
 	STATIC_ASSERT_OFFSET(GfxCmdBufState, origMaterial, 0x1118);
 
+	struct MapEnts
+	{
+		char* name;
+		char* entityString;
+		int numEntityChars;
+	};
+
+	struct cStaticModelWritable
+	{
+		unsigned __int16 nextModelInWorldSector;
+	};
+
+	struct XModel
+	{
+		char* name;
+		// ....
+	};
+
+	struct cStaticModel_s
+	{
+		cStaticModelWritable writable;
+		XModel* xmodel;
+		float origin[3];
+		float invScaledAxis[3][3];
+		float absmin[3];
+		float absmax[3];
+	};
+
+	struct clipMap_t
+	{
+		char* name;
+		int isInUse;
+		int planeCount;
+		void* cplane_s___planes;
+		unsigned int numStaticModels;
+		cStaticModel_s* staticModelList;
+		unsigned int numMaterials;
+		void* dmaterial_t___materials;
+		unsigned int numBrushSides;
+		void* cbrushside_t___brushsides;
+		unsigned int numBrushEdges;
+		unsigned __int8* brushEdges;
+		unsigned int numNodes;
+		void* cNode_t___nodes;
+		unsigned int numLeafs;
+		void* cLeaf_s___leafs;
+		unsigned int leafbrushNodesCount;
+		void* cLeafBrushNode_s___leafbrushNodes;
+		unsigned int numLeafBrushes;
+		unsigned __int16* leafbrushes;
+		unsigned int numLeafSurfaces;
+		unsigned int* leafsurfaces;
+		unsigned int vertCount;
+		float(*verts)[3];
+		unsigned int numBrushVerts;
+		float(*brushVerts)[3];
+		unsigned int nuinds;
+		unsigned __int16* uinds;
+		int triCount;
+		unsigned __int16* triIndices;
+		unsigned __int8* triEdgeIsWalkable;
+		int borderCount;
+		void* CollisionBorder___borders;
+		int partitionCount;
+		void* CollisionPartition___partitions;
+		int aabbTreeCount;
+		void* CollisionAabbTree___aabbTrees;
+		unsigned int numSubModels;
+		void* cmodel_t___cmodels;
+		unsigned __int16 numBrushes;
+		void* cbrush_t___brushes;
+		int numClusters;
+		int clusterBytes;
+		unsigned __int8* visibility;
+		int vised;
+		MapEnts* mapEnts;
+		void* cbrush_t___box_brush;
+		// .....
+	}; STATIC_ASSERT_OFFSET(clipMap_t, mapEnts, 0xB4);
+
 	struct switch_material_t
 	{
 		bool switch_material;

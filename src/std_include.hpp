@@ -18,6 +18,10 @@
 #include <shellapi.h>
 #include <chrono>
 #include <functional>
+#include <sstream>
+#include <fstream>
+#include <iostream>
+#include <filesystem>
 
 #pragma warning(push)
 #pragma warning(disable: 26495)

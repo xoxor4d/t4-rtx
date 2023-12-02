@@ -1,5 +1,4 @@
 #include "std_include.hpp"
-
 #define HIDWORD(x)  (*((DWORD*)&(x)+1))
 
 using namespace game::mp;
@@ -8,6 +7,58 @@ namespace components
 {
 	namespace mp
 	{
+		void export_entity_string()
+		{
+			std::ofstream ents;
+
+			if (const auto& fs_basepath = Dvar_FindVar("fs_basepath"); fs_basepath)
+			{
+				std::string filepath;
+				filepath = fs_basepath->current.string;
+				filepath += "\\t4rtx-export\\"s;
+
+				std::filesystem::create_directories(filepath);
+
+				std::string map_name = cm->mapEnts->name;
+				utils::erase_substring(map_name, "maps/mp/");
+				utils::erase_substring(map_name, ".d3dbsp");
+
+				ents.open(filepath + map_name + ".map");
+
+				if (!ents.is_open())
+				{
+					return;
+				}
+
+				ents << cm->mapEnts->entityString << std::endl;;
+
+				for (auto i = 0u; i < cm->numStaticModels; i++)
+				{
+					game::vec3_t angles = {};
+
+					float axis_inv[3][3] = {};
+					utils::axis_transpose(cm->staticModelList[i].invScaledAxis, axis_inv);
+					utils::axis_to_angles(axis_inv, angles);
+
+					ents << "{" << std::endl;
+					ents << R"("model" )" << "\""s + cm->staticModelList[i].xmodel->name << "\""s << std::endl;
+
+					ents << R"("origin" )" << "\""s << cm->staticModelList[i].origin[0] << " "
+													<< cm->staticModelList[i].origin[1] << " "
+													<< cm->staticModelList[i].origin[2] << "\""s << std::endl;
+
+					ents << R"("angles" )" << "\""s << angles[0] << " "
+													<< angles[1] << " "
+													<< angles[2] << "\""s << std::endl;
+
+					ents << R"("classname" "misc_model")" << std::endl;
+					ents << "}" << std::endl;
+				}
+
+				ents.close();
+			}
+		}
+
 		void spawn_light()
 		{
 			D3DLIGHT9 light;
@@ -49,6 +100,15 @@ namespace components
 
 			//spawn_light();
 			//setup_dvars_rtx();
+
+			if (const auto& export_entities = game::mp::Dvar_FindVar("export_entities"); 
+				export_entities && std::string_view(export_entities->current.string) == "1")
+			{
+				export_entities->current.string = "0";
+				export_entities->latched.string = "0";
+				export_entities->modified = true;
+				export_entity_string();
+			}
 		}
 
 		__declspec(naked) void rb_draw3d_internal_stub()

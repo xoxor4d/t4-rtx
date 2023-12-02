@@ -20,11 +20,13 @@ namespace game
 	namespace sp
 	{
 		extern DxGlobals* dx;
-		static utils::function<dvar_s* __cdecl (const char* name)> Dvar_FindVar = 0x5EDE30;
-		static utils::function<Material* __fastcall (const char* name, int)> Material_RegisterHandle = 0x6E9C20;
+		extern clipMap_t* cm;
 
 		static DWORD* gfxCmdBufSourceState_ptr = (DWORD*)(0x829EA8);
-		static DWORD * backEndDataOut_ptr = (DWORD*)(0x3DCB4CC);
+		static DWORD* backEndDataOut_ptr = (DWORD*)(0x3DCB4CC);
+
+		static utils::function<dvar_s* __cdecl (const char* name)> Dvar_FindVar = 0x5EDE30;
+		static utils::function<Material* __fastcall (const char* name, int)> Material_RegisterHandle = 0x6E9C20;
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -34,6 +36,7 @@ namespace game
 	namespace mp
 	{
 		extern DxGlobals* dx;
+		extern clipMap_t* cm;
 
 		static DWORD* gfxCmdBufSourceState_ptr = (DWORD*)(0x829B04);
 		static DWORD* backEndDataOut_ptr = (DWORD*)(0x10CF9B5C);

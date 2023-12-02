@@ -8,6 +8,58 @@ namespace components
 {
 	namespace sp
 	{
+		void export_entity_string()
+		{
+			std::ofstream ents;
+
+			if (const auto& fs_basepath = Dvar_FindVar("fs_basepath"); fs_basepath)
+			{
+				std::string filepath;
+				filepath = fs_basepath->current.string;
+				filepath += "\\t4rtx-export\\"s;
+
+				std::filesystem::create_directories(filepath);
+
+				std::string map_name = cm->mapEnts->name;
+				utils::erase_substring(map_name, "maps/");
+				utils::erase_substring(map_name, ".d3dbsp");
+
+				ents.open(filepath + map_name + ".map");
+
+				if (!ents.is_open())
+				{
+					return;
+				}
+
+				ents << cm->mapEnts->entityString << std::endl;;
+
+				for (auto i = 0u; i < cm->numStaticModels; i++)
+				{
+					game::vec3_t angles = {};
+
+					float axis_inv[3][3] = {};
+					utils::axis_transpose(cm->staticModelList[i].invScaledAxis, axis_inv);
+					utils::axis_to_angles(axis_inv, angles);
+
+					ents << "{" << std::endl;
+					ents << R"("model" )" << "\""s + cm->staticModelList[i].xmodel->name << "\""s << std::endl;
+
+					ents << R"("origin" )" << "\""s << cm->staticModelList[i].origin[0] << " "
+						<< cm->staticModelList[i].origin[1] << " "
+						<< cm->staticModelList[i].origin[2] << "\""s << std::endl;
+
+					ents << R"("angles" )" << "\""s << angles[0] << " "
+						<< angles[1] << " "
+						<< angles[2] << "\""s << std::endl;
+
+					ents << R"("classname" "misc_model")" << std::endl;
+					ents << "}" << std::endl;
+				}
+
+				ents.close();
+			}
+		}
+
 		void spawn_light()
 		{
 			D3DLIGHT9 light;
@@ -48,6 +100,15 @@ namespace components
 			dev->SetTransform(D3DTS_PROJECTION, reinterpret_cast<D3DMATRIX*>(&src->viewParms.projectionMatrix.m));
 
 			//spawn_light();
+
+			if (const auto& export_entities = Dvar_FindVar("export_entities");
+				export_entities && std::string_view(export_entities->current.string) == "1")
+			{
+				export_entities->current.string = "0";
+				export_entities->latched.string = "0";
+				export_entities->modified = true;
+				export_entity_string();
+			}
 		}
 
 		__declspec(naked) void rb_draw3d_internal_stub()
@@ -63,6 +124,24 @@ namespace components
 				sub     eax, 0;
 				push    ebp;
 				mov     ebp, [esp + 0xC];
+				jmp		retn_addr;
+			}
+		}
+
+		__declspec(naked) void r_set3d_stub()
+		{
+			const static uint32_t stock_func_addr = 0x7244C0;
+			const static uint32_t retn_addr = 0x7246F5;
+			__asm
+			{
+				call	stock_func_addr;
+
+				pushad;
+				push	esi; // bufsrcstate
+				call	setup_rtx;
+				add		esp, 4;
+				popad;
+
 				jmp		retn_addr;
 			}
 		}
@@ -264,6 +343,12 @@ namespace components
 				var->current.enabled = false;
 				var->flags = game::dvar_flags::userinfo;
 			}
+
+			if (const auto var = Dvar_FindVar("sv_cheats"); var)
+			{
+				var->current.enabled = true;
+				var->flags = game::dvar_flags::userinfo;
+			}
 		}
 
 		__declspec(naked) void register_dvars_stub()
@@ -314,6 +399,8 @@ namespace components
 		// hook beginning of 'RB_Draw3DInternal' to setup general stuff required for rtx-remix
 		utils::hook::nop(0x6E8B96, 8); utils::hook(0x6E8B96, sp::rb_draw3d_internal_stub, HOOK_JUMP).install()->quick();
 
+		//utils::hook(0x7246F0, sp::r_set3d_stub, HOOK_JUMP).install()->quick();
+
 		// hook R_SetMaterial ...... 0x741F1E
 		utils::hook(0x741F1E, sp::r_set_material, HOOK_CALL).install()->quick();
 
@@ -327,6 +414,9 @@ namespace components
 		// un-cheat + userinfo flag for fx_enable
 		utils::hook::set<BYTE>(0x4A4D16 + 1, 0x01); // was 0x80
 
+		// un-cheat + userinfo flag for sv_cheats
+		utils::hook::set<BYTE>(0x70B92D + 1, 0x01); // was 0x48
+		utils::hook::set<BYTE>(0x70B92D + 1, 0x01);
 
 		// ------------------------------------------------------------------------
 
