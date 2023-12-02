@@ -28,6 +28,9 @@ eg: &ensp;`c:\path\CoDWaWmp.exe -disable_culling`
 - use dvar `r_lodScaleRigid` to adjust static model draw distances
 - use dvar `r_warm_static` to force all static models to LOD0 (stable hashes)
 
+### Advanced:
+- use console command `set export_entities 1` to export map entities and static models (misc_models) to `cod5root/t4rtx-export/mapname.map`
+
 <br>
 
 Not required but makes life easier:   
