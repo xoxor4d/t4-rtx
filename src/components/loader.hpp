@@ -25,6 +25,6 @@ namespace components
 	};
 }
 
-#include "modules/main_module_sp.hpp"
-#include "modules/main_module_mp.hpp"
+#include "modules/sp/main_module.hpp"
+#include "modules/mp/main_module.hpp"
 #include "modules/flags.hpp"

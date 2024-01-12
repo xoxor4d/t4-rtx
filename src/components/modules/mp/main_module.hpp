@@ -1,12 +1,12 @@
 #pragma once
 
-namespace components
+namespace components::mp
 {
-	class main_module_mp : public component
+	class main_module : public component
 	{
 	public:
-		main_module_mp();
-		~main_module_mp() = default;
+		main_module();
+		~main_module() = default;
 		const char* get_name() override { return "main_module_mp"; }
 	
 	private:

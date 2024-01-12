@@ -214,7 +214,7 @@ dependencies.load()
 
 workspace "t4-rtx"
 
-	startproject "t4-rtx"
+	startproject "start-sp"
 	location "./build"
 	objdir "%{wks.location}/obj"
 	targetdir "%{wks.location}/bin/%{cfg.buildcfg}"
@@ -283,6 +283,28 @@ workspace "t4-rtx"
 
 	-- Project
 
+	project "start-sp"
+		kind "none"
+		links { "t4-rtx" }
+
+		if(os.getenv("COD5_ROOT")) then
+			print ("Setup paths for sp using environment variable 'COD5_ROOT' :: '" .. os.getenv("COD5_ROOT") .. "'")
+			targetdir(os.getenv("COD5_ROOT"))
+			debugdir (os.getenv("COD5_ROOT"))
+			debugcommand (os.getenv("COD5_ROOT") .. "/CoDWaW.exe")
+		end
+
+	project "start-mp"
+		kind "none"
+		links { "t4-rtx" }
+	
+		if(os.getenv("COD5_ROOT")) then
+			print ("Setup paths for mp using environment variable 'COD5_ROOT' :: '" .. os.getenv("COD5_ROOT") .. "'")
+			targetdir(os.getenv("COD5_ROOT"))
+			debugdir (os.getenv("COD5_ROOT"))
+			debugcommand (os.getenv("COD5_ROOT") .. "/CoDWaWmp.exe")
+		end
+
 	project "t4-rtx"
 		kind "SharedLib"
 		language "C++"
@@ -314,7 +336,7 @@ workspace "t4-rtx"
         }
 
 		if(os.getenv("COD5_ROOT")) then
-			print ("Setup paths using environment variable 'COD5_ROOT' :: '" .. os.getenv("COD5_ROOT") .. "'")
+			--[[ print ("Setup paths using environment variable 'COD5_ROOT' :: '" .. os.getenv("COD5_ROOT") .. "'") ]]
 			targetdir(os.getenv("COD5_ROOT"))
 			debugdir (os.getenv("COD5_ROOT"))
 			debugcommand (os.getenv("COD5_ROOT") .. "/CoDWaWmp.exe")

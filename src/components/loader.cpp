@@ -11,12 +11,12 @@ namespace components
 
 		if (game::is_sp)
 		{
-			loader::_register(new main_module_sp());
+			loader::_register(new sp::main_module());
 		}
 
 		if (game::is_mp)
 		{
-			loader::_register(new main_module_mp());
+			loader::_register(new mp::main_module());
 		}
 	}
 
