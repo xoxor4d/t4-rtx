@@ -4,6 +4,9 @@
 #define	YAW		1
 #define	ROLL	2
 
+#define VA_BUFFER_COUNT		64
+#define VA_BUFFER_SIZE		65536
+
 namespace utils
 {
 	bool starts_with(std::string haystack, std::string needle)
@@ -53,6 +56,19 @@ namespace utils
 		return result;
 	}
 
+	const char* va(const char* fmt, ...)
+	{
+		static char g_vaBuffer[VA_BUFFER_COUNT][VA_BUFFER_SIZE];
+		static int g_vaNextBufferIndex = 0;
+
+		va_list ap;
+		va_start(ap, fmt);
+		char* dest = g_vaBuffer[g_vaNextBufferIndex];
+		vsnprintf(g_vaBuffer[g_vaNextBufferIndex], VA_BUFFER_SIZE, fmt, ap);
+		g_vaNextBufferIndex = (g_vaNextBufferIndex + 1) % VA_BUFFER_COUNT;
+		va_end(ap);
+		return dest;
+	}
 
 	// ---------------------------------
 	// math
@@ -386,5 +402,37 @@ namespace utils
 		(*out)[6] = (*in)[2];
 		(*out)[7] = (*in)[5];
 		(*out)[8] = (*in)[8];
+	}
+
+	void unit_quat_to_axis(const float* quat, float(*axis)[3])
+	{
+		float xx, xy, xz, xw;
+		float yy, yz, yw;
+		float zz, zw;
+
+		const float scaledX = quat[0] + quat[0];
+		xx = scaledX * quat[0];
+		xy = scaledX * quat[1];
+		xz = scaledX * quat[2];
+		xw = scaledX * quat[3];
+
+		const float scaledY = quat[1] + quat[1];
+		yy = scaledY * quat[1];
+		yz = scaledY * quat[2];
+		yw = scaledY * quat[3];
+
+		const float scaledZ = quat[2] + quat[2];
+		zz = scaledZ * quat[2];
+		zw = scaledZ * quat[3];
+
+		(*axis)[0] = 1.0f - (yy + zz);
+		(*axis)[1] = xy + zw;
+		(*axis)[2] = xz - yw;
+		(*axis)[3] = xy - zw;
+		(*axis)[4] = 1.0f - (xx + zz);
+		(*axis)[5] = yz + xw;
+		(*axis)[6] = xz + yw;
+		(*axis)[7] = yz - xw;
+		(*axis)[8] = 1.0f - (xx + yy);
 	}
 }

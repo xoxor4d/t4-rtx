@@ -7,29 +7,33 @@ namespace components
 
 	void loader::initialize()
 	{
-		loader::mem_allocator_.clear();
+		mem_allocator_.clear();
+
+		_register(new command());
 
 		if (game::is_sp)
 		{
-			loader::_register(new sp::main_module());
+			_register(new sp::main_module());
+			_register(new sp::fixed_function());
+			
 		}
 
 		if (game::is_mp)
 		{
-			loader::_register(new mp::main_module());
+			_register(new mp::main_module());
 		}
 	}
 
 	void loader::uninitialize()
 	{
-		std::ranges::reverse(loader::components_.begin(), loader::components_.end());
-		for (auto component : loader::components_)
+		std::ranges::reverse(components_.begin(), components_.end());
+		for (auto component : components_)
 		{
 			delete component;
 		}
 
-		loader::components_.clear();
-		loader::mem_allocator_.clear();
+		components_.clear();
+		mem_allocator_.clear();
 		fflush(stdout);
 		fflush(stderr);
 	}
@@ -39,7 +43,7 @@ namespace components
 		if (component)
 		{
 			game::loaded_modules.push_back("component registered: "s + component->get_name() + "\n");
-			loader::components_.push_back(component);
+			components_.push_back(component);
 		}
 	}
 

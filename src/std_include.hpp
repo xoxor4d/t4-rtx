@@ -23,6 +23,7 @@
 #include <iostream>
 #include <filesystem>
 #include <mutex>
+#include <map>
 
 #pragma warning(push)
 #pragma warning(disable: 26495)

@@ -89,10 +89,11 @@ namespace components::sp
 		// populate viewParms3D because R_Set3D needs it
 		src->viewParms3D = &data->viewInfo->viewParms;
 
-		//// update world matrix (R_Set3D)
-		utils::hook::call<void(__fastcall)(int, game::GfxCmdBufSourceState*)>(0x7244C0)(0, src); // updated SP
+		// update world matrix (R_Set3D)
+		//utils::hook::call<void(__fastcall)(int, game::GfxCmdBufSourceState*)>(0x7244C0)(0, src); // updated SP
+		R_Set3D(0, src);
 
-		//// directly set matrices on the device so that rtx-remix finds the camera
+		// directly set matrices on the device so that rtx-remix finds the camera
 		dev->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&src->matrices.matrix[0].m));
 		dev->SetTransform(D3DTS_VIEW, reinterpret_cast<D3DMATRIX*>(&src->viewParms.viewMatrix.m));
 		dev->SetTransform(D3DTS_PROJECTION, reinterpret_cast<D3DMATRIX*>(&src->viewParms.projectionMatrix.m));
@@ -202,11 +203,11 @@ namespace components::sp
 
 	int r_set_material(game::MaterialTechniqueType type, game::GfxCmdBufSourceState* src, game::GfxCmdBufState* state, game::GfxDrawSurf drawSurf)
 	{
-		const auto rgp = reinterpret_cast<game::r_global_permanent_t*>(0x3BF1880); // updated SP
+		//const auto rgp = reinterpret_cast<game::r_global_permanent_t*>(0x3BF1880); // updated SP
 
 		game::switch_material_t mat = {};
 
-		mat.current_material = rgp->sortedMaterials[(HIDWORD(drawSurf.packed) >> 1) & 2047];
+		mat.current_material = game::sp::rgp->sortedMaterials[(HIDWORD(drawSurf.packed) >> 1) & 2047];
 		mat.current_technique = mat.current_material->techniqueSet->remappedTechniqueSet->techniques[type];
 
 		mat.material = mat.current_material;
@@ -323,11 +324,11 @@ namespace components::sp
 			var->flags = game::dvar_flags::userinfo;
 		}
 
-		if (const auto var = Dvar_FindVar("r_fullbright"); var)
+		/*if (const auto var = Dvar_FindVar("r_fullbright"); var)
 		{
 			var->current.enabled = true;
 			var->flags = game::dvar_flags::userinfo;
-		}
+		}*/
 
 		if (const auto var = Dvar_FindVar("fx_enable"); var)
 		{
@@ -393,6 +394,17 @@ namespace components::sp
 
 	main_module::main_module()
 	{
+		// *
+		// general
+
+		
+
+		// stuck in some loop 'Com_Quit_f'
+		utils::hook::nop(0x5FEA01, 5);
+
+		// don't play intro video
+		utils::hook::nop(SELECT(0x564CB9, 0x59D68B), 5);
+
 		// hook beginning of 'RB_Draw3DInternal' to setup general stuff required for rtx-remix
 		utils::hook::nop(0x6E8B96, 8); utils::hook(0x6E8B96, rb_draw3d_internal_stub, HOOK_JUMP).install()->quick();
 

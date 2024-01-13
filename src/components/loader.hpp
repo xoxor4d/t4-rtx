@@ -26,5 +26,9 @@ namespace components
 }
 
 #include "modules/sp/main_module.hpp"
+#include "modules/sp/fixed_function.hpp"
+
 #include "modules/mp/main_module.hpp"
+
 #include "modules/flags.hpp"
+#include "modules/command.hpp"
