@@ -658,7 +658,7 @@ namespace game
 
 	struct GfxBackEndData
 	{
-		char pad0[1330636];
+		char surfsBuffer[1330636]; // obv. not the correct size
 		unsigned int viewInfoIndex;
 		unsigned int viewInfoCount;
 		GfxViewInfo* viewInfo;
