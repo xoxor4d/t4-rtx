@@ -918,6 +918,397 @@ namespace components::sp
 		dev->SetFVF(NULL);
 	}
 
+	// fixed function brushmodel drawing -- there is an issue with indicies / offset
+	//void bmodel_test(/*game::GfxCmdBufPrimState* state*/ int baseVertex, game::GfxDrawPrimArgs* args, int first_vertex, int baseIndex, game::BModelSurface* bmodel)
+	void bmodel_test(/*game::srfTriangles_t* tris,*/ game::GfxDrawPrimArgs* args, game::BModelSurface* bmodel2, /*int first_vertex, int baseIndex,*/ game::BModelSurface* bmodel, int baseIndex)
+	{
+		const auto dev = dx->device;
+		const auto src = game::get_cmdbufsourcestate();
+		//src->objectPlacement = bmodel->placement;
+
+		// #
+		// setup fixed-function
+
+		// vertex format
+		dev->SetFVF(WORLD_VERTEX_FORMAT);
+
+		// save shaders
+		IDirect3DVertexShader9* og_vertex_shader;
+		dev->GetVertexShader(&og_vertex_shader);
+
+		IDirect3DPixelShader9* og_pixel_shader;
+		dev->GetPixelShader(&og_pixel_shader);
+
+		// def. needed or the game will render the mesh using shaders
+		dev->SetVertexShader(nullptr);
+		dev->SetPixelShader(nullptr);
+
+
+		// #
+		// transform
+
+		float model_axis[3][3] = {};
+
+		const auto placement = args->baseIndex < 0 ? bmodel2->placement : bmodel->placement;
+		utils::unit_quat_to_axis(placement->base.quat, model_axis);
+		const auto scale = placement->scale;
+		
+		//const auto mtx = source->matrices.matrix[0].m;
+		float mtx[4][4] = {};
+
+		// inlined ikMatrixSet44
+		mtx[0][0] = model_axis[0][0] * scale;
+		mtx[0][1] = model_axis[0][1] * scale;
+		mtx[0][2] = model_axis[0][2] * scale;
+		mtx[0][3] = 0.0f;
+
+		mtx[1][0] = model_axis[1][0] * scale;
+		mtx[1][1] = model_axis[1][1] * scale;
+		mtx[1][2] = model_axis[1][2] * scale;
+		mtx[1][3] = 0.0f;
+
+		mtx[2][0] = model_axis[2][0] * scale;
+		mtx[2][1] = model_axis[2][1] * scale;
+		mtx[2][2] = model_axis[2][2] * scale;
+		mtx[2][3] = 0.0f;
+
+		mtx[3][0] = placement->base.origin[0];
+		mtx[3][1] = placement->base.origin[1];
+		mtx[3][2] = placement->base.origin[2];
+		mtx[3][3] = 1.0f;
+
+		dev->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&mtx));
+
+		// texture alpha + vertex alpha (decal blending)
+		dev->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+		dev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+		dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+
+		/*state->streams[0].vb = gfx_world_vertexbuffer;
+		state->streams[0].offset = args->baseIndex;
+		state->streams[0].stride = WORLD_VERTEX_STRIDE;*/
+		//dev->SetStreamSource(0, gfx_world_vertexbuffer, WORLD_VERTEX_STRIDE * tris->firstVertex /*first_vertex*/, WORLD_VERTEX_STRIDE);
+
+		//int x = baseIndex;
+		 
+		//dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, tris->vertexCount, args->baseIndex, tris->triCount);
+
+		if (args->baseIndex < 0)
+		{
+			dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, bmodel2->surf->tris.vertexCount, baseIndex /*baseIndex*/, bmodel2->surf->tris.triCount);
+		}
+		else
+		{
+			dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, args->vertexCount, args->baseIndex, args->triCount);
+		}
+
+		//state->device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, bmodel->surf->tris.vertexCount, baseIndex, bmodel->surf->tris.triCount);
+
+		// #
+		// restore everything for following meshes rendered via shaders
+
+		dev->SetVertexShader(og_vertex_shader);
+		dev->SetPixelShader(og_pixel_shader);
+		dev->SetFVF(NULL);
+	}
+
+	__declspec(naked) void bmodel_stub01()
+	{
+		const static uint32_t retn_addr = 0x7418DC;
+		__asm
+		{
+			pushad;
+			//lea		eax, [esp + 0x34 + 32]; // tris?
+
+
+			lea		edx, [esp + 0x74 + 32]; // bmodel : +32 (pushad)
+
+			push	ebx; // baseIndex returned by R_SetIndexData
+
+
+			push	edx; // bmodel?
+			push	edi; // bmodel 2
+
+
+
+			//push	ebx; // baseIndex returned by R_SetIndexData
+
+			//push	ecx; // tris->firstVertex
+			push	esi; // args
+
+			//push	eax; // state
+			//push	eax; // tris ?
+
+			call	bmodel_test;
+			//add		esp, 20;
+			add		esp, 16;
+			popad;
+
+			jmp		retn_addr;
+		}
+
+		//__asm
+		//{
+		//	pushad;
+		//	lea		eax, [esp + 0x60 + 32 - 8]; // baseVertex :  +32 (pushad) -8 (esp offset before stub)
+		//	lea		edx, [esp + 0x74 + 32]; // bmodel : +32 (pushad)
+		//	push	edx; // bmodel?
+
+		//	push	ebx; // baseIndex returned by R_SetIndexData
+
+		//	push	ecx; // tris->firstVertex
+		//	push	esi; // args
+		//	//push	eax; // state
+
+		//	
+		//	push	eax; // baseVertex ?
+
+		//	call	bmodel_test;
+		//	add		esp, 20;
+		//	popad;
+
+		//	jmp		retn_addr;
+		//}
+	}
+
+	__declspec(naked) void bmodel_stub02()
+	{
+		const static uint32_t retn_addr = 0x741B68;
+		__asm
+		{
+			pushad;
+			lea		edx, [esp + 0x74 + 32]; // bmodel : +32 (pushad)
+			push	0;
+			push	edx; // bmodel?
+			push	edx; // bmodel? fake
+			push	esi; // args
+			call	bmodel_test;
+			add		esp, 16;
+			popad;
+
+			jmp		retn_addr;
+		}
+	}
+
+	int g_layerDataStride[]
+	{
+		0, 0, 0, 8, 12, 16, 20, 24, 24, 28, 32, 32, 36, 40, 0, 0, 16
+	};
+
+	void R_SetStreamsForBspSurface(game::GfxCmdBufPrimState* prim, game::srfTriangles_t* tris)
+	{
+		auto v2 = tris[1].vertexLayerData;
+
+		auto layerDataStride = g_layerDataStride[prim->vertDeclType];
+		auto v6 = 1 * prim->vertDeclType;
+
+		auto vert_offset = tris->firstVertex * WORLD_VERTEX_STRIDE;
+
+		if (layerDataStride)
+		{
+			if (v2 < 0)
+			{
+				//result = R_SetDoubleStreamSource(44 * tris->firstVertex, 44, prim, (int)rgp.world->vd.worldVb.data, (int)rgp.world->vld.layerVb.data, tris->vertexLayerData, layerDataStride);
+				if (prim->streams[0].vb != gfx_world_vertexbuffer || prim->streams[0].offset != vert_offset || prim->streams[0].stride != WORLD_VERTEX_STRIDE)
+				{
+					prim->streams[0].vb = gfx_world_vertexbuffer;
+					prim->streams[0].offset = vert_offset;
+					prim->streams[0].stride = WORLD_VERTEX_STRIDE;
+					prim->device->SetStreamSource(0, gfx_world_vertexbuffer, vert_offset, WORLD_VERTEX_STRIDE);
+				}
+			}
+			else
+			{                                       // this has some effect on decals
+				//result = R_ClearAllStreamSources(44 * tris->firstVertex, 44, prim, (int)rgp.world->vd.worldVb.data, (int)rgp.world->vld.layerVb.data, tris->vertexLayerData, layerDataStride, dword_3BE6CD4, v2, *(int*)((char*)&dword_8CE470 + v6));
+				int x = 1;
+			}
+		}
+		else if (v2 < 0)
+		{
+			//result = R_SetStreamSource(44 * tris->firstVertex, 44, prim, (int)rgp.world->vd.worldVb.data);
+			if (prim->streams[0].vb != gfx_world_vertexbuffer || prim->streams[0].offset != vert_offset || prim->streams[0].stride != WORLD_VERTEX_STRIDE)
+			{
+				prim->streams[0].vb = gfx_world_vertexbuffer;
+				prim->streams[0].offset = vert_offset;
+				prim->streams[0].stride = WORLD_VERTEX_STRIDE;
+				prim->device->SetStreamSource(0, gfx_world_vertexbuffer, vert_offset, WORLD_VERTEX_STRIDE);
+			}
+		}
+		else
+		{
+			//result = R_ClearAllStreamSources(44 * tris->firstVertex, 44, prim, (int)rgp.world->vd.worldVb.data, 0, 0, 0, dword_3BE6CD4, v2, *(int*)((char*)&dword_8CE470 + v6));
+			int x = 0;
+		}
+	}
+
+	__declspec(naked) void R_SetStreamsForBspSurface_stub()
+	{
+		const static uint32_t retn_addr = 0x741A35;
+		__asm
+		{
+			pushad;
+			push	ecx; // tris
+			push	eax; // prim
+			call	R_SetStreamsForBspSurface;
+			add		esp, 8;
+			popad;
+
+			jmp		retn_addr;
+		}
+	}
+
+	// #############################################################################
+	// ############# bruh ##########################################################
+
+	int R_TessBModel(game::GfxDrawSurfListArgs* listArgs, void* x, void* y)
+	{
+		const auto source = listArgs->context.source;
+		const auto prim = &listArgs->context.state->prim;
+
+		// #
+		// setup fixed-function
+
+		// vertex format
+		prim->device->SetFVF(WORLD_VERTEX_FORMAT);
+
+		// save shaders
+		IDirect3DVertexShader9* og_vertex_shader;
+		prim->device->GetVertexShader(&og_vertex_shader);
+
+		IDirect3DPixelShader9* og_pixel_shader;
+		prim->device->GetPixelShader(&og_pixel_shader);
+
+		// def. needed or the game will render the mesh using shaders
+		prim->device->SetVertexShader(nullptr);
+		prim->device->SetPixelShader(nullptr);
+
+		// texture alpha + vertex alpha (decal blending)
+		prim->device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+		prim->device->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+		prim->device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+
+
+		// #
+		// ------
+
+		auto drawSurfList = &listArgs->info->drawSurfs[listArgs->firstDrawSurfIndex];
+		auto drawSurfCount = listArgs->info->drawSurfCount - listArgs->firstDrawSurfIndex;
+
+		game::GfxDrawSurf drawSurf = {};
+		drawSurf.fields = drawSurfList->fields;
+
+		auto drawSurfSubMask = 0xFFFFFFFFE0000000;
+
+		//game::GfxDrawSurf drawSurfMask = {};
+		//drawSurfMask.packed = drawSurf.packed & 0xFFFFFFFFE0000000ui64;
+
+		game::GfxDrawSurf drawSurfKey = {};
+		drawSurfKey.packed = drawSurf.packed & drawSurfSubMask;
+
+		game::GfxDrawSurf drawSurfKey_SAVED = {};
+		drawSurfKey_SAVED.fields = drawSurfKey.fields;
+
+		auto drawSurfIndex = 0;
+		game::GfxDrawSurf* surflist = &drawSurfList[drawSurfIndex];
+
+		while (1)
+		{
+			auto surf = (game::BModelSurface*)((char*)source->data + 4 * LOWORD(drawSurf.packed));
+
+			// #
+			// transform
+
+			float model_axis[3][3] = {};
+
+			const auto placement = surf->placement;
+			utils::unit_quat_to_axis(placement->base.quat, model_axis);
+			const auto scale = placement->scale;
+
+			//const auto mtx = source->matrices.matrix[0].m;
+			float mtx[4][4] = {};
+
+			// inlined ikMatrixSet44
+			mtx[0][0] = model_axis[0][0] * scale;
+			mtx[0][1] = model_axis[0][1] * scale;
+			mtx[0][2] = model_axis[0][2] * scale;
+			mtx[0][3] = 0.0f;
+
+			mtx[1][0] = model_axis[1][0] * scale;
+			mtx[1][1] = model_axis[1][1] * scale;
+			mtx[1][2] = model_axis[1][2] * scale;
+			mtx[1][3] = 0.0f;
+
+			mtx[2][0] = model_axis[2][0] * scale;
+			mtx[2][1] = model_axis[2][1] * scale;
+			mtx[2][2] = model_axis[2][2] * scale;
+			mtx[2][3] = 0.0f;
+
+			mtx[3][0] = placement->base.origin[0];
+			mtx[3][1] = placement->base.origin[1];
+			mtx[3][2] = placement->base.origin[2];
+			mtx[3][3] = 1.0f;
+
+			prim->device->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&mtx));
+
+			// #
+			// ------
+
+			auto gfxsurf = surf->surf;
+			auto tribasevert = WORLD_VERTEX_STRIDE * gfxsurf->tris.firstVertex;
+			auto trivertcount_triCount = gfxsurf->tris.triCount;
+			auto trivertcount_vertexCount = gfxsurf->tris.vertexCount;
+
+			if (prim->streams[0].vb != gfx_world_vertexbuffer || prim->streams[0].offset != tribasevert || prim->streams[0].stride != WORLD_VERTEX_STRIDE)
+			{
+				prim->streams[0].vb = gfx_world_vertexbuffer;
+				prim->streams[0].offset = tribasevert;
+				prim->streams[0].stride = WORLD_VERTEX_STRIDE;
+				prim->device->SetStreamSource(0, gfx_world_vertexbuffer, tribasevert, WORLD_VERTEX_STRIDE);
+			}
+
+			auto idx = gfxsurf->tris.baseIndex;
+			auto idx_ret = R_SetIndexData(prim, &game::sp::rgp->world->indices[idx], trivertcount_triCount);
+			prim->device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, trivertcount_vertexCount, idx_ret, trivertcount_triCount);
+
+			auto indices_plus_4 = surflist + 1;
+			auto break_me_daddy = ++drawSurfIndex == drawSurfCount;
+			++surflist;
+
+			if (break_me_daddy)
+			{
+				break;
+			}
+
+			drawSurf.fields = indices_plus_4->fields;
+			drawSurfKey.packed = indices_plus_4->packed & drawSurfSubMask;
+
+			if (drawSurfKey.packed != drawSurfKey_SAVED.packed)
+			{
+				break;
+			}
+		}
+
+		prim->device->SetVertexShader(og_vertex_shader);
+		prim->device->SetPixelShader(og_pixel_shader);
+		prim->device->SetFVF(NULL);
+
+		return drawSurfIndex;
+	}
+
+	__declspec(naked) void R_TessBModel_stub()
+	{
+		const static uint32_t retn_addr = 0x741BB0;
+		__asm
+		{
+			//pushad;
+			call	R_TessBModel;
+			//popad;
+
+			jmp		retn_addr;
+		}
+	}
+
+
 #if 0
 	void R_DrawBspDrawSurfsLitPreTess(const unsigned int* primDrawSurfPos, game::GfxCmdBufSourceState* src, game::GfxCmdBufState* state)
 	{
@@ -1187,6 +1578,8 @@ namespace components::sp
 	}
 #endif
 
+	
+
 	fixed_function::fixed_function()
 	{
 		// force fullbright
@@ -1205,17 +1598,23 @@ namespace components::sp
 		// fixed-function rendering of skinned (animated) models (R_TessXModelSkinnedDrawSurfList)
 		utils::hook(0x73F190, R_DrawXModelSkinnedUncached_stub, HOOK_JUMP).install()->quick();
 
-
 		// #
 		// fixed-function rendering of world surfaces (R_TessTrianglesPreTessList)
 		// :: R_SetStreamsForBspSurface -> R_ClearAllStreamSources -> Stream 1 (world->vld.layerVb) handles 'decals'
 		// :: see technique 'lm_r0c0t1c1n1_nc_sm3.tech'
 
-		// unlit
-		utils::hook(0x741408, R_DrawBspDrawSurfsPreTess, HOOK_CALL).install()->quick();
+		utils::hook(0x741408, R_DrawBspDrawSurfsPreTess, HOOK_CALL).install()->quick(); // unlit
+		//utils::hook(0x7413F3, R_DrawBspDrawSurfsLitPreTess_stub, HOOK_JUMP).install()->quick(); // lit - decal tests
 
-		// lit - decal tests
-		//utils::hook(0x7413F3, R_DrawBspDrawSurfsLitPreTess_stub, HOOK_JUMP).install()->quick();
+		// ff brushmodel - partially working but problem with indicies / offset -> broken tris
+		// DrawIndexedPrimitive @ 0x7418D7 & 0x741B63 render wobbly makin house
+		//utils::hook(0x7418D7, bmodel_stub01, HOOK_JUMP).install()->quick();
+		//utils::hook(0x741B63, bmodel_stub02, HOOK_JUMP).install()->quick();
+		//utils::hook(0x741A30, R_SetStreamsForBspSurface_stub, HOOK_JUMP).install()->quick();
+
+		//utils::hook(0x741420, R_TessBModel_stub, HOOK_JUMP).install()->quick();
+		utils::hook(0x741420, R_TessBModel, HOOK_JUMP).install()->quick();
+		//utils::hook::set<DWORD>(0x82A808, (DWORD)&R_TessBModel);
 
 		// ----
 

@@ -744,7 +744,9 @@ namespace game
 	struct GfxCmdBufSourceState
 	{
 		GfxCodeMatrices matrices;
-		char pad0[2128];
+		char pad0[2116];
+		GfxBackEndData* data;
+		char padx0[8];
 		GfxViewParms viewParms;
 		char pad00[382];
 		GfxScaledPlacement* objectPlacement;
@@ -1420,6 +1422,37 @@ namespace game
 		GfxVertexBufferState dynamicVertexBufferPool[1];
 		GfxVertexBufferState* dynamicVertexBuffer;
 	}; STATIC_ASSERT_OFFSET(GfxBuffers, dynamicVertexBuffer, 0x80);
+
+	struct BModelSurface
+	{
+		GfxScaledPlacement* placement;
+		GfxSurface* surf;
+	};
+
+	struct GfxCmdBufContext
+	{
+		GfxCmdBufSourceState* source;
+		GfxCmdBufState* state;
+	};
+
+	struct GfxDrawSurfListInfo
+	{
+		GfxDrawSurf* drawSurfs;
+		unsigned int drawSurfCount;
+		MaterialTechniqueType baseTechType;
+		GfxViewInfo* viewInfo;
+		float viewOrigin[4];
+		void* GfxLight__light;
+		int cameraView;
+	};
+
+	struct GfxDrawSurfListArgs
+	{
+		GfxCmdBufContext context;
+		unsigned int firstDrawSurfIndex;
+		GfxDrawSurfListInfo* info;
+	};
+
 
 	struct MapEnts
 	{

@@ -308,21 +308,21 @@ namespace components::sp
 			var->flags = game::dvar_flags::userinfo;
 		}
 
-		if (const auto var = Dvar_FindVar("r_znear"); var)
-		{
-			var->current.value = 40.0f; // 10.0 works but still a little wobble at larger distances
-			var->domain.value.min = 0.0f;
-			var->domain.value.max = FLT_MAX;
-			var->flags = game::dvar_flags::userinfo;
-		}
+		//if (const auto var = Dvar_FindVar("r_znear"); var)
+		//{
+		//	var->current.value = 40.0f; // 10.0 works but still a little wobble at larger distances
+		//	var->domain.value.min = 0.0f;
+		//	var->domain.value.max = FLT_MAX;
+		//	var->flags = game::dvar_flags::userinfo;
+		//}
 
-		if (const auto var = Dvar_FindVar("r_znear_depthhack"); var)
-		{
-			var->current.value = 39.9805f; // - 9.99512f see ^
-			var->domain.value.min = 0.0f;
-			var->domain.value.max = FLT_MAX;
-			var->flags = game::dvar_flags::userinfo;
-		}
+		//if (const auto var = Dvar_FindVar("r_znear_depthhack"); var)
+		//{
+		//	var->current.value = 39.9805f; // - 9.99512f see ^
+		//	var->domain.value.min = 0.0f;
+		//	var->domain.value.max = FLT_MAX;
+		//	var->flags = game::dvar_flags::userinfo;
+		//}
 
 		/*if (const auto var = Dvar_FindVar("r_fullbright"); var)
 		{
@@ -330,11 +330,23 @@ namespace components::sp
 			var->flags = game::dvar_flags::userinfo;
 		}*/
 
-		if (const auto var = Dvar_FindVar("fx_enable"); var)
+		if (const auto var = Dvar_FindVar("r_skinCache"); var)
 		{
 			var->current.enabled = false;
 			var->flags = game::dvar_flags::userinfo;
 		}
+
+		if (const auto var = Dvar_FindVar("r_fastSkin"); var)
+		{
+			var->current.enabled = false;
+			var->flags = game::dvar_flags::userinfo;
+		}
+
+		/*if (const auto var = Dvar_FindVar("fx_enable"); var)
+		{
+			var->current.enabled = false;
+			var->flags = game::dvar_flags::userinfo;
+		}*/
 
 		// enable via cfg when in-game
 		if (const auto var = Dvar_FindVar("r_warm_static"); var)
