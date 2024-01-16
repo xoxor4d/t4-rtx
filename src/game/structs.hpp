@@ -656,9 +656,39 @@ namespace game
 		// ....
 	}; // size = 0x6D80
 
-	struct GfxBackEndData
+	struct FxCodeMeshData
 	{
-		char surfsBuffer[1330636]; // obv. not the correct size
+		unsigned int triCount;
+		unsigned __int16* indices;
+		unsigned __int16 argOffset;
+		unsigned __int16 argCount;
+		unsigned int pad;
+	};
+
+	struct GfxVertexBufferState
+	{
+		volatile int used;
+		int total;
+		IDirect3DVertexBuffer9* buffer;
+		char* verts;
+	};
+
+	struct GfxMeshData
+	{
+		unsigned int indexCount;
+		unsigned int totalIndexCount;
+		unsigned __int16* indices;
+		GfxVertexBufferState vb;
+		unsigned int vertSize;
+	};
+
+	struct __declspec(align(4)) GfxBackEndData
+	{
+		char surfsBuffer[262144];
+		FxCodeMeshData codeMeshes[2048];
+		char pad0[569088];
+		GfxMeshData codeMesh;
+		char pad[466604];
 		unsigned int viewInfoIndex;
 		unsigned int viewInfoCount;
 		GfxViewInfo* viewInfo;
@@ -1398,14 +1428,6 @@ namespace game
 		int total;
 		IDirect3DIndexBuffer9* buffer;
 		unsigned __int16* indices;
-	};
-
-	struct GfxVertexBufferState
-	{
-		volatile int used;
-		int total;
-		IDirect3DVertexBuffer9* buffer;
-		char* verts;
 	};
 
 	struct __declspec(align(4)) GfxBuffers
