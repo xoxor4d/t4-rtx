@@ -39,7 +39,7 @@ namespace components::sp
 		// setup vertexbuffer
 		{
 			//XSurfaceOptimizeRigid(model, surf);
-			if (!surf->vb0)
+			if (surf && !surf->vb0 && surf->vertCount)
 			{
 				void* vertex_buffer_data = nullptr;
 				const auto vertex_bytes = surf->vertCount * MODEL_VERTEX_STRIDE;
@@ -286,13 +286,13 @@ namespace components::sp
 		state->prim.indexBuffer = surf->indexBuffer;
 		state->prim.device->SetIndices(surf->indexBuffer);
 
-		const float custom_scalar = 1.0f;
+		float custom_scalar = 1.0f;
 
 		// skysphere materials need to have sort = sky in assetmanager
-		/*if (state->material && state->material->info.sortKey == 5)
+		if (state->material && state->material->info.sortKey == 5)
 		{
 			custom_scalar = 1000.0f;
-		}*/
+		}
 
 		// #
 		// build world matrix

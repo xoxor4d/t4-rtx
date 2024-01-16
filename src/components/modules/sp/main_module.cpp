@@ -100,6 +100,8 @@ namespace components::sp
 
 		//spawn_light();
 
+		dev->SetRenderState(D3DRS_LIGHTING, FALSE);
+
 		if (const auto& export_entities = Dvar_FindVar("export_entities");
 			export_entities && std::string_view(export_entities->current.string) == "1")
 		{
@@ -226,6 +228,11 @@ namespace components::sp
 		{
 			return 0;
 		}
+
+		/*if (utils::starts_with(mat.current_material->info.name, "mc/mtl_rtx_"))
+		{
+			int x = 1;
+		}*/
 
 		/*if (std::string_view(mat.current_material->techniqueSet->name) == std::string_view("wc_water"))
 		{
@@ -378,6 +385,109 @@ namespace components::sp
 		}
 	}
 
+
+	// *
+	// skysphere
+
+	const char* main_module::skysphere_get_name_for_variant(int variant)
+	{
+		switch (variant)
+		{
+		default:
+		case 0: return "rtx_skysphere_oceanrock";
+		case 1: return "rtx_skysphere_desert";
+		case 2: return "rtx_skysphere_night";
+		case 3: return "rtx_skysphere_overcast";
+		case 4: return "rtx_skysphere_sunset_clouds";
+		}
+	}
+
+	bool main_module::skysphere_is_model_valid()
+	{
+		// if not spawned an entity yet
+		if (!skysphere_spawned)
+		{
+			return false;
+		}
+
+		// check if the entity is valid (player changed level etc.)
+		if (skysphere_model == nullptr || skysphere_model->classname == 0
+			|| skysphere_model->model != game::sp::G_ModelIndex(skysphere_get_name_for_variant(skysphere_variant)))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	void main_module::skysphere_change_model(int variant)
+	{
+		const std::int16_t model_index = game::sp::G_ModelIndex(skysphere_get_name_for_variant(variant));
+
+		skysphere_model->model = model_index;
+		skysphere_model->s.index.xmodel = model_index;
+		skysphere_model->classname = game::sp::scr_const->script_model;
+		game::sp::G_DObjUpdate(&skysphere_model->s);
+
+		skysphere_variant = variant;
+	}
+
+	void main_module::skysphere_spawn(int variant)
+	{
+		if (skysphere_is_model_valid())
+		{
+			skysphere_change_model(variant);
+			return;
+		}
+
+		// needs :: 
+		// s->index = modelIndex
+		// linked = 0x1;
+		// svFlags = 0x04; // even = visible, uneven = hidden
+
+		const std::int16_t model_index = game::sp::G_ModelIndex(skysphere_get_name_for_variant(variant));
+
+		skysphere_model = game::sp::G_Spawn();
+		skysphere_model->classname = game::sp::scr_const->script_model;
+		skysphere_model->model = model_index;
+		skysphere_model->s.index.xmodel = model_index;
+		skysphere_model->r.svFlags = 0x04;
+		skysphere_model->r.linked = 0x1;
+
+		//Game::G_SetOrigin(skysphere_model, skysphere_model_origin);
+		skysphere_model->s.lerp.pos.trBase[0] = 0.0f;
+		skysphere_model->s.lerp.pos.trBase[1] = 0.0f;
+		skysphere_model->s.lerp.pos.trBase[2] = 0.0f;
+		skysphere_model->s.lerp.pos.trType = game::TR_STATIONARY;
+		skysphere_model->s.lerp.pos.trTime = 0;
+		skysphere_model->s.lerp.pos.trDuration = 0;
+		skysphere_model->s.lerp.pos.trDelta[0] = 0.0;
+		skysphere_model->s.lerp.pos.trDelta[1] = 0.0;
+		skysphere_model->s.lerp.pos.trDelta[2] = 0.0;
+		skysphere_model->r.currentOrigin[0] = 0.0f;
+		skysphere_model->r.currentOrigin[1] = 0.0f;
+		skysphere_model->r.currentOrigin[2] = 0.0f;
+
+		//Game::G_SetAngles(skysphere_model, skysphere_model_rotation);
+		skysphere_model->s.lerp.apos.trBase[0] = 0.0f;
+		skysphere_model->s.lerp.apos.trBase[1] = 0.0f;
+		skysphere_model->s.lerp.apos.trBase[2] = 0.0f;
+		skysphere_model->s.lerp.apos.trType = game::TR_STATIONARY;
+		skysphere_model->s.lerp.apos.trTime = 0;
+		skysphere_model->s.lerp.apos.trDuration = 0;
+		skysphere_model->s.lerp.apos.trDelta[0] = 0.0;
+		skysphere_model->s.lerp.apos.trDelta[1] = 0.0;
+		skysphere_model->s.lerp.apos.trDelta[2] = 0.0;
+		skysphere_model->r.currentAngles[0] = 0.0f;
+		skysphere_model->r.currentAngles[1] = 0.0f;
+		skysphere_model->r.currentAngles[2] = 0.0f;
+
+		game::sp::G_CallSpawnEntity(skysphere_model);
+
+		skysphere_spawned = true;
+		skysphere_variant = variant;
+	}
+
 	// ------------------------------------------------------------------------
 
 	__declspec(naked) void force_lod_stub01()
@@ -424,6 +534,10 @@ namespace components::sp
 
 		// hook R_SetMaterial ...... 0x741F1E
 		utils::hook(0x741F1E, r_set_material, HOOK_CALL).install()->quick();
+
+
+		// Precaching beyond level load (skysphere spawning)
+		utils::hook::set<BYTE>(0x54A4D6, 0xEB);
 
 
 		// ------------------------------------------------------------------------
@@ -491,5 +605,33 @@ namespace components::sp
 
 		// no forward/backslash for console cmds
 		//utils::hook::nop(0x493DEF, 5);
+
+		command::add("rtx_sky_clear", [](command::params) { main_module::skysphere_spawn(0); });
+		command::add("rtx_sky_desert", [](command::params) { main_module::skysphere_spawn(1); });
+		command::add("rtx_sky_night", [](command::params) { main_module::skysphere_spawn(2); });
+		command::add("rtx_sky_overcast", [](command::params) { main_module::skysphere_spawn(3); });
+		command::add("rtx_sky_sunset", [](command::params) { main_module::skysphere_spawn(4); });
+
+		command::add("noborder", [this](command::params)
+		{
+			const auto hwnd = game::sp::dx->windows->hwnd ? game::sp::dx->windows->hwnd : FindWindow(nullptr, L"Call of Duty®");
+
+			// calculate titlebar height
+			RECT w, c; GetWindowRect(hwnd, &w); GetClientRect(hwnd, &c);
+			sp::main_module::noborder_titlebar_height = (w.bottom - w.top) - (c.bottom - c.top);
+
+			SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_POPUP);
+			SetWindowPos(hwnd, nullptr, 0, 0, game::sp::dx->windows->width, game::sp::dx->windows->height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
+		});
+
+		command::add("windowed", [this](command::params)
+		{
+			if (sp::main_module::noborder_titlebar_height)
+			{
+				const auto hwnd = game::sp::dx->windows->hwnd ? game::sp::dx->windows->hwnd : FindWindow(nullptr, L"Call of Duty®");
+				SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
+				SetWindowPos(hwnd, nullptr, 0, 0, game::sp::dx->windows->width, game::sp::dx->windows->height + sp::main_module::noborder_titlebar_height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
+			}
+		});
 	}
 }

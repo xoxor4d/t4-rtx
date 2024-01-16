@@ -4,6 +4,7 @@
 
 namespace game
 {
+	struct gentity_s;
 	typedef float vec_t;
 	typedef vec_t vec2_t[2];
 	typedef vec_t vec3_t[3];
@@ -582,6 +583,13 @@ namespace game
 	STATIC_ASSERT_OFFSET(XModel, numLods, 0xC4);
 	STATIC_ASSERT_OFFSET(XModel, bad, 0xD1);
 
+	struct GfxWindowTarget
+	{
+		HWND__* hwnd;
+		IDirect3DSwapChain9* swapChain;
+		int width;
+		int height;
+	};
 
 	// obv. not complete
 	struct __declspec(align(8)) DxGlobals
@@ -596,8 +604,26 @@ namespace game
 		int adapterFullscreenHeight;
 		int depthStencilFormat;
 		unsigned int displayModeCount;
+		_D3DDISPLAYMODE displayModes[256];
+		const char* resolutionNameTable[257];
+		const char* refreshRateNameTable[257];
+		char modeText[5120];
+		IDirect3DQuery9* fencePool[8];
+		unsigned int nextFence;
+		int gpuSync;
+		int multiSampleType;
+		unsigned int multiSampleQuality;
+		int sunSpriteSamples;
+		IDirect3DSurface9* singleSampleDepthStencilSurface;
+		int pad;
+		bool deviceLost;
+		bool inScene;
+		int targetWindowIndex;
+		int windowCount;
+		GfxWindowTarget windows[1];
 		// ....
 	};
+	STATIC_ASSERT_OFFSET(DxGlobals, windows, 0x2C78);
 
 	struct GfxMatrix
 	{
@@ -1544,6 +1570,1022 @@ namespace game
 		void* cbrush_t___box_brush;
 		// .....
 	}; STATIC_ASSERT_OFFSET(clipMap_t, mapEnts, 0xB4);
+
+	struct __declspec(align(2)) XAnimParent
+	{
+		unsigned __int16 flags; //OFS: 0x0 SIZE: 0x2
+		unsigned __int16 children; //OFS: 0x2 SIZE: 0x2
+	};
+
+	struct XAnimEntry
+	{
+		unsigned __int16 bCreated; //OFS: 0x0 SIZE: 0x2
+		unsigned __int16 numAnims; //OFS: 0x2 SIZE: 0x2
+		unsigned __int16 parent; //OFS: 0x4 SIZE: 0x2
+		__int16 field_6; //OFS: 0x6 SIZE: 0x2
+		XAnimParent animParent; //OFS: 0x8 SIZE: 0x4
+	};
+
+	struct XAnim_s
+	{
+		char* debugName; //OFS: 0x0 SIZE: 0x4
+		unsigned int size; //OFS: 0x4 SIZE: 0x4
+		char** debugAnimNames; //OFS: 0x8 SIZE: 0x4
+		XAnimEntry entries[1]; //OFS: 0xC SIZE: 0xC
+	};
+
+	struct XAnimTree_s
+	{
+		XAnim_s* anims; //OFS: 0x0 SIZE: 0x4
+		unsigned __int16 children; //OFS: 0x4 SIZE: 0x2
+	};
+
+	union XAnimIndices
+	{
+		char* _1; //OFS: 0x0 SIZE: 0x4
+		unsigned __int16* _2; //OFS: 0x1 SIZE: 0x4
+		void* data; //OFS: 0x2 SIZE: 0x4
+	};
+
+	struct XAnimNotifyInfo
+	{
+		unsigned __int16 name; //OFS: 0x0 SIZE: 0x2
+		float time; //OFS: 0x4 SIZE: 0x4
+	};
+
+	union XAnimDynamicFrames
+	{
+		unsigned __int8(*_1)[3]; //OFS: 0x0 SIZE: 0x4
+		unsigned __int16(*_2)[3]; //OFS: 0x1 SIZE: 0x4
+	};
+
+	union XAnimDynamicIndices
+	{
+		char _1[1]; //OFS: 0x0 SIZE: 0x1
+		unsigned __int16 _2[1]; //OFS: 0x1 SIZE: 0x2
+	};
+
+	struct XAnimPartTransFrames
+	{
+		float mins[3]; //OFS: 0x0 SIZE: 0xC
+		float size[3]; //OFS: 0xC SIZE: 0xC
+		XAnimDynamicFrames frames; //OFS: 0x18 SIZE: 0x4
+		XAnimDynamicIndices indices; //OFS: 0x1C SIZE: 0x2
+	};
+
+	union XAnimPartTransData
+	{
+		XAnimPartTransFrames frames; //OFS: 0x0 SIZE: 0x20
+		float frame0[3]; //OFS: 0x1 SIZE: 0xC
+	};
+
+	struct XAnimPartTrans
+	{
+		unsigned __int16 size; //OFS: 0x0 SIZE: 0x2
+		char smallTrans; //OFS: 0x2 SIZE: 0x1
+		XAnimPartTransData u; //OFS: 0x4 SIZE: 0x20
+	};
+
+	struct XAnimDeltaPartQuatDataFrames
+	{
+		__int16(*frames)[2]; //OFS: 0x0 SIZE: 0x4
+		XAnimDynamicIndices indices; //OFS: 0x4 SIZE: 0x2
+	};
+
+	union XAnimDeltaPartQuatData
+	{
+		XAnimDeltaPartQuatDataFrames frames; //OFS: 0x0 SIZE: 0x8
+		__int16 frame0[2]; //OFS: 0x1 SIZE: 0x4
+	};
+
+	struct XAnimDeltaPartQuat
+	{
+		unsigned __int16 size; //OFS: 0x0 SIZE: 0x2
+		XAnimDeltaPartQuatData u; //OFS: 0x4 SIZE: 0x8
+	};
+
+	struct XAnimDeltaPart
+	{
+		XAnimPartTrans* trans; //OFS: 0x0 SIZE: 0x4
+		XAnimDeltaPartQuat* quat; //OFS: 0x4 SIZE: 0x4
+	};
+
+	struct XAnimParts
+	{
+		const char* name; //OFS: 0x0 SIZE: 0x4
+		unsigned __int16 dataByteCount; //OFS: 0x4 SIZE: 0x2
+		unsigned __int16 dataShortCount; //OFS: 0x6 SIZE: 0x2
+		unsigned __int16 dataIntCount; //OFS: 0x8 SIZE: 0x2
+		unsigned __int16 randomDataByteCount; //OFS: 0xA SIZE: 0x2
+		unsigned __int16 randomDataIntCount; //OFS: 0xC SIZE: 0x2
+		unsigned __int16 numframes; //OFS: 0xE SIZE: 0x2
+		bool bLoop; //OFS: 0x10 SIZE: 0x1
+		bool bDelta; //OFS: 0x11 SIZE: 0x1
+		char boneCount[10]; //OFS: 0x12 SIZE: 0xA
+		char notifyCount; //OFS: 0x1C SIZE: 0x1
+		char assetType; //OFS: 0x1D SIZE: 0x1
+		bool isDefault; //OFS: 0x1E SIZE: 0x1
+		unsigned int randomDataShortCount; //OFS: 0x20 SIZE: 0x4
+		unsigned int indexCount; //OFS: 0x24 SIZE: 0x4
+		float framerate; //OFS: 0x28 SIZE: 0x4
+		float frequency; //OFS: 0x2C SIZE: 0x4
+		unsigned __int16* names; //OFS: 0x30 SIZE: 0x4
+		char* dataByte; //OFS: 0x34 SIZE: 0x4
+		__int16* dataShort; //OFS: 0x38 SIZE: 0x4
+		int* dataInt; //OFS: 0x3C SIZE: 0x4
+		__int16* randomDataShort; //OFS: 0x40 SIZE: 0x4
+		char* randomDataByte; //OFS: 0x44 SIZE: 0x4
+		int* randomDataInt; //OFS: 0x48 SIZE: 0x4
+		XAnimIndices indices; //OFS: 0x4C SIZE: 0x4
+		XAnimNotifyInfo* notify; //OFS: 0x50 SIZE: 0x4
+		XAnimDeltaPart* deltaPart; //OFS: 0x54 SIZE: 0x4
+	};
+
+	union XAnimParent_u
+	{
+		XAnimParts* parts; //OFS: 0x0 SIZE: 0x4
+		XAnimParent animParent; //OFS: 0x1 SIZE: 0x4
+	};
+
+	struct XAnimState
+	{
+		float currentAnimTime; //OFS: 0x0 SIZE: 0x4
+		float oldTime; //OFS: 0x4 SIZE: 0x4
+		__int16 cycleCount; //OFS: 0x8 SIZE: 0x2
+		__int16 oldCycleCount; //OFS: 0xA SIZE: 0x2
+		float goalTime; //OFS: 0xC SIZE: 0x4
+		float goalWeight; //OFS: 0x10 SIZE: 0x4
+		float weight; //OFS: 0x14 SIZE: 0x4
+		float rate; //OFS: 0x18 SIZE: 0x4
+		bool instantWeightChange; //OFS: 0x1C SIZE: 0x1
+	};
+
+	struct XAnimInfo
+	{
+		unsigned __int16 notifyChild; //OFS: 0x0 SIZE: 0x2
+		__int16 notifyIndex; //OFS: 0x2 SIZE: 0x2
+		unsigned __int16 notifyName; //OFS: 0x4 SIZE: 0x2
+		unsigned __int16 notifyType; //OFS: 0x6 SIZE: 0x2
+		unsigned __int16 prev; //OFS: 0x8 SIZE: 0x2
+		unsigned __int16 next; //OFS: 0xA SIZE: 0x2
+		unsigned __int16 children; //OFS: 0xC SIZE: 0x2
+		unsigned __int16 parent; //OFS: 0xE SIZE: 0x2
+		unsigned __int16 animIndex; //OFS: 0x10 SIZE: 0x2
+		unsigned __int16 animToModel; //OFS: 0x12 SIZE: 0x2
+		XAnimParent_u u; //OFS: 0x14 SIZE: 0x4
+		XAnimState state; //OFS: 0x18 SIZE: 0x20
+	};
+
+	enum TraceHitType : __int32
+	{
+		TRACE_HITTYPE_NONE = 0x0,
+		TRACE_HITTYPE_ENTITY = 0x1,
+		TRACE_HITTYPE_DYNENT_MODEL = 0x2,
+		TRACE_HITTYPE_DYNENT_BRUSH = 0x3,
+	};
+
+	struct trace_t
+	{
+		float normal[4]; //OFS: 0x0 SIZE: 0x10
+		float fraction; //OFS: 0x10 SIZE: 0x4
+		int surfaceFlags; //OFS: 0x14 SIZE: 0x4
+		int contents; //OFS: 0x18 SIZE: 0x4
+		char* material; //OFS: 0x1C SIZE: 0x4
+		TraceHitType hitType; //OFS: 0x20 SIZE: 0x4
+		unsigned __int16 hitId; //OFS: 0x24 SIZE: 0x2
+		unsigned __int16 modelIndex; //OFS: 0x26 SIZE: 0x2
+		unsigned __int16 partName; //OFS: 0x28 SIZE: 0x2
+		unsigned __int16 boneIndex; //OFS: 0x2A SIZE: 0x2
+		unsigned __int16 partGroup; //OFS: 0x2C SIZE: 0x2
+		bool allsolid; //OFS: 0x2E SIZE: 0x1
+		bool startsolid; //OFS: 0x2F SIZE: 0x1
+		bool walkable; //OFS: 0x30 SIZE: 0x1
+	};
+
+	enum trType_t : __int32
+	{
+		TR_STATIONARY = 0x0,
+		TR_INTERPOLATE = 0x1,
+		TR_LINEAR = 0x2,
+		TR_LINEAR_STOP = 0x3,
+		TR_SINE = 0x4,
+		TR_GRAVITY = 0x5,
+		TR_ACCELERATE = 0x6,
+		TR_DECELERATE = 0x7,
+		TR_PHYSICS = 0x8,
+		TR_XDOLL = 0x9,
+		TR_FIRST_RAGDOLL = 0xA,
+		TR_RAGDOLL = 0xA,
+		TR_RAGDOLL_GRAVITY = 0xB,
+		TR_RAGDOLL_INTERPOLATE = 0xC,
+		TR_LAST_RAGDOLL = 0xC,
+		TR_COUNT = 0xD,
+	};
+
+	struct trajectory_t
+	{
+		trType_t trType; //OFS: 0x0 SIZE: 0x4
+		int trTime; //OFS: 0x4 SIZE: 0x4
+		int trDuration; //OFS: 0x8 SIZE: 0x4
+		float trBase[3]; //OFS: 0xC SIZE: 0xC
+		float trDelta[3]; //OFS: 0x18 SIZE: 0xC
+	};
+
+	struct LerpEntityStateTurret
+	{
+		float gunAngles[3]; //OFS: 0x0 SIZE: 0xC
+		unsigned __int8 overheating; //OFS: 0xC SIZE: 0x1
+		float heatVal; //OFS: 0x10 SIZE: 0x4
+	};
+
+	struct LerpEntityStateLoopFx
+	{
+		float cullDist; //OFS: 0x0 SIZE: 0x4
+		int period; //OFS: 0x4 SIZE: 0x4
+	};
+
+	union LerpEntityStateActor_unnamed_type_index
+	{
+		int actorNum; //OFS: 0x0 SIZE: 0x4
+		int corpseNum; //OFS: 0x1 SIZE: 0x4
+	};
+
+	struct __declspec(align(2)) LerpEntityStateActor_unnamed_type_proneInfo
+	{
+		__int16 fBodyPitch; //OFS: 0x0 SIZE: 0x2
+	};
+
+	struct LerpEntityStateActor
+	{
+		LerpEntityStateActor_unnamed_type_index index; //OFS: 0x0 SIZE: 0x4
+		int species; //OFS: 0x4 SIZE: 0x4
+		LerpEntityStateActor_unnamed_type_proneInfo proneInfo; //OFS: 0x8 SIZE: 0x2
+	};
+
+	struct LerpEntityStatePrimaryLight
+	{
+		char colorAndExp[4]; //OFS: 0x0 SIZE: 0x4
+		float intensity; //OFS: 0x4 SIZE: 0x4
+		float radius; //OFS: 0x8 SIZE: 0x4
+		float cosHalfFovOuter; //OFS: 0xC SIZE: 0x4
+		float cosHalfFovInner; //OFS: 0x10 SIZE: 0x4
+	};
+
+	struct LerpEntityStatePlayer
+	{
+		float leanf; //OFS: 0x0 SIZE: 0x4
+		int movementDir; //OFS: 0x4 SIZE: 0x4
+		char vehicleType; //OFS: 0x8 SIZE: 0x1
+		char vehicleAnimBoneIndex; //OFS: 0x9 SIZE: 0x1
+		char vehicleSeat; //OFS: 0xA SIZE: 0x1
+	};
+
+	struct __declspec(align(2)) LerpEntityStateVehicleGunnerAngles
+	{
+		__int16 pitch; //OFS: 0x0 SIZE: 0x2
+		__int16 yaw; //OFS: 0x2 SIZE: 0x2
+	};
+
+	union LerpEntityStateVehicleThrottle_u
+	{
+		__int16 throttle; //OFS: 0x0 SIZE: 0x2
+		__int16 bodyPitch; //OFS: 0x1 SIZE: 0x2
+	};
+
+	struct LerpEntityStateVehicle
+	{
+		float steerYaw; //OFS: 0x0 SIZE: 0x4
+		float bodyRoll; //OFS: 0x4 SIZE: 0x4
+		float bodyPitch; //OFS: 0x8 SIZE: 0x4
+		LerpEntityStateVehicleGunnerAngles gunnerAngles[4]; //OFS: 0xC SIZE: 0x10
+		LerpEntityStateVehicleThrottle_u ___u3; //OFS: 0x1C SIZE: 0x2
+		__int16 gunPitch; //OFS: 0x1E SIZE: 0x2
+		__int16 gunYaw; //OFS: 0x20 SIZE: 0x2
+		char drawOnCompass; //OFS: 0x22 SIZE: 0x1
+		int teamAndOwnerIndex; //OFS: 0x24 SIZE: 0x4
+	};
+
+	struct LerpEntityStateMissile
+	{
+		int launchTime; //OFS: 0x0 SIZE: 0x4
+		int parentClientNum; //OFS: 0x4 SIZE: 0x4
+		int fuseTime; //OFS: 0x8 SIZE: 0x4
+	};
+
+	struct LerpEntityStateScriptMover
+	{
+		char attachTagIndex[4]; //OFS: 0x0 SIZE: 0x4
+		int attachedTagIndex; //OFS: 0x4 SIZE: 0x4
+		__int16 attachModelIndex[4]; //OFS: 0x8 SIZE: 0x8
+		__int16 animScriptedAnim; //OFS: 0x10 SIZE: 0x2
+		int animScriptedAnimTime; //OFS: 0x14 SIZE: 0x4
+		__int16 attachedEntNum; //OFS: 0x18 SIZE: 0x2
+		__int16 exploderIndex; //OFS: 0x1A SIZE: 0x2
+	};
+
+	struct LerpEntityStateSoundBlend
+	{
+		float lerp; //OFS: 0x0 SIZE: 0x4
+		float volumeScale; //OFS: 0x4 SIZE: 0x4
+	};
+
+	struct LerpEntityStateAnonymous
+	{
+		int data[15]; //OFS: 0x0 SIZE: 0x3C
+	};
+
+	union LerpEntityStateTypeUnion
+	{
+		LerpEntityStateTurret turret; //OFS: 0x0 SIZE: 0x14
+		LerpEntityStateLoopFx loopFx; //OFS: 0x1 SIZE: 0x8
+		LerpEntityStateActor actor; //OFS: 0x2 SIZE: 0xC
+		LerpEntityStatePrimaryLight primaryLight; //OFS: 0x3 SIZE: 0x14
+		LerpEntityStatePlayer player; //OFS: 0x4 SIZE: 0xC
+		LerpEntityStateVehicle vehicle; //OFS: 0x5 SIZE: 0x28
+		LerpEntityStateMissile missile; //OFS: 0x6 SIZE: 0xC
+		LerpEntityStateScriptMover scriptMover; //OFS: 0x7 SIZE: 0x1C
+		LerpEntityStateSoundBlend soundBlend; //OFS: 0x8 SIZE: 0x8
+		LerpEntityStateAnonymous anonymous; //OFS: 0x9 SIZE: 0x3C
+	};
+
+	struct LerpEntityState
+	{
+		int eFlags; //OFS: 0x0 SIZE: 0x4
+		trajectory_t pos; //OFS: 0x4 SIZE: 0x24
+		trajectory_t apos; //OFS: 0x28 SIZE: 0x24
+		LerpEntityStateTypeUnion u; //OFS: 0x4C SIZE: 0x3C
+		int usecount; //OFS: 0x88 SIZE: 0x4
+	};
+
+	struct __declspec(align(2)) LoopSound
+	{
+		unsigned __int16 soundAlias; //OFS: 0x0 SIZE: 0x2
+		__int16 fadeTime; //OFS: 0x2 SIZE: 0x2
+	};
+
+	struct __declspec(align(2)) scr_const_t
+	{
+		unsigned __int16 _; //OFS: 0x0 SIZE: 0x2
+		unsigned __int16 active2; //OFS: 0x2 SIZE: 0x2
+		unsigned __int16 j_spine4; //OFS: 0x4 SIZE: 0x2
+		unsigned __int16 j_helmet; //OFS: 0x6 SIZE: 0x2
+		unsigned __int16 j_head; //OFS: 0x8 SIZE: 0x2
+		unsigned __int16 all; //OFS: 0xA SIZE: 0x2
+		unsigned __int16 allies; //OFS: 0xC SIZE: 0x2
+		unsigned __int16 axis; //OFS: 0xE SIZE: 0x2
+		unsigned __int16 bad_path; //OFS: 0x10 SIZE: 0x2
+		unsigned __int16 begin_firing; //OFS: 0x12 SIZE: 0x2
+		unsigned __int16 unknown_location; //OFS: 0x14 SIZE: 0x2
+		unsigned __int16 cancel_location; //OFS: 0x16 SIZE: 0x2
+		unsigned __int16 confirm_location; //OFS: 0x18 SIZE: 0x2
+		unsigned __int16 regroup_location; //OFS: 0x1A SIZE: 0x2
+		unsigned __int16 defend_location; //OFS: 0x1C SIZE: 0x2
+		unsigned __int16 clear_squadcommand; //OFS: 0x1E SIZE: 0x2
+		unsigned __int16 squadleader_changed; //OFS: 0x20 SIZE: 0x2
+		unsigned __int16 squad_disbanded; //OFS: 0x22 SIZE: 0x2
+		unsigned __int16 deployed_turret; //OFS: 0x24 SIZE: 0x2
+		unsigned __int16 crouch; //OFS: 0x26 SIZE: 0x2
+		unsigned __int16 current; //OFS: 0x28 SIZE: 0x2
+		unsigned __int16 damage; //OFS: 0x2A SIZE: 0x2
+		unsigned __int16 dead; //OFS: 0x2C SIZE: 0x2
+		unsigned __int16 death; //OFS: 0x2E SIZE: 0x2
+		unsigned __int16 disconnect; //OFS: 0x30 SIZE: 0x2
+		unsigned __int16 death_or_disconnect; //OFS: 0x32 SIZE: 0x2
+		unsigned __int16 detonate; //OFS: 0x34 SIZE: 0x2
+		unsigned __int16 direct; //OFS: 0x36 SIZE: 0x2
+		unsigned __int16 dlight; //OFS: 0x38 SIZE: 0x2
+		unsigned __int16 done; //OFS: 0x3A SIZE: 0x2
+		unsigned __int16 empty; //OFS: 0x3C SIZE: 0x2
+		unsigned __int16 end_firing; //OFS: 0x3E SIZE: 0x2
+		unsigned __int16 enter_vehicle; //OFS: 0x40 SIZE: 0x2
+		unsigned __int16 entity; //OFS: 0x42 SIZE: 0x2
+		unsigned __int16 exit_vehicle; //OFS: 0x44 SIZE: 0x2
+		unsigned __int16 change_seat; //OFS: 0x46 SIZE: 0x2
+		unsigned __int16 vehicle_death; //OFS: 0x48 SIZE: 0x2
+		unsigned __int16 explode; //OFS: 0x4A SIZE: 0x2
+		unsigned __int16 failed; //OFS: 0x4C SIZE: 0x2
+		unsigned __int16 free; //OFS: 0x4E SIZE: 0x2
+		unsigned __int16 fraction; //OFS: 0x50 SIZE: 0x2
+		unsigned __int16 goal; //OFS: 0x52 SIZE: 0x2
+		unsigned __int16 goal_changed; //OFS: 0x54 SIZE: 0x2
+		unsigned __int16 goal_yaw; //OFS: 0x56 SIZE: 0x2
+		unsigned __int16 grenade; //OFS: 0x58 SIZE: 0x2
+		unsigned __int16 grenade_danger; //OFS: 0x5A SIZE: 0x2
+		unsigned __int16 grenade_fire; //OFS: 0x5C SIZE: 0x2
+		unsigned __int16 grenade_launcher_fire; //OFS: 0x5E SIZE: 0x2
+		unsigned __int16 grenade_pullback; //OFS: 0x60 SIZE: 0x2
+		unsigned __int16 info_notnull; //OFS: 0x62 SIZE: 0x2
+		unsigned __int16 invisible; //OFS: 0x64 SIZE: 0x2
+		unsigned __int16 key1; //OFS: 0x66 SIZE: 0x2
+		unsigned __int16 key2; //OFS: 0x68 SIZE: 0x2
+		unsigned __int16 killanimscript; //OFS: 0x6A SIZE: 0x2
+		unsigned __int16 left; //OFS: 0x6C SIZE: 0x2
+		unsigned __int16 left_tread; //OFS: 0x6E SIZE: 0x2
+		unsigned __int16 light; //OFS: 0x70 SIZE: 0x2
+		unsigned __int16 movedone; //OFS: 0x72 SIZE: 0x2
+		unsigned __int16 noclass; //OFS: 0x74 SIZE: 0x2
+		unsigned __int16 none; //OFS: 0x76 SIZE: 0x2
+		unsigned __int16 normal; //OFS: 0x78 SIZE: 0x2
+		unsigned __int16 player; //OFS: 0x7A SIZE: 0x2
+		unsigned __int16 position; //OFS: 0x7C SIZE: 0x2
+		unsigned __int16 projectile_impact; //OFS: 0x7E SIZE: 0x2
+		unsigned __int16 prone; //OFS: 0x80 SIZE: 0x2
+		unsigned __int16 right; //OFS: 0x82 SIZE: 0x2
+		unsigned __int16 right_tread; //OFS: 0x84 SIZE: 0x2
+		unsigned __int16 tank_armor; //OFS: 0x86 SIZE: 0x2
+		unsigned __int16 reload; //OFS: 0x88 SIZE: 0x2
+		unsigned __int16 reload_start; //OFS: 0x8A SIZE: 0x2
+		unsigned __int16 rocket; //OFS: 0x8C SIZE: 0x2
+		unsigned __int16 rotatedone; //OFS: 0x8E SIZE: 0x2
+		unsigned __int16 script_brushmodel; //OFS: 0x90 SIZE: 0x2
+		unsigned __int16 script_model; //OFS: 0x92 SIZE: 0x2
+		unsigned __int16 script_origin; //OFS: 0x94 SIZE: 0x2
+		unsigned __int16 snd_enveffectsprio_level; //OFS: 0x96 SIZE: 0x2
+		unsigned __int16 snd_enveffectsprio_shellshock; //OFS: 0x98 SIZE: 0x2
+		unsigned __int16 snd_busvolprio_holdbreath; //OFS: 0x9A SIZE: 0x2
+		unsigned __int16 snd_busvolprio_pain; //OFS: 0x9C SIZE: 0x2
+		unsigned __int16 snd_busvolprio_shellshock; //OFS: 0x9E SIZE: 0x2
+		unsigned __int16 stand; //OFS: 0xA0 SIZE: 0x2
+		unsigned __int16 suppression; //OFS: 0xA2 SIZE: 0x2
+		unsigned __int16 suppression_end; //OFS: 0xA4 SIZE: 0x2
+		unsigned __int16 surfacetype; //OFS: 0xA6 SIZE: 0x2
+		unsigned __int16 tag_aim; //OFS: 0xA8 SIZE: 0x2
+		unsigned __int16 tag_aim_animated; //OFS: 0xAA SIZE: 0x2
+		unsigned __int16 tag_brass; //OFS: 0xAC SIZE: 0x2
+		unsigned __int16 tag_butt; //OFS: 0xAE SIZE: 0x2
+		unsigned __int16 tag_clip; //OFS: 0xB0 SIZE: 0x2
+		unsigned __int16 tag_flash; //OFS: 0xB2 SIZE: 0x2
+		unsigned __int16 tag_flash_11; //OFS: 0xB4 SIZE: 0x2
+		unsigned __int16 tag_flash_2; //OFS: 0xB6 SIZE: 0x2
+		unsigned __int16 tag_flash_22; //OFS: 0xB8 SIZE: 0x2
+		unsigned __int16 tag_flash_3; //OFS: 0xBA SIZE: 0x2
+		unsigned __int16 tag_fx; //OFS: 0xBC SIZE: 0x2
+		unsigned __int16 tag_inhand2; //OFS: 0xBE SIZE: 0x2
+		unsigned __int16 tag_knife_attach; //OFS: 0xC0 SIZE: 0x2
+		unsigned __int16 tag_knife_fx; //OFS: 0xC2 SIZE: 0x2
+		unsigned __int16 tag_bayonet; //OFS: 0xC4 SIZE: 0x2
+		unsigned __int16 tag_laser; //OFS: 0xC6 SIZE: 0x2
+		unsigned __int16 tag_origin; //OFS: 0xC8 SIZE: 0x2
+		unsigned __int16 tag_weapon; //OFS: 0xCA SIZE: 0x2
+		unsigned __int16 tag_player2; //OFS: 0xCC SIZE: 0x2
+		unsigned __int16 tag_camera; //OFS: 0xCE SIZE: 0x2
+		unsigned __int16 tag_weapon_right; //OFS: 0xD0 SIZE: 0x2
+		unsigned __int16 tag_gasmask; //OFS: 0xD2 SIZE: 0x2
+		unsigned __int16 tag_gasmask2; //OFS: 0xD4 SIZE: 0x2
+		unsigned __int16 tag_sync; //OFS: 0xD6 SIZE: 0x2
+		unsigned __int16 tag_wake; //OFS: 0xD8 SIZE: 0x2
+		unsigned __int16 target_script_trigger; //OFS: 0xDA SIZE: 0x2
+		unsigned __int16 tempEntity; //OFS: 0xDC SIZE: 0x2
+		unsigned __int16 top; //OFS: 0xDE SIZE: 0x2
+		unsigned __int16 touch; //OFS: 0xE0 SIZE: 0x2
+		unsigned __int16 trigger; //OFS: 0xE2 SIZE: 0x2
+		unsigned __int16 trigger_use; //OFS: 0xE4 SIZE: 0x2
+		unsigned __int16 trigger_use_touch; //OFS: 0xE6 SIZE: 0x2
+		unsigned __int16 trigger_damage; //OFS: 0xE8 SIZE: 0x2
+		unsigned __int16 trigger_lookat; //OFS: 0xEA SIZE: 0x2
+		unsigned __int16 trigger_radius; //OFS: 0xEC SIZE: 0x2
+		unsigned __int16 truck_cam; //OFS: 0xEE SIZE: 0x2
+		unsigned __int16 weapon_change_on_turret; //OFS: 0xF0 SIZE: 0x2
+		unsigned __int16 weapon_change; //OFS: 0xF2 SIZE: 0x2
+		unsigned __int16 weapon_change_complete; //OFS: 0xF4 SIZE: 0x2
+		unsigned __int16 weapon_fired; //OFS: 0xF6 SIZE: 0x2
+		unsigned __int16 weapon_pvp_attack; //OFS: 0xF8 SIZE: 0x2
+		unsigned __int16 worldspawn; //OFS: 0xFA SIZE: 0x2
+		unsigned __int16 flashbang; //OFS: 0xFC SIZE: 0x2
+		unsigned __int16 flash; //OFS: 0xFE SIZE: 0x2
+		unsigned __int16 smoke; //OFS: 0x100 SIZE: 0x2
+		unsigned __int16 night_vision_on; //OFS: 0x102 SIZE: 0x2
+		unsigned __int16 night_vision_off; //OFS: 0x104 SIZE: 0x2
+		unsigned __int16 back_low; //OFS: 0x106 SIZE: 0x2
+		unsigned __int16 back_mid; //OFS: 0x108 SIZE: 0x2
+		unsigned __int16 back_up; //OFS: 0x10A SIZE: 0x2
+		unsigned __int16 head; //OFS: 0x10C SIZE: 0x2
+		unsigned __int16 j_mainroot; //OFS: 0x10E SIZE: 0x2
+		unsigned __int16 neck; //OFS: 0x110 SIZE: 0x2
+		unsigned __int16 pelvis; //OFS: 0x112 SIZE: 0x2
+		unsigned __int16 j_head2; //OFS: 0x114 SIZE: 0x2
+		unsigned __int16 MOD_UNKNOWN; //OFS: 0x116 SIZE: 0x2
+		unsigned __int16 MOD_PISTOL_BULLET; //OFS: 0x118 SIZE: 0x2
+		unsigned __int16 MOD_RIFLE_BULLET; //OFS: 0x11A SIZE: 0x2
+		unsigned __int16 MOD_GRENADE; //OFS: 0x11C SIZE: 0x2
+		unsigned __int16 MOD_GRENADE_SPLASH; //OFS: 0x11E SIZE: 0x2
+		unsigned __int16 MOD_PROJECTILE; //OFS: 0x120 SIZE: 0x2
+		unsigned __int16 MOD_PROJECTILE_SPLASH; //OFS: 0x122 SIZE: 0x2
+		unsigned __int16 MOD_MELEE; //OFS: 0x124 SIZE: 0x2
+		unsigned __int16 MOD_BAYONET; //OFS: 0x126 SIZE: 0x2
+		unsigned __int16 MOD_HEAD_SHOT; //OFS: 0x128 SIZE: 0x2
+		unsigned __int16 MOD_CRUSH; //OFS: 0x12A SIZE: 0x2
+		unsigned __int16 MOD_TELEFRAG; //OFS: 0x12C SIZE: 0x2
+		unsigned __int16 MOD_FALLING; //OFS: 0x12E SIZE: 0x2
+		unsigned __int16 MOD_SUICIDE; //OFS: 0x130 SIZE: 0x2
+		unsigned __int16 MOD_TRIGGER_HURT; //OFS: 0x132 SIZE: 0x2
+		unsigned __int16 MOD_EXPLOSIVE; //OFS: 0x134 SIZE: 0x2
+		unsigned __int16 MOD_IMPACT; //OFS: 0x136 SIZE: 0x2
+		unsigned __int16 MOD_BURNED; //OFS: 0x138 SIZE: 0x2
+		unsigned __int16 MOD_HIT_BY_OBJECT; //OFS: 0x13A SIZE: 0x2
+		unsigned __int16 MOD_DROWN; //OFS: 0x13C SIZE: 0x2
+		unsigned __int16 script_vehicle; //OFS: 0x13E SIZE: 0x2
+		unsigned __int16 script_vehicle_collision; //OFS: 0x140 SIZE: 0x2
+		unsigned __int16 script_vehicle_collmap; //OFS: 0x142 SIZE: 0x2
+		unsigned __int16 script_vehicle_corpse; //OFS: 0x144 SIZE: 0x2
+		unsigned __int16 turret_fire; //OFS: 0x146 SIZE: 0x2
+		unsigned __int16 turret_on_target; //OFS: 0x148 SIZE: 0x2
+		unsigned __int16 turret_not_on_target; //OFS: 0x14A SIZE: 0x2
+		unsigned __int16 turret_on_vistarget; //OFS: 0x14C SIZE: 0x2
+		unsigned __int16 turret_no_vis; //OFS: 0x14E SIZE: 0x2
+		unsigned __int16 turret_rotate_stopped; //OFS: 0x150 SIZE: 0x2
+		unsigned __int16 turret_deactivate; //OFS: 0x152 SIZE: 0x2
+		unsigned __int16 turretstatechange; //OFS: 0x154 SIZE: 0x2
+		unsigned __int16 turretownerchange; //OFS: 0x156 SIZE: 0x2
+		unsigned __int16 reached_end_node; //OFS: 0x158 SIZE: 0x2
+		unsigned __int16 reached_wait_node; //OFS: 0x15A SIZE: 0x2
+		unsigned __int16 reached_wait_speed; //OFS: 0x15C SIZE: 0x2
+		unsigned __int16 near_goal; //OFS: 0x15E SIZE: 0x2
+		unsigned __int16 veh_collision; //OFS: 0x160 SIZE: 0x2
+		unsigned __int16 veh_predictedcollision; //OFS: 0x162 SIZE: 0x2
+		unsigned __int16 script_camera; //OFS: 0x164 SIZE: 0x2
+		unsigned __int16 begin; //OFS: 0x166 SIZE: 0x2
+		unsigned __int16 curve_nodehit; //OFS: 0x168 SIZE: 0x2
+		unsigned __int16 curve_start; //OFS: 0x16A SIZE: 0x2
+		unsigned __int16 curve_end; //OFS: 0x16C SIZE: 0x2
+		unsigned __int16 tag_enter_driver; //OFS: 0x16E SIZE: 0x2
+		unsigned __int16 tag_enter_gunner1; //OFS: 0x170 SIZE: 0x2
+		unsigned __int16 tag_enter_gunner2; //OFS: 0x172 SIZE: 0x2
+		unsigned __int16 tag_enter_gunner3; //OFS: 0x174 SIZE: 0x2
+		unsigned __int16 tag_enter_gunner4; //OFS: 0x176 SIZE: 0x2
+		unsigned __int16 tag_enter_passenger; //OFS: 0x178 SIZE: 0x2
+		unsigned __int16 tag_enter_passenger2; //OFS: 0x17A SIZE: 0x2
+		unsigned __int16 tag_enter_passenger3; //OFS: 0x17C SIZE: 0x2
+		unsigned __int16 tag_enter_passenger4; //OFS: 0x17E SIZE: 0x2
+		unsigned __int16 tag_player; //OFS: 0x180 SIZE: 0x2
+		unsigned __int16 tag_passenger1; //OFS: 0x182 SIZE: 0x2
+		unsigned __int16 tag_passenger2; //OFS: 0x184 SIZE: 0x2
+		unsigned __int16 tag_passenger3; //OFS: 0x186 SIZE: 0x2
+		unsigned __int16 tag_passenger4; //OFS: 0x188 SIZE: 0x2
+		unsigned __int16 tag_gunner1; //OFS: 0x18A SIZE: 0x2
+		unsigned __int16 tag_gunner2; //OFS: 0x18C SIZE: 0x2
+		unsigned __int16 tag_gunner3; //OFS: 0x18E SIZE: 0x2
+		unsigned __int16 tag_gunner4; //OFS: 0x190 SIZE: 0x2
+		unsigned __int16 tag_gunner_barrel1; //OFS: 0x192 SIZE: 0x2
+		unsigned __int16 tag_gunner_barrel2; //OFS: 0x194 SIZE: 0x2
+		unsigned __int16 tag_gunner_barrel3; //OFS: 0x196 SIZE: 0x2
+		unsigned __int16 tag_gunner_barrel4; //OFS: 0x198 SIZE: 0x2
+		unsigned __int16 tag_gunner_turret1; //OFS: 0x19A SIZE: 0x2
+		unsigned __int16 tag_gunner_turret2; //OFS: 0x19C SIZE: 0x2
+		unsigned __int16 tag_gunner_turret3; //OFS: 0x19E SIZE: 0x2
+		unsigned __int16 tag_gunner_turret4; //OFS: 0x1A0 SIZE: 0x2
+		unsigned __int16 tag_flash_gunner1; //OFS: 0x1A2 SIZE: 0x2
+		unsigned __int16 tag_flash_gunner2; //OFS: 0x1A4 SIZE: 0x2
+		unsigned __int16 tag_flash_gunner3; //OFS: 0x1A6 SIZE: 0x2
+		unsigned __int16 tag_flash_gunner4; //OFS: 0x1A8 SIZE: 0x2
+		unsigned __int16 tag_flash_gunner1a; //OFS: 0x1AA SIZE: 0x2
+		unsigned __int16 tag_flash_gunner2a; //OFS: 0x1AC SIZE: 0x2
+		unsigned __int16 tag_flash_gunner3a; //OFS: 0x1AE SIZE: 0x2
+		unsigned __int16 tag_flash_gunner4a; //OFS: 0x1B0 SIZE: 0x2
+		unsigned __int16 tag_gunner_brass1; //OFS: 0x1B2 SIZE: 0x2
+		unsigned __int16 tag_gunner_hands1; //OFS: 0x1B4 SIZE: 0x2
+		unsigned __int16 tag_wheel_front_left; //OFS: 0x1B6 SIZE: 0x2
+		unsigned __int16 tag_wheel_front_right; //OFS: 0x1B8 SIZE: 0x2
+		unsigned __int16 tag_wheel_back_left; //OFS: 0x1BA SIZE: 0x2
+		unsigned __int16 tag_wheel_back_right; //OFS: 0x1BC SIZE: 0x2
+		unsigned __int16 tag_wheel_middle_left; //OFS: 0x1BE SIZE: 0x2
+		unsigned __int16 tag_wheel_middle_right; //OFS: 0x1C0 SIZE: 0x2
+		unsigned __int16 vampire_health_regen; //OFS: 0x1C2 SIZE: 0x2
+		unsigned __int16 vampire_kill; //OFS: 0x1C4 SIZE: 0x2
+		unsigned __int16 morphine_shot; //OFS: 0x1C6 SIZE: 0x2
+		unsigned __int16 morphine_revive; //OFS: 0x1C8 SIZE: 0x2
+		unsigned __int16 freelook; //OFS: 0x1CA SIZE: 0x2
+		unsigned __int16 intermission; //OFS: 0x1CC SIZE: 0x2
+		unsigned __int16 playing; //OFS: 0x1CE SIZE: 0x2
+		unsigned __int16 spectator; //OFS: 0x1D0 SIZE: 0x2
+		unsigned __int16 action_notify_attack; //OFS: 0x1D2 SIZE: 0x2
+		unsigned __int16 action_notify_melee; //OFS: 0x1D4 SIZE: 0x2
+		unsigned __int16 action_notify_use_reload; //OFS: 0x1D6 SIZE: 0x2
+		unsigned __int16 always; //OFS: 0x1D8 SIZE: 0x2
+		unsigned __int16 auto_ai; //OFS: 0x1DA SIZE: 0x2
+		unsigned __int16 auto_nonai; //OFS: 0x1DC SIZE: 0x2
+		unsigned __int16 back_left; //OFS: 0x1DE SIZE: 0x2
+		unsigned __int16 back_right; //OFS: 0x1E0 SIZE: 0x2
+		unsigned __int16 begin_custom_anim; //OFS: 0x1E2 SIZE: 0x2
+		unsigned __int16 bullethit; //OFS: 0x1E4 SIZE: 0x2
+		unsigned __int16 count; //OFS: 0x1E6 SIZE: 0x2
+		unsigned __int16 corner_approach; //OFS: 0x1E8 SIZE: 0x2
+		unsigned __int16 damage_notdone; //OFS: 0x1EA SIZE: 0x2
+		unsigned __int16 deathplant; //OFS: 0x1EC SIZE: 0x2
+		unsigned __int16 front_left; //OFS: 0x1EE SIZE: 0x2
+		unsigned __int16 front_right; //OFS: 0x1F0 SIZE: 0x2
+		unsigned __int16 tag_inhand; //OFS: 0x1F2 SIZE: 0x2
+		unsigned __int16 high_priority; //OFS: 0x1F4 SIZE: 0x2
+		unsigned __int16 info_player_deathmatch; //OFS: 0x1F6 SIZE: 0x2
+		unsigned __int16 infinite_energy; //OFS: 0x1F8 SIZE: 0x2
+		unsigned __int16 low_priority; //OFS: 0x1FA SIZE: 0x2
+		unsigned __int16 manual; //OFS: 0x1FC SIZE: 0x2
+		unsigned __int16 manual_ai; //OFS: 0x1FE SIZE: 0x2
+		unsigned __int16 max_time; //OFS: 0x200 SIZE: 0x2
+		unsigned __int16 menuresponse; //OFS: 0x202 SIZE: 0x2
+		unsigned __int16 middle_left; //OFS: 0x204 SIZE: 0x2
+		unsigned __int16 middle_right; //OFS: 0x206 SIZE: 0x2
+		unsigned __int16 min_energy; //OFS: 0x208 SIZE: 0x2
+		unsigned __int16 min_time; //OFS: 0x20A SIZE: 0x2
+		unsigned __int16 neutral; //OFS: 0x20C SIZE: 0x2
+		unsigned __int16 never; //OFS: 0x20E SIZE: 0x2
+		unsigned __int16 pickup; //OFS: 0x210 SIZE: 0x2
+		unsigned __int16 receiver; //OFS: 0x212 SIZE: 0x2
+		unsigned __int16 sound_blend; //OFS: 0x214 SIZE: 0x2
+		unsigned __int16 tag_wingtipl; //OFS: 0x216 SIZE: 0x2
+		unsigned __int16 tag_wingtipr; //OFS: 0x218 SIZE: 0x2
+		unsigned __int16 tag_wingmidl; //OFS: 0x21A SIZE: 0x2
+		unsigned __int16 tag_wingmidr; //OFS: 0x21C SIZE: 0x2
+		unsigned __int16 tag_prop; //OFS: 0x21E SIZE: 0x2
+		unsigned __int16 tag_end; //OFS: 0x220 SIZE: 0x2
+		unsigned __int16 tag_tailtop; //OFS: 0x222 SIZE: 0x2
+		unsigned __int16 tag_tailbottom; //OFS: 0x224 SIZE: 0x2
+		unsigned __int16 tag_detach; //OFS: 0x226 SIZE: 0x2
+		unsigned __int16 tag_passenger; //OFS: 0x228 SIZE: 0x2
+		unsigned __int16 tag_enter_back; //OFS: 0x22A SIZE: 0x2
+		unsigned __int16 tag_detach2; //OFS: 0x22C SIZE: 0x2
+		unsigned __int16 tag_popout; //OFS: 0x22E SIZE: 0x2
+		unsigned __int16 tag_body; //OFS: 0x230 SIZE: 0x2
+		unsigned __int16 tag_turret; //OFS: 0x232 SIZE: 0x2
+		unsigned __int16 tag_turret_base; //OFS: 0x234 SIZE: 0x2
+		unsigned __int16 tag_barrel; //OFS: 0x236 SIZE: 0x2
+		unsigned __int16 tag_weapon_left; //OFS: 0x238 SIZE: 0x2
+		unsigned __int16 human; //OFS: 0x23A SIZE: 0x2
+		unsigned __int16 custom; //OFS: 0x23C SIZE: 0x2
+		unsigned __int16 angle_deltas; //OFS: 0x23E SIZE: 0x2
+		unsigned __int16 bulletwhizby; //OFS: 0x240 SIZE: 0x2
+		unsigned __int16 dog; //OFS: 0x242 SIZE: 0x2
+		unsigned __int16 enemy; //OFS: 0x244 SIZE: 0x2
+		unsigned __int16 enemy_visible; //OFS: 0x246 SIZE: 0x2
+		unsigned __int16 face_angle; //OFS: 0x248 SIZE: 0x2
+		unsigned __int16 face_current; //OFS: 0x24A SIZE: 0x2
+		unsigned __int16 face_default; //OFS: 0x24C SIZE: 0x2
+		unsigned __int16 face_direction; //OFS: 0x24E SIZE: 0x2
+		unsigned __int16 face_enemy; //OFS: 0x250 SIZE: 0x2
+		unsigned __int16 face_enemy_or_motion; //OFS: 0x252 SIZE: 0x2
+		unsigned __int16 face_goal; //OFS: 0x254 SIZE: 0x2
+		unsigned __int16 face_motion; //OFS: 0x256 SIZE: 0x2
+		unsigned __int16 face_point; //OFS: 0x258 SIZE: 0x2
+		unsigned __int16 gravity; //OFS: 0x25A SIZE: 0x2
+		unsigned __int16 groundEntChanged; //OFS: 0x25C SIZE: 0x2
+		unsigned __int16 gunshot; //OFS: 0x25E SIZE: 0x2
+		unsigned __int16 obstacle; //OFS: 0x260 SIZE: 0x2
+		unsigned __int16 movemode; //OFS: 0x262 SIZE: 0x2
+		unsigned __int16 node_out_of_range; //OFS: 0x264 SIZE: 0x2
+		unsigned __int16 node_relinquished; //OFS: 0x266 SIZE: 0x2
+		unsigned __int16 node_taken; //OFS: 0x268 SIZE: 0x2
+		unsigned __int16 node_not_safe; //OFS: 0x26A SIZE: 0x2
+		unsigned __int16 noclip; //OFS: 0x26C SIZE: 0x2
+		unsigned __int16 nogravity; //OFS: 0x26E SIZE: 0x2
+		unsigned __int16 nophysics; //OFS: 0x270 SIZE: 0x2
+		unsigned __int16 pain; //OFS: 0x272 SIZE: 0x2
+		unsigned __int16 run; //OFS: 0x274 SIZE: 0x2
+		unsigned __int16 runto_arrived; //OFS: 0x276 SIZE: 0x2
+		unsigned __int16 silenced_shot; //OFS: 0x278 SIZE: 0x2
+		unsigned __int16 spawned; //OFS: 0x27A SIZE: 0x2
+		unsigned __int16 start_move; //OFS: 0x27C SIZE: 0x2
+		unsigned __int16 stop; //OFS: 0x27E SIZE: 0x2
+		unsigned __int16 stop_soon; //OFS: 0x280 SIZE: 0x2
+		unsigned __int16 tag_eye; //OFS: 0x282 SIZE: 0x2
+		unsigned __int16 walk; //OFS: 0x284 SIZE: 0x2
+		unsigned __int16 world; //OFS: 0x286 SIZE: 0x2
+		unsigned __int16 zonly_physics; //OFS: 0x288 SIZE: 0x2
+		unsigned __int16 j_ankle_le; //OFS: 0x28A SIZE: 0x2
+		unsigned __int16 j_ankle_ri; //OFS: 0x28C SIZE: 0x2
+		unsigned __int16 j_ball_le; //OFS: 0x28E SIZE: 0x2
+		unsigned __int16 j_ball_ri; //OFS: 0x290 SIZE: 0x2
+		unsigned __int16 j_palm_le; //OFS: 0x292 SIZE: 0x2
+		unsigned __int16 j_palm_ri; //OFS: 0x294 SIZE: 0x2
+		unsigned __int16 broken; //OFS: 0x296 SIZE: 0x2
+		unsigned __int16 destructible; //OFS: 0x298 SIZE: 0x2
+		unsigned __int16 snapacknowledged; //OFS: 0x29A SIZE: 0x2
+		unsigned __int16 disconnected; //OFS: 0x29C SIZE: 0x2
+		unsigned __int16 cinematic; //OFS: 0x29E SIZE: 0x2
+		unsigned __int16 uicinematic; //OFS: 0x2A0 SIZE: 0x2
+		unsigned __int16 logo; //OFS: 0x2A2 SIZE: 0x2
+		unsigned __int16 connecting; //OFS: 0x2A4 SIZE: 0x2
+		unsigned __int16 challenging; //OFS: 0x2A6 SIZE: 0x2
+		unsigned __int16 connected; //OFS: 0x2A8 SIZE: 0x2
+		unsigned __int16 sendingstats; //OFS: 0x2AA SIZE: 0x2
+		unsigned __int16 loading; //OFS: 0x2AC SIZE: 0x2
+		unsigned __int16 primed; //OFS: 0x2AE SIZE: 0x2
+		unsigned __int16 active; //OFS: 0x2B0 SIZE: 0x2
+		unsigned __int16 map_restart; //OFS: 0x2B2 SIZE: 0x2
+		unsigned __int16 orientdone; //OFS: 0x2B4 SIZE: 0x2
+	};
+
+	union entityState_index
+	{
+		__int16 brushmodel; //OFS: 0x0 SIZE: 0x2
+		__int16 xmodel; //OFS: 0x1 SIZE: 0x2
+		__int16 primaryLight; //OFS: 0x2 SIZE: 0x2
+		unsigned __int16 bone; //OFS: 0x3 SIZE: 0x2
+		int pad; //OFS: 0x4 SIZE: 0x4
+	};
+
+	union entityState_un1
+	{
+		char destructibleid; //OFS: 0x0 SIZE: 0x1
+		char pad[4]; //OFS: 0x1 SIZE: 0x4
+	};
+
+	struct playerAnimState_t
+	{
+		int legsAnim; //OFS: 0x0 SIZE: 0x4
+		int torsoAnim; //OFS: 0x4 SIZE: 0x4
+		float fTorsoPitch; //OFS: 0x8 SIZE: 0x4
+		float fWaistPitch; //OFS: 0xC SIZE: 0x4
+	};
+
+	union entityState_un2
+	{
+		playerAnimState_t anim; //OFS: 0x0 SIZE: 0x10
+	};
+
+	union entityState_un3
+	{
+		int item; //OFS: 0x0 SIZE: 0x4
+		int hintString; //OFS: 0x1 SIZE: 0x4
+		int vehicleXModel; //OFS: 0x2 SIZE: 0x4
+		unsigned int secondBcAlias; //OFS: 0x3 SIZE: 0x4
+		unsigned int soundTag; //OFS: 0x4 SIZE: 0x4
+	};
+
+	enum entityType_t : __int32
+	{
+		ET_GENERAL = 0x0,
+		ET_PLAYER = 0x1,
+		ET_PLAYER_CORPSE = 0x2,
+		ET_ITEM = 0x3,
+		ET_MISSILE = 0x4,
+		ET_INVISIBLE = 0x5,
+		ET_SCRIPTMOVER = 0x6,
+		ET_SOUND_BLEND = 0x7,
+		ET_FX = 0x8,
+		ET_LOOP_FX = 0x9,
+		ET_PRIMARY_LIGHT = 0xA,
+		ET_MG42 = 0xB,
+		ET_PLANE = 0xC,
+		ET_VEHICLE = 0xD,
+		ET_VEHICLE_COLLMAP = 0xE,
+		ET_VEHICLE_CORPSE = 0xF,
+		ET_ACTOR = 0x10,
+		ET_ACTOR_SPAWNER = 0x11,
+		ET_ACTOR_CORPSE = 0x12,
+		ET_EVENTS = 0x13,
+	};
+
+	struct entityState_s
+	{
+		int number; //OFS: 0x0 SIZE: 0x4
+		entityType_t eType; //OFS: 0x4 SIZE: 0x4
+		LerpEntityState lerp; //OFS: 0x8 SIZE: 0x8C
+		int time2; //OFS: 0x94 SIZE: 0x4
+		int otherEntityNum; //OFS: 0x98 SIZE: 0x4
+		int groundEntityNum; //OFS: 0x9C SIZE: 0x4
+		LoopSound loopSound; //OFS: 0xA0 SIZE: 0x4
+		int surfType; //OFS: 0xA4 SIZE: 0x4
+		entityState_index index; //OFS: 0xA8 SIZE: 0x4
+		int clientnum; //OFS: 0xAC SIZE: 0x4
+		int iHeadIcon; //OFS: 0xB0 SIZE: 0x4
+		int solid; //OFS: 0xB4 SIZE: 0x4
+		int eventParm; //OFS: 0xB8 SIZE: 0x4
+		int eventSequence; //OFS: 0xBC SIZE: 0x4
+		int events[4]; //OFS: 0xC0 SIZE: 0x10
+		int eventParms[4]; //OFS: 0xD0 SIZE: 0x10
+		int weapon; //OFS: 0xE0 SIZE: 0x4
+		int weaponModel; //OFS: 0xE4 SIZE: 0x4
+		int targetname; //OFS: 0xE8 SIZE: 0x4
+		entityState_un1 un1; //OFS: 0xEC SIZE: 0x4
+		entityState_un2 un2; //OFS: 0xF0 SIZE: 0x10
+		entityState_un3 un3; //OFS: 0x100 SIZE: 0x4
+		int animtreeIndex; //OFS: 0x104 SIZE: 0x4
+		int partBits[4]; //OFS: 0x108 SIZE: 0x10
+	};
+
+	struct __declspec(align(2)) EntHandle
+	{
+		unsigned __int16 number; //OFS: 0x0 SIZE: 0x2
+		unsigned __int16 infoIndex; //OFS: 0x2 SIZE: 0x2
+	};
+
+	enum contents_e
+	{
+		CONTENTS_SOLID = 0x1,
+		CONTENTS_FOLIAGE = 0x2,
+		CONTENTS_NONCOLLIDING = 0x4,
+		CONTENTS_GLASS = 0x10,
+		CONTENTS_WATER = 0x20,
+		CONTENTS_CANSHOOTCLIP = 0x40,
+		CONTENTS_MISSILECLIP = 0x80,
+		CONTENTS_ITEM = 0x100,
+		CONTENTS_VEHICLECLIP = 0x200,
+		CONTENTS_ITEMCLIP = 0x400,
+		CONTENTS_SKY = 0x800,
+		CONTENTS_AI_NOSIGHT = 0x1000,
+		CONTENTS_CLIPSHOT = 0x2000,
+		CONTENTS_CORPSE_CLIPSHOT = 0x4000,
+		CONTENTS_ACTOR = 0x8000,
+		CONTENTS_FAKE_ACTOR = 0x8000,
+		CONTENTS_PLAYERCLIP = 0x10000,
+		CONTENTS_MONSTERCLIP = 0x20000,
+		CONTENTS_PLAYERVEHICLECLIP = 0x40000,
+		CONTENTS_USE = 0x200000,
+		CONTENTS_UTILITYCLIP = 0x400000,
+		CONTENTS_VEHICLE = 0x800000,
+		CONTENTS_MANTLE = 0x1000000,
+		CONTENTS_PLAYER = 0x2000000,
+		CONTENTS_CORPSE = 0x4000000,
+		CONTENTS_DETAIL = 0x8000000,
+		CONTENTS_STRUCTURAL = 0x10000000,
+		CONTENTS_LOOKAT = 0x10000000,
+		CONTENTS_TRIGGER = 0x40000000,
+		CONTENTS_NODROP = 0x80000000,
+	};
+
+	struct entityShared_s
+	{
+		unsigned __int8 linked; //OFS: 0x0 SIZE: 0x1
+		unsigned __int8 bmodel; //OFS: 0x1 SIZE: 0x1
+		unsigned __int16 svFlags; //OFS: 0x2 SIZE: 0x2
+		unsigned __int8 eventType; //OFS: 0x4 SIZE: 0x1
+		unsigned __int8 inuse; //OFS: 0x5 SIZE: 0x1
+		int clientMask[2]; //OFS: 0x8 SIZE: 0x8
+		int broadcastTime; //OFS: 0x10 SIZE: 0x4
+		float mins[3]; //OFS: 0x14 SIZE: 0xC
+		float maxs[3]; //OFS: 0x20 SIZE: 0xC
+		contents_e contents; //OFS: 0x2C SIZE: 0x4
+		float absmin[3]; //OFS: 0x30 SIZE: 0xC
+		float absmax[3]; //OFS: 0x3C SIZE: 0xC
+		float currentOrigin[3]; //OFS: 0x48 SIZE: 0xC
+		float currentAngles[3]; //OFS: 0x54 SIZE: 0xC
+		EntHandle ownerNum; //OFS: 0x60 SIZE: 0x4
+		int eventTime; //OFS: 0x64 SIZE: 0x4
+	};
+
+	struct flame_timed_damage_t
+	{
+		gentity_s* attacker; //OFS: 0x0 SIZE: 0x4
+		int damage; //OFS: 0x4 SIZE: 0x4
+		float damageDuration; //OFS: 0x8 SIZE: 0x4
+		float damageInterval; //OFS: 0xC SIZE: 0x4
+		int start_timestamp; //OFS: 0x10 SIZE: 0x4
+		int end_timestamp; //OFS: 0x14 SIZE: 0x4
+		int lastupdate_timestamp; //OFS: 0x18 SIZE: 0x4
+	};
+
+	enum team_t : __int32
+	{
+		TEAM_FREE = 0x0,
+		TEAM_BAD = 0x0,
+		TEAM_AXIS = 0x1,
+		TEAM_ALLIES = 0x2,
+		TEAM_NEUTRAL = 0x3,
+		TEAM_DEAD = 0x4,
+		TEAM_NUM_TEAMS = 0x5,
+	};
+
+	enum MissileStage : __int32
+	{
+		MISSILESTAGE_SOFTLAUNCH = 0x0,
+		MISSILESTAGE_ASCENT = 0x1,
+		MISSILESTAGE_DESCENT = 0x2,
+	};
+
+	enum MissileFlightMode : __int32
+	{
+		MISSILEFLIGHTMODE_TOP = 0x0,
+		MISSILEFLIGHTMODE_DIRECT = 0x1,
+	};
+
+	struct missile_ent_t
+	{
+		float predictLandPos[3]; //OFS: 0x0 SIZE: 0xC
+		int predictLandTime; //OFS: 0xC SIZE: 0x4
+		int timestamp; //OFS: 0x10 SIZE: 0x4
+		float time; //OFS: 0x14 SIZE: 0x4
+		int timeOfBirth; //OFS: 0x18 SIZE: 0x4
+		float travelDist; //OFS: 0x1C SIZE: 0x4
+		float surfaceNormal[3]; //OFS: 0x20 SIZE: 0xC
+		team_t team; //OFS: 0x2C SIZE: 0x4
+		int thrownBack; //OFS: 0x30 SIZE: 0x4
+		float curvature[3]; //OFS: 0x34 SIZE: 0xC
+		float targetOffset[3]; //OFS: 0x40 SIZE: 0xC
+		MissileStage stage; //OFS: 0x4C SIZE: 0x4
+		MissileFlightMode flightMode; //OFS: 0x50 SIZE: 0x4
+	};
+
+	struct mover_ent_t
+	{
+		float decelTime; //OFS: 0x0 SIZE: 0x4
+		float aDecelTime; //OFS: 0x4 SIZE: 0x4
+		float speed; //OFS: 0x8 SIZE: 0x4
+		float aSpeed; //OFS: 0xC SIZE: 0x4
+		float midTime; //OFS: 0x10 SIZE: 0x4
+		float aMidTime; //OFS: 0x14 SIZE: 0x4
+		float pos1[3]; //OFS: 0x18 SIZE: 0xC
+		float pos2[3]; //OFS: 0x24 SIZE: 0xC
+		float pos3[3]; //OFS: 0x30 SIZE: 0xC
+		float apos1[3]; //OFS: 0x3C SIZE: 0xC
+		float apos2[3]; //OFS: 0x48 SIZE: 0xC
+		float apos3[3]; //OFS: 0x54 SIZE: 0xC
+	};
+
+	struct trigger_ent_t
+	{
+		int threshold; //OFS: 0x0 SIZE: 0x4
+		int accumulate; //OFS: 0x4 SIZE: 0x4
+		int timestamp; //OFS: 0x8 SIZE: 0x4
+		int singleUserEntIndex; //OFS: 0xC SIZE: 0x4
+		bool requireLookAt; //OFS: 0x10 SIZE: 0x1
+		int exposureIndex; //OFS: 0x14 SIZE: 0x4
+		float exposureLerpToLighter; //OFS: 0x18 SIZE: 0x4
+		float exposureLerpToDarker; //OFS: 0x1C SIZE: 0x4
+		float exposureFeather[3]; //OFS: 0x20 SIZE: 0xC
+	};
+	union gentity_u
+	{
+		missile_ent_t missile; //OFS: 0x0 SIZE: 0x54
+		mover_ent_t mover; //OFS: 0x1 SIZE: 0x60
+		trigger_ent_t trigger; //OFS: 0x2 SIZE: 0x2C
+	};
+
+	struct snd_wait_t
+	{
+		unsigned __int16 notifyString; //OFS: 0x0 SIZE: 0x2
+		unsigned __int16 index; //OFS: 0x2 SIZE: 0x2
+		unsigned __int8 stoppable; //OFS: 0x4 SIZE: 0x1
+		int basetime; //OFS: 0x8 SIZE: 0x4
+		int duration; //OFS: 0xC SIZE: 0x4
+	};
+
+	struct tagInfo_s
+	{
+		gentity_s* parent; //OFS: 0x0 SIZE: 0x4
+		gentity_s* next; //OFS: 0x4 SIZE: 0x4
+		unsigned __int16 name; //OFS: 0x8 SIZE: 0x2
+		int index; //OFS: 0xC SIZE: 0x4
+		float axis[4][3]; //OFS: 0x10 SIZE: 0x30
+		float parentInvAxis[4][3]; //OFS: 0x40 SIZE: 0x30
+	};
+
+	struct __declspec(align(8)) gentity_s
+	{
+		entityState_s s; //OFS: 0x0 SIZE: 0x118
+		entityShared_s r; //OFS: 0x118 SIZE: 0x68
+		void* gclient_s__client; //OFS: 0x180 SIZE: 0x4
+		void* actor_s__actor; //OFS: 0x184 SIZE: 0x4
+		void* sentient_s__sentient; //OFS: 0x188 SIZE: 0x4
+		void* scr_vehicle_s__scr_vehicle; //OFS: 0x18C SIZE: 0x4
+		void* TurretInfo__pTurretInfo; //OFS: 0x190 SIZE: 0x4
+		void* Destructible__destructible; //OFS: 0x194 SIZE: 0x4
+		unsigned __int16 model; //OFS: 0x198 SIZE: 0x2
+		unsigned __int8 physicsObject; //OFS: 0x19A SIZE: 0x1
+		unsigned __int8 takedamage; //OFS: 0x19B SIZE: 0x1
+		unsigned __int8 active; //OFS: 0x19C SIZE: 0x1
+		unsigned __int8 nopickup; //OFS: 0x19D SIZE: 0x1
+		unsigned __int8 handler; //OFS: 0x19E SIZE: 0x1
+		unsigned __int16 classname; //OFS: 0x1A0 SIZE: 0x2
+		unsigned __int16 script_linkName; //OFS: 0x1A2 SIZE: 0x2
+		unsigned __int16 script_noteworthy; //OFS: 0x1A4 SIZE: 0x2
+		unsigned __int16 target; //OFS: 0x1A6 SIZE: 0x2
+		int targetname; //OFS: 0x1A8 SIZE: 0x4
+		int spawnflags2; //OFS: 0x1AC SIZE: 0x4
+		int spawnflags; //OFS: 0x1B0 SIZE: 0x4
+		int flags; //OFS: 0x1B4 SIZE: 0x4
+		int clipmask; //OFS: 0x1B8 SIZE: 0x4
+		int processedFrame; //OFS: 0x1BC SIZE: 0x4
+		EntHandle parent; //OFS: 0x1C0 SIZE: 0x4
+		int nextthink; //OFS: 0x1C4 SIZE: 0x4
+		int health; //OFS: 0x1C8 SIZE: 0x4
+		int maxhealth; //OFS: 0x1CC SIZE: 0x4
+		int nexteq; //OFS: 0x1D0 SIZE: 0x4
+		int damage; //OFS: 0x1D4 SIZE: 0x4
+		flame_timed_damage_t flame_timed_damage[4]; //OFS: 0x1D8 SIZE: 0x70
+		int last_timed_radius_damage; //OFS: 0x248 SIZE: 0x4
+		int count; //OFS: 0x24C SIZE: 0x4
+		gentity_s* chain; //OFS: 0x250 SIZE: 0x4
+		gentity_s* activator; //OFS: 0x254 SIZE: 0x4
+		gentity_u u; //OFS: 0x258 SIZE: 0x60
+		EntHandle missileTargetEnt; //OFS: 0x2B8 SIZE: 0x4
+		__int16 lookAtText0; //OFS: 0x2BC SIZE: 0x2
+		__int16 lookAtText1; //OFS: 0x2BE SIZE: 0x2
+		snd_wait_t snd_wait; //OFS: 0x2C0 SIZE: 0x10
+		tagInfo_s* tagInfo; //OFS: 0x2D0 SIZE: 0x4
+		gentity_s* tagChildren; //OFS: 0x2D4 SIZE: 0x4
+		void* animscripted_s__scripted; //OFS: 0x2D8 SIZE: 0x4
+		__int16 attachTagNames[31]; //OFS: 0x2DC SIZE: 0x3E
+		__int16 attachModelNames[31]; //OFS: 0x31A SIZE: 0x3E
+		int disconnectedLinks; //OFS: 0x358 SIZE: 0x4
+		int iDisconnectTime; //OFS: 0x35C SIZE: 0x4
+		float angleLerpRate; //OFS: 0x360 SIZE: 0x4
+		int physObjId; //OFS: 0x364 SIZE: 0x4
+		XAnimTree_s* pAnimTree; //OFS: 0x368 SIZE: 0x4
+		gentity_s* nextFree; //OFS: 0x36C SIZE: 0x4
+		int scriptUse; //OFS: 0x370 SIZE: 0x4
+		int birthTime; //OFS: 0x374 SIZE: 0x4
+	};
+	STATIC_ASSERT_SIZE(gentity_s, 0x378);
 
 	struct switch_material_t
 	{

@@ -27,6 +27,8 @@ namespace game
 		Com_Error_t Com_Error = Com_Error_t(0x59AC50);
 		DB_EnumXAssets_FastFile_t DB_EnumXAssets_FastFile = DB_EnumXAssets_FastFile_t(0x48D560);
 
+		scr_const_t* scr_const = reinterpret_cast<scr_const_t*>(0x1F33B90);
+
 		void Cbuf_AddText(const char* text /*eax*/)
 		{
 			const static uint32_t Cbuf_AddText_func = 0x594200;
@@ -47,6 +49,16 @@ namespace game
 				push	packed;
 				call	func_addr;
 				add		esp, 4;
+			}
+		}
+
+		std::int16_t G_ModelIndex(const char* model_name /*edi*/)
+		{
+			const static uint32_t G_ModelIndex_func = 0x54A480;
+			__asm
+			{
+				mov		edi, model_name;
+				call	G_ModelIndex_func;
 			}
 		}
 	} // sp-end

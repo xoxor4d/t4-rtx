@@ -47,8 +47,15 @@ namespace game
 		typedef void(*DB_EnumXAssets_FastFile_t)(XAssetType type, void(*)(XAssetHeader, void*), void* userdata, bool overrides);
 			extern DB_EnumXAssets_FastFile_t DB_EnumXAssets_FastFile;
 
+		extern scr_const_t* scr_const;
+
 		void Cbuf_AddText(const char* text /*eax*/);
 		void Vec2UnpackTexCoords(unsigned int packed, float* texcoord_out /*ecx*/);
+
+		std::int16_t G_ModelIndex(const char* model_name /*eax*/); // ASM
+		static utils::function<game::gentity_s* ()> G_Spawn = 0x54EAB0;
+		static utils::function<bool(game::gentity_s*)> G_CallSpawnEntity = 0x5465A0;
+		static utils::function<void(entityState_s*)> G_DObjUpdate = 0x54AC40;
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
