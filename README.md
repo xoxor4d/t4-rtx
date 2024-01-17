@@ -4,42 +4,39 @@
 </div>
 
 <br>
-<h3 align="center">sp / mp compatible</h3>
+<h3 align="center">sp / mp compatible (sp is mostly feature complete - mp has basic support)</h3>
 <br>
 
 ## Usage
 
-1) Install the latest full rtx-remix release (0.3.0 at this time) 
-- https://github.com/NVIDIAGameWorks/rtx-remix/tags
+1) Install the latest full rtx-remix release (0.3.0 at this time)   
+https://github.com/NVIDIAGameWorks/rtx-remix/tags
 
 <br>
 
-2) Install the latest 'nightly' (github actions build) of the brdige
-- https://github.com/NVIDIAGameWorks/bridge-remix/actions
+2) Install the latest `github action` builds of:  
+remix bridge - https://github.com/NVIDIAGameWorks/bridge-remix/actions  
+remix runtime - https://github.com/NVIDIAGameWorks/dxvk-remix/actions  
 
 <br>
 
-3) Install the lastest 'nightly' (github actions build) of the runtime 
-- https://github.com/NVIDIAGameWorks/dxvk-remix/actions
-
-<br>
-
-4) Drop `nvapi.dll` and the contents of the `assets` folder into your CoDWaW root directory and start the game. The in-game console should show `t4-rtx-version >` if the dll was loaded correctly.
+3) Download the latest t4-rtx `github actions` build - https://github.com/xoxor4d/t4-rtx/actions  
+> Drop `nvapi.dll` and the contents of the `assets` folder into your CoDWaW root directory and start the game. The in-game console should show `t4-rtx-version >` if the dll was loaded correctly.
 
 
 <br>
 
 ## Dvars / Commandline Arguments to further tweak the game to your liking:
 
-- render effects using shaders: `-stock_effects` (commandline argument) 
 - spawn a default sky on each map `-spawn_sky` (commandline argument)
-eg: &ensp;`c:\path\CoDWaWmp.exe -stock_effects -spawn_sky` 
+- render effects using shaders: `-stock_effects` (commandline argument) 
+eg: &ensp;`c:\path\CoDWaWmp.exe -spawn_sky -stock_effects` 
 
 - `r_warm_dpvs` :: disable all culling (dvar)
 - `r_warm_static` :: force all static models to LOD0 (dvar)
 - `r_lodScaleRigid` :: adjust static model draw distances (dvar)
 
-- use console commands staring with `rtx_sky_` to spawn/change the skybox
+- use console commands starting with `rtx_sky_` to spawn/change the skybox
 - use console commands `noborder` & `windowed` to switch between borderless and normal windowed mode
 
 ### Advanced:
