@@ -102,6 +102,11 @@ namespace components::sp
 
 		dev->SetRenderState(D3DRS_LIGHTING, FALSE);
 
+		if (flags::has_flag("spawn_sky") && !main_module::skysphere_is_model_valid())
+		{
+			main_module::skysphere_spawn(4); // always spawn sunset
+		}
+
 		if (const auto& export_entities = Dvar_FindVar("export_entities");
 			export_entities && std::string_view(export_entities->current.string) == "1")
 		{
@@ -331,41 +336,61 @@ namespace components::sp
 		//	var->flags = game::dvar_flags::userinfo;
 		//}
 
-		/*if (const auto var = Dvar_FindVar("r_fullbright"); var)
-		{
-			var->current.enabled = true;
-			var->flags = game::dvar_flags::userinfo;
-		}*/
-
 		if (const auto var = Dvar_FindVar("r_skinCache"); var)
 		{
 			var->current.enabled = false;
-			var->flags = game::dvar_flags::userinfo;
 		}
 
 		if (const auto var = Dvar_FindVar("r_fastSkin"); var)
 		{
 			var->current.enabled = false;
-			var->flags = game::dvar_flags::userinfo;
 		}
 
-		/*if (const auto var = Dvar_FindVar("fx_enable"); var)
+		if (const auto var = Dvar_FindVar("r_distortion"); var)
 		{
 			var->current.enabled = false;
-			var->flags = game::dvar_flags::userinfo;
+		}
+
+		if (const auto var = Dvar_FindVar("r_depthprepass"); var)
+		{
+			var->current.enabled = false;
+		}
+
+		if (const auto var = Dvar_FindVar("r_smc_enable"); var)
+		{
+			var->current.enabled = false;
+		}
+
+		if (const auto var = Dvar_FindVar("r_smp_backend"); var)
+		{
+			var->current.enabled = false;
+		}
+
+		if (const auto var = Dvar_FindVar("r_smp_worker"); var)
+		{
+			var->current.enabled = false;
+		}
+
+		/*if (const auto var = Dvar_FindVar("r_zfeather"); var)
+		{
+			var->current.enabled = false;
 		}*/
 
-		// enable via cfg when in-game
-		if (const auto var = Dvar_FindVar("r_warm_static"); var)
+		/*if (const auto var = Dvar_FindVar("r_warm_static"); var)
 		{
-			var->current.enabled = false;
-			var->flags = game::dvar_flags::userinfo;
-		}
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+		}*/
+
+		// #
 
 		if (const auto var = Dvar_FindVar("sv_cheats"); var)
 		{
+			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
+		}
+
+		if (const auto var = Dvar_FindVar("r_pretess"); var)
+		{
 			var->current.enabled = true;
-			var->flags = game::dvar_flags::userinfo;
 		}
 	}
 
@@ -381,6 +406,193 @@ namespace components::sp
 			call	register_rtx_dvars;
 			popad;
 
+			jmp		retn_addr;
+		}
+	}
+
+	//void load_xcommon_zone()
+	//{
+	//	game::XZoneInfo xzone_info_stack[1];
+
+	//	if (game::sp::DB_FileExists("xcommon_rtx", game::DB_FILE_EXISTS_PATH::DB_PATH_ZONE))
+	//	{
+	//		xzone_info_stack[0].name = "xcommon_rtx";
+	//		xzone_info_stack[0].allocFlags = 4; //game::XZONE_FLAGS::XZONE_COMMON;
+	//		xzone_info_stack[0].freeFlags = 0; //game::XZONE_FLAGS::XZONE_ZERO;
+	//	}
+
+	//	game::sp::DB_LoadXAssets(xzone_info_stack, 1, 0);
+
+	//	int x = 0;
+	//}
+
+	//__declspec(naked) void DB_LoadCommonFastFiles_stub()
+	//{
+	//	const static uint32_t DB_LoadCommonFastFiles_addr = 0x6D5610;
+	//	const static uint32_t retn_addr = 0x6D63AA;
+	//	__asm
+	//	{
+	//		call	DB_LoadCommonFastFiles_addr;
+
+	//		pushad;
+	//		call	load_xcommon_zone;
+	//		popad;
+
+	//		jmp		retn_addr;
+	//	}
+	//}
+
+	void load_common_fast_files()
+	{
+		/*
+		only unload zones with a set flag
+		:: zone.name = 0;
+		:: zone.allocFlags = 0;
+		:: zone.freeFlags = ZONE_FLAG_TO_UNLOAD
+		*/
+
+		const char** zone_code_post_gfx = reinterpret_cast<const char**>(0x3BF6800);
+		const char** zone_patch = reinterpret_cast<const char**>(0x3BF6804);
+		const char** zone_ui = reinterpret_cast<const char**>(0x3BF6808);
+		const char** zone_common = reinterpret_cast<const char**>(0x3BF680C);
+		const char** zone_localized_common = reinterpret_cast<const char**>(0x3BF6814);
+		const char** zone_mod = reinterpret_cast<const char**>(0x3BF6818);
+
+		int i = 0;
+		game::XZoneInfo xzone_info_stack[8];
+
+		// ------------------------------------
+
+		xzone_info_stack[i].name = *zone_code_post_gfx;
+		xzone_info_stack[i].allocFlags = 4;
+		xzone_info_stack[i].freeFlags = 0;
+		++i;
+
+		// ------------------------------------
+
+		// unused in sp
+		/*if (zone_localized_code_post_gfx)
+		{
+			xzone_info_stack[i].name = *game::zone_localized_code_post_gfx_mp;
+			xzone_info_stack[i].allocFlags = game::XZONE_FLAGS::XZONE_LOC_POST_GFX;
+			xzone_info_stack[i].freeFlags = game::XZONE_FLAGS::XZONE_LOC_POST_GFX_FREE;
+			++i;
+		}*/
+
+		// mod loading -- maybe sync assets for addon menu too?
+		if (*zone_mod)
+		{
+			xzone_info_stack[i].name = *zone_mod;
+			xzone_info_stack[i].allocFlags = 0x800;
+			xzone_info_stack[i].freeFlags = 0;
+			++i;
+
+			game::sp::DB_LoadXAssets(&xzone_info_stack[0], i, 0);
+
+			utils::hook::call<void(__cdecl)()>(0x6F6CE0)(); // R_BeginRemoteScreenUpdate
+			utils::hook::call<void(__cdecl)()>(0x5A3320)(); // no clue
+			utils::hook::call<void(__cdecl)()>(0x6F6D60)(); // R_EndRemoteScreenUpdate
+			utils::hook::call<void(__cdecl)()>(0x5FDBF0)(); // no clue
+			utils::hook::call<void(__cdecl)()>(0x48E560)(); // DB_SyncXAssets
+
+			// start a new zone stack
+			i = 0;
+		}
+
+		if (game::sp::DB_FileExists("xcommon_rtx", game::DB_FILE_EXISTS_PATH::DB_PATH_ZONE))
+		{
+			xzone_info_stack[i].name = "xcommon_rtx";
+			xzone_info_stack[i].allocFlags = 4;
+			xzone_info_stack[i].freeFlags = 0;
+			++i;
+		}
+
+		// ---------------------------------------------------------------------------------------------------------
+
+		if (*zone_ui) // not loaded when starting dedicated servers
+		{
+			xzone_info_stack[i].name = *zone_ui;
+			xzone_info_stack[i].allocFlags = 16;
+			xzone_info_stack[i].freeFlags = 0;
+			++i;
+		}
+
+		if (*zone_localized_common) // not loaded on when starting dedicated servers
+		{
+			xzone_info_stack[i].name = *zone_localized_common;
+			xzone_info_stack[i].allocFlags = 1;
+			xzone_info_stack[i].freeFlags = 0;
+			++i;
+		}
+
+		xzone_info_stack[i].name = *zone_common;
+		xzone_info_stack[i].allocFlags = 8;
+		xzone_info_stack[i].freeFlags = 0;
+		++i;
+
+		if (*zone_patch) // not loaded on when starting dedicated servers
+		{
+			xzone_info_stack[i].name = *zone_patch;
+			xzone_info_stack[i].allocFlags = 512;
+			xzone_info_stack[i].freeFlags = 0;
+			++i;
+		}
+
+		// ------------------------------------
+
+		game::sp::DB_LoadXAssets(&xzone_info_stack[0], i, 0);
+	}
+
+	// *
+	// IWDs
+
+	bool iwd_match_xcommon(const char* s0)
+	{
+		if (!utils::q_stricmpn(s0, "xcommon_", 8))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	bool iwd_match_iw(const char* s0)
+	{
+		if (!utils::q_stricmpn(s0, "iw_", 3))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	// load "iw_" iwds and "xcommon_" iwds as localized ones ;)
+	__declspec(naked) void FS_MakeIWDsLocalized()
+	{
+		const static uint32_t err_msg = 0x5DD735;
+		const static uint32_t retn_addr = 0x5DD753;
+		__asm
+		{
+			push	ebx;				// current iwd string + ext
+			call	iwd_match_iw;
+			add		esp, 4;
+			test    eax, eax;
+
+			je		MATCH;				// jump if iwd matched iw_
+			// if not, cmp to xcommon_
+			push	ebx;				// current iwd string + ext
+			call	iwd_match_xcommon;
+			add		esp, 4;
+			test    eax, eax;
+
+			je		MATCH;				// jump if iwd matched xcommon_
+			jmp		err_msg;			// yeet
+
+
+		MATCH:
+			mov     ebx, [ebp - 4];		// whatever df that is
+			mov		[ebp - 8], 1;		// set qLocalized to true ;)
+			mov		[ebp - 0xC], esi;	// whatever df that is
 			jmp		retn_addr;
 		}
 	}
@@ -539,6 +751,18 @@ namespace components::sp
 		// Precaching beyond level load (skysphere spawning)
 		utils::hook::set<BYTE>(0x54A4D6, 0xEB);
 
+		//utils::hook(0x6D63A5, DB_LoadCommonFastFiles_stub, HOOK_JUMP).install()->quick();
+		utils::hook(0x6D63A5, load_common_fast_files, HOOK_CALL).install()->quick();
+
+		// *
+		// IWDs
+
+		// Remove Impure client (iwd) check 
+		utils::hook::nop(0x5DBC7F, 30);
+
+		// Load "iw_" and "xcommon_" iwds as localized (works in all situations + elements in xcommon files can overwrite prior files)
+		//utils::hook(0x5DD71F, FS_MakeIWDsLocalized, HOOK_JUMP).install()->quick();
+		utils::hook::set<BYTE>(0x5DD733, 0xEB); // not worky worky because we inject to late
 
 		// ------------------------------------------------------------------------
 

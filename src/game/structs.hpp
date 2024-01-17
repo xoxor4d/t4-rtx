@@ -2602,6 +2602,20 @@ namespace game
 		MaterialTechniqueType technique_type;
 	};
 
+	enum DB_FILE_EXISTS_PATH
+	{
+		DB_PATH_ZONE = 0,
+		DB_PATH_MAIN = 1,
+		DB_PATH_USERMAPS = 2
+	};
+
+	struct XZoneInfo
+	{
+		const char* name;
+		int allocFlags;
+		int freeFlags;
+	};
+
 	enum dvar_flags : unsigned __int16
 	{
 		archive = 1 << 0,			// 0x0001

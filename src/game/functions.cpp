@@ -26,6 +26,7 @@ namespace game
 		Com_PrintMessage_t Com_PrintMessage = Com_PrintMessage_t(0x59A170);
 		Com_Error_t Com_Error = Com_Error_t(0x59AC50);
 		DB_EnumXAssets_FastFile_t DB_EnumXAssets_FastFile = DB_EnumXAssets_FastFile_t(0x48D560);
+		DB_LoadXAssets_t DB_LoadXAssets = DB_LoadXAssets_t(0x48E7B0);
 
 		scr_const_t* scr_const = reinterpret_cast<scr_const_t*>(0x1F33B90);
 
@@ -59,6 +60,19 @@ namespace game
 			{
 				mov		edi, model_name;
 				call	G_ModelIndex_func;
+			}
+		}
+
+		bool DB_FileExists(const char* file_name, game::DB_FILE_EXISTS_PATH src)
+		{
+			const static uint32_t DB_FileExists_func = 0x48FC10;
+			__asm
+			{
+				push	src;
+				mov		eax, file_name;
+
+				call	DB_FileExists_func;
+				add     esp, 4h;
 			}
 		}
 	} // sp-end

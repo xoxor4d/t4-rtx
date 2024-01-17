@@ -47,12 +47,17 @@ namespace game
 		typedef void(*DB_EnumXAssets_FastFile_t)(XAssetType type, void(*)(XAssetHeader, void*), void* userdata, bool overrides);
 			extern DB_EnumXAssets_FastFile_t DB_EnumXAssets_FastFile;
 
+		typedef void(*DB_LoadXAssets_t)(XZoneInfo* zoneInfo, unsigned int zone_count, int sync);
+			extern DB_LoadXAssets_t DB_LoadXAssets;
+
 		extern scr_const_t* scr_const;
 
 		void Cbuf_AddText(const char* text /*eax*/);
 		void Vec2UnpackTexCoords(unsigned int packed, float* texcoord_out /*ecx*/);
 
 		std::int16_t G_ModelIndex(const char* model_name /*eax*/); // ASM
+		extern bool DB_FileExists(const char* file_name, game::DB_FILE_EXISTS_PATH);
+
 		static utils::function<game::gentity_s* ()> G_Spawn = 0x54EAB0;
 		static utils::function<bool(game::gentity_s*)> G_CallSpawnEntity = 0x5465A0;
 		static utils::function<void(entityState_s*)> G_DObjUpdate = 0x54AC40;

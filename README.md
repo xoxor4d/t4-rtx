@@ -32,12 +32,15 @@
 ## Dvars / Commandline Arguments to further tweak the game to your liking:
 
 - render effects using shaders: `-stock_effects` (commandline argument) 
-eg: &ensp;`c:\path\CoDWaWmp.exe -stock_effects` 
-- ^ outdated - use dvar `r_warm_dpvs` instead
+- spawn a default sky on each map `-spawn_sky` (commandline argument)
+eg: &ensp;`c:\path\CoDWaWmp.exe -stock_effects -spawn_sky` 
 
 - `r_warm_dpvs` :: disable all culling (dvar)
-- `r_lodScaleRigid` :: adjust static model draw distances (dvar)
 - `r_warm_static` :: force all static models to LOD0 (dvar)
+- `r_lodScaleRigid` :: adjust static model draw distances (dvar)
+
+- use console commands staring with `rtx_sky_` to spawn/change the skybox
+- use console commands `noborder` & `windowed` to switch between borderless and normal windowed mode
 
 ### Advanced:
 - use console command `set export_entities 1` to export map entities and static models (misc_models) to `cod5root/t4rtx-export/mapname.map`
@@ -55,13 +58,14 @@ Note: Don't use shadermodel 2.0. The game itself "does not support" it.
 <br>
 
 ## Current issues:
-- no proper sky replacement yet
+- you might not be able to use your monitors default resolution right now so I suggest using `r_fullscreen 0` (windowed mode)
+- changing resolution or anything else that requires the game to semi-restart might crash the game
+> use commandline arguments like `c:\path\CoDWaWmp.exe +set r_fullscreen 0` or edit your player config (`appdata/local/Activision/CoDWaW/players/yourprofile`)
 - effects will slow down the game (really depends on the effect and the amount - use `fx_enable 0` to disable effects completely) 
 - static models might look weird at times because motion vectors are not correct (remix issue?)
 - the gun gets a little wobbly the further from 0 0 0 you are
 - > "fix" with following dvars:
 - > r_znear "40.0"
-- > r_znear_depthhack "39.9805"
 - > too heigh values will cause wrong volumetrics (visualize with Surface Volume Radiance)
 - > too low values will result in wobble
 - if your map is mostly black, open remix and go to textures. Hover your mouse over what you think the sky is and select the sky category.

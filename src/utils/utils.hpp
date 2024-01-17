@@ -8,6 +8,7 @@ namespace utils
 	bool erase_substring(std::string& base, const std::string& replace);
 	std::string str_to_lower(std::string input);
 	std::string convert_wstring(const std::wstring& wstr);
+	int	q_stricmpn(const char* s1, const char* s2, int n);
 	const char* va(const char* fmt, ...);
 
 	void axis_to_angles(game::vec3_t axis[3], game::vec3_t angles);

@@ -228,8 +228,31 @@ namespace components::sp
 			const auto inst = &draw_inst[*((std::uint16_t*)&smodel_list->primDrawSurfPos + index)];
 
 			// transform model into the scene by updating the worldmatrix
-			R_DrawStaticModelDrawSurfPlacement(src, inst);
-			dev->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&src->matrices.matrix[0].m));
+			//R_DrawStaticModelDrawSurfPlacement(src, inst);
+
+			float mtx[4][4] = {};
+			const auto scale = inst->placement.scale;
+			mtx[0][0] = inst->placement.axis[0][0] * scale;
+			mtx[0][1] = inst->placement.axis[0][1] * scale;
+			mtx[0][2] = inst->placement.axis[0][2] * scale;
+			mtx[0][3] = 0.0f;
+
+			mtx[1][0] = inst->placement.axis[1][0] * scale;
+			mtx[1][1] = inst->placement.axis[1][1] * scale;
+			mtx[1][2] = inst->placement.axis[1][2] * scale;
+			mtx[1][3] = 0.0f;
+
+			mtx[2][0] = inst->placement.axis[2][0] * scale;
+			mtx[2][1] = inst->placement.axis[2][1] * scale;
+			mtx[2][2] = inst->placement.axis[2][2] * scale;
+			mtx[2][3] = 0.0f;
+
+			mtx[3][0] = inst->placement.origin[0];
+			mtx[3][1] = inst->placement.origin[1];
+			mtx[3][2] = inst->placement.origin[2];
+			mtx[3][3] = 1.0f;
+
+			dev->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&mtx));
 
 			// get indexbuffer offset
 			const auto offset = 0;
@@ -242,11 +265,12 @@ namespace components::sp
 			// #
 			// restore everything for following meshes rendered via shaders
 
-			if (og_vertex_shader) dev->SetVertexShader(og_vertex_shader);
-			if (og_pixel_shader) dev->SetPixelShader(og_pixel_shader);
+			// do not restore shaders (fixes a few issues in der rise)
+			//if (og_vertex_shader) dev->SetVertexShader(og_vertex_shader);
+			//if (og_pixel_shader) dev->SetPixelShader(og_pixel_shader);
 
 			// restore world matrix
-			game::sp::R_Set3D(0, src);
+			//game::sp::R_Set3D(0, src);
 			dev->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&src->matrices.matrix[0].m));
 
 			dev->SetFVF(NULL);
@@ -361,9 +385,10 @@ namespace components::sp
 		// restore everything for following meshes rendered via shaders
 
 		{
-			if (og_vertex_shader) dev->SetVertexShader(og_vertex_shader);
-			if (og_pixel_shader) dev->SetPixelShader(og_pixel_shader);
+			//if (og_vertex_shader) dev->SetVertexShader(og_vertex_shader);
+			//if (og_pixel_shader) dev->SetPixelShader(og_pixel_shader);
 			dev->SetFVF(NULL);
+			dev->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&source->matrices.matrix[0].m));
 		}
 	}
 
@@ -558,8 +583,9 @@ namespace components::sp
 
 		{
 			state->prim.device->SetFVF(NULL);
-			state->prim.device->SetVertexShader(og_vertex_shader);
-			state->prim.device->SetPixelShader(og_pixel_shader);
+			//state->prim.device->SetVertexShader(og_vertex_shader);
+			//state->prim.device->SetPixelShader(og_pixel_shader);
+			state->prim.device->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&src->matrices.matrix[0].m));
 		}
 	}
 
@@ -652,6 +678,9 @@ namespace components::sp
 		dev->SetVertexShader(nullptr);
 		dev->SetPixelShader(nullptr);
 
+		const auto saved_x = src->matrices.matrix[0].m[3][0];
+		const auto saved_y = src->matrices.matrix[0].m[3][0];
+		const auto saved_z = src->matrices.matrix[0].m[3][0];
 
 		// #
 		// draw prims
@@ -701,14 +730,16 @@ namespace components::sp
 		// #
 		// restore everything for following meshes rendered via shaders
 
-		dev->SetVertexShader(og_vertex_shader);
-		dev->SetPixelShader(og_pixel_shader);
+		//dev->SetVertexShader(og_vertex_shader);
+		//dev->SetPixelShader(og_pixel_shader);
+		dev->SetFVF(NULL);
 
 		// restore world matrix
-		game::sp::R_Set3D(0, src);
+		//game::sp::R_Set3D(0, src);
+		src->matrices.matrix[0].m[3][0] = saved_x;
+		src->matrices.matrix[0].m[3][1] = saved_y;
+		src->matrices.matrix[0].m[3][2] = saved_z;
 		dev->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&src->matrices.matrix[0].m));
-
-		dev->SetFVF(NULL);
 	}
 
 	/**
@@ -831,8 +862,8 @@ namespace components::sp
 			}
 		}
 
-		prim->device->SetVertexShader(og_vertex_shader);
-		prim->device->SetPixelShader(og_pixel_shader);
+		//prim->device->SetVertexShader(og_vertex_shader);
+		//prim->device->SetPixelShader(og_pixel_shader);
 		prim->device->SetFVF(NULL);
 
 		return draw_surf_index;
@@ -969,8 +1000,8 @@ namespace components::sp
 	void R_TessCodeMeshList_end()
 	{
 		const auto dev = game::sp::dx->device;
-		dev->SetVertexShader(_og_codemesh_vertex_shader);
-		dev->SetPixelShader(_og_codemesh_pixel_shader);
+		//dev->SetVertexShader(_og_codemesh_vertex_shader);
+		//dev->SetPixelShader(_og_codemesh_pixel_shader);
 		dev->SetFVF(NULL);
 	}
 
@@ -1184,9 +1215,7 @@ namespace components::sp
 		// fixed-function rendering of brushmodels
 		utils::hook(0x741420, R_TessBModel, HOOK_JUMP).install()->quick();
 
-		// TODO :: effects - R_TessCodeMeshList
-		//utils::hook(0x73D590, R_TessCodeMeshList, HOOK_JUMP).install()->quick();
-
+		// fixed-function rendering of effects - R_TessCodeMeshList (particle clounds are still shader based)
 		if (!flags::has_flag("stock_effects"))
 		{
 			utils::hook::set<BYTE>(0x73D70F + 5, 0x10); // change max verts from 0x4000 to 0x1000 
@@ -1205,11 +1234,13 @@ namespace components::sp
 		// on renderer shutdown :: release custom buffers used by fixed-function rendering
 		utils::hook(0x6D6C4B, free_fixed_function_buffers_stub, HOOK_JUMP).install()->quick(); // R_Shutdown :: R_ResetModelLighting call
 
+#ifdef DEBUG
 		command::add("rtx_rebuild_world", [this](command::params)
 		{
 			gfx_world_vertexbuffer->Release();
 			gfx_world_vertexbuffer = nullptr;
 			build_gfxworld_buffers();
 		});
+#endif
 	}
 }
