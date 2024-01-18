@@ -134,24 +134,6 @@ namespace components::sp
 		}
 	}
 
-	__declspec(naked) void r_set3d_stub()
-	{
-		const static uint32_t stock_func_addr = 0x7244C0;
-		const static uint32_t retn_addr = 0x7246F5;
-		__asm
-		{
-			call	stock_func_addr;
-
-			pushad;
-			push	esi; // bufsrcstate
-			call	setup_rtx;
-			add		esp, 4;
-			popad;
-
-			jmp		retn_addr;
-		}
-	}
-
 	// ------------------------
 
 	bool is_valid_technique_for_type(const game::Material* mat, const game::MaterialTechniqueType type)
@@ -410,47 +392,12 @@ namespace components::sp
 		}
 	}
 
-	//void load_xcommon_zone()
-	//{
-	//	game::XZoneInfo xzone_info_stack[1];
 
-	//	if (game::sp::DB_FileExists("xcommon_rtx", game::DB_FILE_EXISTS_PATH::DB_PATH_ZONE))
-	//	{
-	//		xzone_info_stack[0].name = "xcommon_rtx";
-	//		xzone_info_stack[0].allocFlags = 4; //game::XZONE_FLAGS::XZONE_COMMON;
-	//		xzone_info_stack[0].freeFlags = 0; //game::XZONE_FLAGS::XZONE_ZERO;
-	//	}
-
-	//	game::sp::DB_LoadXAssets(xzone_info_stack, 1, 0);
-
-	//	int x = 0;
-	//}
-
-	//__declspec(naked) void DB_LoadCommonFastFiles_stub()
-	//{
-	//	const static uint32_t DB_LoadCommonFastFiles_addr = 0x6D5610;
-	//	const static uint32_t retn_addr = 0x6D63AA;
-	//	__asm
-	//	{
-	//		call	DB_LoadCommonFastFiles_addr;
-
-	//		pushad;
-	//		call	load_xcommon_zone;
-	//		popad;
-
-	//		jmp		retn_addr;
-	//	}
-	//}
+	// *
+	// load custom fastfile containing required custom assets
 
 	void load_common_fast_files()
 	{
-		/*
-		only unload zones with a set flag
-		:: zone.name = 0;
-		:: zone.allocFlags = 0;
-		:: zone.freeFlags = ZONE_FLAG_TO_UNLOAD
-		*/
-
 		const char** zone_code_post_gfx = reinterpret_cast<const char**>(0x3BF6800);
 		const char** zone_patch = reinterpret_cast<const char**>(0x3BF6804);
 		const char** zone_ui = reinterpret_cast<const char**>(0x3BF6808);
@@ -479,7 +426,6 @@ namespace components::sp
 			++i;
 		}*/
 
-		// mod loading -- maybe sync assets for addon menu too?
 		if (*zone_mod)
 		{
 			xzone_info_stack[i].name = *zone_mod;
@@ -543,56 +489,87 @@ namespace components::sp
 		game::sp::DB_LoadXAssets(&xzone_info_stack[0], i, 0);
 	}
 
+
 	// *
-	// IWDs
+	// fix resolution issues by removing duplicates returned by EnumAdapterModes
 
-	bool iwd_match_xcommon(const char* s0)
+	namespace resolution
 	{
-		if (!utils::q_stricmpn(s0, "xcommon_", 8))
+		auto hash = [](const _D3DDISPLAYMODE& d) { return d.Width + 10 * d.Height + d.RefreshRate; };
+		auto equal = [](const _D3DDISPLAYMODE& d1, const _D3DDISPLAYMODE& d2) { return d1.Width == d2.Width && d1.Height == d2.Height && d1.RefreshRate == d2.RefreshRate; };
+		std::unordered_set<_D3DDISPLAYMODE, decltype(hash), decltype(equal)> modes(256, hash, equal);
+
+		int enum_adapter_modes_intercept(std::uint32_t adapter_index, std::uint32_t mode_index)
 		{
-			return false;
+			_D3DDISPLAYMODE current = {};
+			const auto hr = game::sp::dx->d3d9->EnumAdapterModes(adapter_index, D3DFMT_X8R8G8B8, mode_index, &current) < 0;
+			modes.emplace(current);
+			return hr;
 		}
 
-		return true;
-	}
-
-	bool iwd_match_iw(const char* s0)
-	{
-		if (!utils::q_stricmpn(s0, "iw_", 3))
+		__declspec(naked) void R_EnumDisplayModes_stub()
 		{
-			return false;
+			const static uint32_t retn_addr = 0x6D5CF2;
+			__asm
+			{
+				push	esi; // mode index
+				push	ebx; // adapter index
+				call	enum_adapter_modes_intercept;
+				add		esp, 8;
+				jmp		retn_addr;
+			}
 		}
 
-		return true;
+		void enum_adapter_modes_write_array()
+		{
+			std::uint32_t idx = 0;
+			for (auto& m : modes)
+			{
+				if (idx >= 256)
+				{
+					game::sp::Com_PrintMessage(0, "EnumAdapterModes : Failed to grab all possible resolutions. Array to small!\n", 0);
+					break;
+				}
+
+				memcpy(&game::sp::dx->displayModes[idx], &m, sizeof(_D3DDISPLAYMODE));
+				idx++;
+			}
+		}
+
+		__declspec(naked) void R_EnumDisplayModes_stub2()
+		{
+			const static uint32_t R_CompareDisplayModes_addr = 0x6D5C70;
+			const static uint32_t retn_addr = 0x6D5D2E;
+			__asm
+			{
+				pushad;
+				call	enum_adapter_modes_write_array;
+				popad;
+
+				push	R_CompareDisplayModes_addr;
+				jmp		retn_addr;
+			}
+		}
 	}
 
-	// load "iw_" iwds and "xcommon_" iwds as localized ones ;)
-	__declspec(naked) void FS_MakeIWDsLocalized()
+	void fix_aspect_ratio(int* window_parms)
 	{
-		const static uint32_t err_msg = 0x5DD735;
-		const static uint32_t retn_addr = 0x5DD753;
+		*reinterpret_cast<float*>(0x3BED844) = static_cast<float>(window_parms[7]) / static_cast<float>(window_parms[8]);
+	}
+
+	void __declspec(naked) fix_aspect_ratio_stub()
+	{
+		const static uint32_t retn_addr = 0x6D504E;
 		__asm
 		{
-			push	ebx;				// current iwd string + ext
-			call	iwd_match_iw;
+			pop		eax;
+			pushad;
+			push	eax;
+			call	fix_aspect_ratio;
 			add		esp, 4;
-			test    eax, eax;
+			popad;
+			push	eax;
 
-			je		MATCH;				// jump if iwd matched iw_
-			// if not, cmp to xcommon_
-			push	ebx;				// current iwd string + ext
-			call	iwd_match_xcommon;
-			add		esp, 4;
-			test    eax, eax;
-
-			je		MATCH;				// jump if iwd matched xcommon_
-			jmp		err_msg;			// yeet
-
-
-		MATCH:
-			mov     ebx, [ebp - 4];		// whatever df that is
-			mov		[ebp - 8], 1;		// set qLocalized to true ;)
-			mov		[ebp - 0xC], esi;	// whatever df that is
 			jmp		retn_addr;
 		}
 	}
@@ -733,39 +710,37 @@ namespace components::sp
 
 		
 
-		// stuck in some loop 'Com_Quit_f'
-		utils::hook::nop(0x5FEA01, 5);
-
-		// don't play intro video
-		utils::hook::nop(SELECT(0x564CB9, 0x59D68B), 5);
-
 		// hook beginning of 'RB_Draw3DInternal' to setup general stuff required for rtx-remix
 		utils::hook::nop(0x6E8B96, 8); utils::hook(0x6E8B96, rb_draw3d_internal_stub, HOOK_JUMP).install()->quick();
 
-		//utils::hook(0x7246F0, sp::r_set3d_stub, HOOK_JUMP).install()->quick();
-
-		// hook R_SetMaterial ...... 0x741F1E
+		// hook R_SetMaterial - material/technique replacing
 		utils::hook(0x741F1E, r_set_material, HOOK_CALL).install()->quick();
 
-
-		// Precaching beyond level load (skysphere spawning)
+		// precaching xmodels beyond level load (dynamic skysphere spawning)
 		utils::hook::set<BYTE>(0x54A4D6, 0xEB);
 
-		//utils::hook(0x6D63A5, DB_LoadCommonFastFiles_stub, HOOK_JUMP).install()->quick();
+		// load custom fastfile containing required assets
 		utils::hook(0x6D63A5, load_common_fast_files, HOOK_CALL).install()->quick();
 
-		// *
-		// IWDs
+		// dxvk's 'EnumAdapterModes' returns a lot of duplicates and the games array only has a capacity of 256 which is not enough depending on max res. and refreshrate
+		// fix resolution issues by removing duplicates returned by EnumAdapterModes - then write the array ourselfs
+		utils::hook(0x6D5CE2, sp::resolution::R_EnumDisplayModes_stub, HOOK_JUMP).install()->quick();
+		utils::hook(0x6D5D29, sp::resolution::R_EnumDisplayModes_stub2, HOOK_JUMP).install()->quick();
+		utils::hook::set<BYTE>(0x6D5CD0 + 2, 0x04); // set max array size check to 1024 (check within loop)
 
-		// Remove Impure client (iwd) check 
+		// Remove Impure client (iwd) check - needed?
 		utils::hook::nop(0x5DBC7F, 30);
 
-		// Load "iw_" and "xcommon_" iwds as localized (works in all situations + elements in xcommon files can overwrite prior files)
-		//utils::hook(0x5DD71F, FS_MakeIWDsLocalized, HOOK_JUMP).install()->quick();
-		utils::hook::set<BYTE>(0x5DD733, 0xEB); // not worky worky because we inject to late
+		// stuck in some loop 'Com_Quit_f'
+		utils::hook::nop(0x5FEA01, 5);
+
+		// don't play intro video - allows to devmap into a map via commandline
+		utils::hook::nop(0x59D68B, 5); // mp: 0x564CB9
+
+		// :*
+		utils::hook(0x6D4FB3, fix_aspect_ratio_stub, HOOK_JUMP).install()->quick();
 
 		// ------------------------------------------------------------------------
-
 
 		// stub after 'R_InitGraphicsApi' (NVAPI Entry) to re-register stock dvars
 		utils::hook(0x6D6B40, register_dvars_stub, HOOK_JUMP).install()->quick();
@@ -793,7 +768,7 @@ namespace components::sp
 		//}
 
 		// disable dynent drawing (could have stable hashes but no stable lods right now)
-		utils::hook::nop(0x6DD7DD, 5);
+		//utils::hook::nop(0x6DD7DD, 5);
 
 		// force static model LOD via 'r_warm_static' dvar (R_AddAllStaticModelSurfacesCamera)
 		utils::hook::nop(0x732CF7, 6);

@@ -24,6 +24,7 @@
 #include <filesystem>
 #include <mutex>
 #include <map>
+#include <unordered_set>
 
 #pragma warning(push)
 #pragma warning(disable: 26495)

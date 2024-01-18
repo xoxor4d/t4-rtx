@@ -35,9 +35,10 @@ eg: &ensp;`c:\path\CoDWaWmp.exe -spawn_sky -stock_effects`
 - `r_warm_dpvs` :: disable all culling (dvar)
 - `r_warm_static` :: force all static models to LOD0 (dvar)
 - `r_lodScaleRigid` :: adjust static model draw distances (dvar)
+- `r_aspectRatio` :: `auto` is truly auto now and supports any aspect ratio
 
 - use console commands starting with `rtx_sky_` to spawn/change the skybox
-- use console commands `noborder` & `windowed` to switch between borderless and normal windowed mode
+- use console commands `noborder` & `windowed` to switch between borderless and normal windowed mode (`vid_xpos 0` and `vid_ypos 0`)
 
 ### Advanced:
 - use console command `set export_entities 1` to export map entities and static models (misc_models) to `cod5root/t4rtx-export/mapname.map`
@@ -55,7 +56,6 @@ Note: Don't use shadermodel 2.0. The game itself "does not support" it.
 <br>
 
 ## Current issues:
-- you might not be able to use your monitors default resolution right now so I suggest using `r_fullscreen 0` (windowed mode)
 - changing resolution or anything else that requires the game to semi-restart might crash the game
 > use commandline arguments like `c:\path\CoDWaWmp.exe +set r_fullscreen 0` or edit your player config (`appdata/local/Activision/CoDWaW/players/yourprofile`)
 - effects will slow down the game (really depends on the effect and the amount - use `fx_enable 0` to disable effects completely) 
