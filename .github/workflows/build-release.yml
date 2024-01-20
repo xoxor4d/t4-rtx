@@ -1,4 +1,4 @@
-name: Build-Debug
+name: Build-Release
 
 on:
   workflow_dispatch: {}
@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         configuration:
-          - Debug
+          - Release
 
     steps:
       - name: Wait for previous workflows
@@ -43,19 +43,25 @@ jobs:
       - name: Build ${{matrix.configuration}}-binaries-t4-rtx
         run: msbuild /m /v:minimal /p:Configuration=${{matrix.configuration}} /p:Platform=Win32 build/t4-rtx.sln
 
+      - name: Move build files 
+        run: |
+          move build/bin/${{matrix.configuration}}/nvapi.dll ./
+          move build/bin/${{matrix.configuration}}/t4-rtx.pdb ./
+
       - name: Upload ${{matrix.configuration}}-binaries-t4-rtx
         uses: actions/upload-artifact@v2
         with:
           name: ${{matrix.configuration}}-binaries-t4-rtx
           path: |
-            build/bin/${{matrix.configuration}}/nvapi.dll
-            build/bin/${{matrix.configuration}}/t4-rtx.pdb
+            ./nvapi.dll
+            ./t4-rtx.pdb
+            ./assets-remix/*
   
   webbook:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Tag String

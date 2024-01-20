@@ -791,6 +791,12 @@ namespace components::sp
 		// can be used as anti cull
 		utils::hook::set<BYTE>(0x6DDED8, 0xEB);
 
+		utils::hook::nop(0x6DEA6F, 4); // do not scale lodScaleRigid with fov
+		utils::hook::nop(0x6DEA78, 4); // do not scale lodBiasRigid with fov
+
+		//utils::hook::nop(0x6DEAC2, 4); // do not scale lodScaleSkinned with fov
+		//utils::hook::nop(0x6DEACB, 4); // do not scale lodBiasSkinned with fov
+
 		// ------------------------------------------------------------------------
 
 #ifdef GIT_DESCRIBE
