@@ -102,7 +102,7 @@ namespace components::sp
 
 		dev->SetRenderState(D3DRS_LIGHTING, FALSE);
 
-		if (flags::has_flag("spawn_sky") && !main_module::skysphere_is_model_valid())
+		if (!flags::has_flag("no_default_sky") && !main_module::skysphere_is_model_valid())
 		{
 			main_module::skysphere_spawn(4); // always spawn sunset
 		}
@@ -353,26 +353,46 @@ namespace components::sp
 			var->current.enabled = false;
 		}
 
-		/*if (const auto var = Dvar_FindVar("r_zfeather"); var)
+		// force static models to lod 0
+		if (const auto var = Dvar_FindVar("r_warm_static"); var)
 		{
-			var->current.enabled = false;
-		}*/
+			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
+		}
 
-		/*if (const auto var = Dvar_FindVar("r_warm_static"); var)
+		if (const auto var = Dvar_FindVar("r_fovScaleThresholdRigid"); var)
 		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
-		}*/
+			var->current.value = 10000.0f;
+		}
+
+		//if (const auto var = Dvar_FindVar("r_fovScaleThresholdSkinned"); var)
+		//{
+		//	var->current.value = 2.0f;
+		//}
+
+		// disable culling
+		if (const auto var = Dvar_FindVar("r_warm_dpvs"); var)
+		{
+			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
+		}
+
+		// batch surfaces (def. needed)
+		if (const auto var = Dvar_FindVar("r_pretess"); var)
+		{
+			var->current.enabled = true;
+		}
 
 		// #
 
+		// enable cheats
 		if (const auto var = Dvar_FindVar("sv_cheats"); var)
 		{
 			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
 		}
 
-		if (const auto var = Dvar_FindVar("r_pretess"); var)
+		// enable console
+		if (const auto var = Dvar_FindVar("monkeytoy"); var)
 		{
-			var->current.enabled = true;
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
 		}
 	}
 
@@ -791,9 +811,9 @@ namespace components::sp
 		// can be used as anti cull
 		utils::hook::set<BYTE>(0x6DDED8, 0xEB);
 
-		utils::hook::nop(0x6DEA6F, 4); // do not scale lodScaleRigid with fov
-		utils::hook::nop(0x6DEA78, 4); // do not scale lodBiasRigid with fov
-
+		// now using dvar 'r_fovScaleThresholdRigid'
+		//utils::hook::nop(0x6DEA6F, 4); // do not scale lodScaleRigid with fov
+		//utils::hook::nop(0x6DEA78, 4); // do not scale lodBiasRigid with fov
 		//utils::hook::nop(0x6DEAC2, 4); // do not scale lodScaleSkinned with fov
 		//utils::hook::nop(0x6DEACB, 4); // do not scale lodBiasSkinned with fov
 
