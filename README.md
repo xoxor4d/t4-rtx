@@ -2,8 +2,12 @@
 
 <div align="center" markdown="1"> 
 
-The modification is specifically made to make the game compatible with nvidia's [rtx-remix](https://github.com/NVIDIAGameWorks/rtx-remix).  
-It does __not__ come with a 'rtx mod' -> meaning no custom models nor materials (as of yet).  
+This client modification is made to make the game compatible with nvidia's [rtx-remix](https://github.com/NVIDIAGameWorks/rtx-remix).  
+It does __not__ come with a 'rtx mod' -> meaning no custom models nor materials.  
+
+A demo mod can be found over at modDB: https://www.moddb.com/mods/cod5-nacht-der-untoten-demo
+
+<br>
 
 </div>
 
