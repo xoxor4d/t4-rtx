@@ -13,6 +13,9 @@ namespace components::sp
 		static void skysphere_change_model(int variant);
 		static void skysphere_spawn(int variant = 0);
 
+		static void on_map_load();
+		static void on_map_shutdown();
+
 	private:
 		static const char* skysphere_get_name_for_variant(int variant);
 		static inline bool skysphere_spawned = false;

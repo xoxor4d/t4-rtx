@@ -14,7 +14,7 @@ namespace components::sp
 		{
 			std::string filepath;
 			filepath = fs_basepath->current.string;
-			filepath += "\\t4rtx-export\\"s;
+			filepath += "\\t4rtx\\entity-export\\"s;
 
 			std::filesystem::create_directories(filepath);
 
@@ -57,29 +57,7 @@ namespace components::sp
 			ents.close();
 		}
 	}
-
-	void spawn_light()
-	{
-		D3DLIGHT9 light;
-		ZeroMemory(&light, sizeof(D3DLIGHT9));
-
-		light.Type = D3DLIGHT_POINT;
-		light.Diffuse.r = 2.0f;
-		light.Diffuse.g = 0.0f;
-		light.Diffuse.b = 0.0f;
-
-		light.Position.x = 0.0;
-		light.Position.y = 0.0;
-		light.Position.z = 70.0;
-
-		light.Range = 2000.0f;
-
-		const auto dev = dx->device;
-		dev->SetLight(0, &light);
-		dev->LightEnable(0, TRUE);
-		dev->SetRenderState(D3DRS_LIGHTING, TRUE);
-	}
-
+	
 	void setup_rtx()
 	{
 		const auto dev = dx->device;
@@ -90,17 +68,25 @@ namespace components::sp
 		src->viewParms3D = &data->viewInfo->viewParms;
 
 		// update world matrix (R_Set3D)
-		//utils::hook::call<void(__fastcall)(int, game::GfxCmdBufSourceState*)>(0x7244C0)(0, src); // updated SP
-		R_Set3D(0, src);
+		R_Set3D(0, src); //utils::hook::call<void(__fastcall)(int, game::GfxCmdBufSourceState*)>(0x7244C0)(0, src); // updated SP
 
 		// directly set matrices on the device so that rtx-remix finds the camera
 		dev->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&src->matrices.matrix[0].m));
 		dev->SetTransform(D3DTS_VIEW, reinterpret_cast<D3DMATRIX*>(&src->viewParms.viewMatrix.m));
 		dev->SetTransform(D3DTS_PROJECTION, reinterpret_cast<D3DMATRIX*>(&src->viewParms.projectionMatrix.m));
 
-		//spawn_light();
-
+		// needed for skysphere
 		dev->SetRenderState(D3DRS_LIGHTING, FALSE);
+
+		if (!flags::has_flag("no_fog"))
+		{
+			const float fog_start = 1.0f;
+			dev->SetRenderState(D3DRS_FOGENABLE, TRUE);
+			dev->SetRenderState(D3DRS_FOGCOLOR, fog::m_color.packed);
+			dev->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
+			dev->SetRenderState(D3DRS_FOGSTART, *(DWORD*)(&fog_start));
+			dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)(&fog::m_max_distance));
+		}
 
 		if (!flags::has_flag("no_default_sky") && !main_module::skysphere_is_model_valid())
 		{
@@ -723,12 +709,21 @@ namespace components::sp
 		}
 	}
 
+	// > fixed_function::init_fixed_function_buffers_stub
+	void main_module::on_map_load()
+	{
+		fog::get()->set_settings_for_loaded_map();
+	}
+
+	// > fixed_function::free_fixed_function_buffers_stub
+	void main_module::on_map_shutdown()
+	{
+	}
+
 	main_module::main_module()
 	{
 		// *
 		// general
-
-		
 
 		// hook beginning of 'RB_Draw3DInternal' to setup general stuff required for rtx-remix
 		utils::hook::nop(0x6E8B96, 8); utils::hook(0x6E8B96, rb_draw3d_internal_stub, HOOK_JUMP).install()->quick();
@@ -836,6 +831,11 @@ namespace components::sp
 		command::add("rtx_sky_night", [](command::params) { main_module::skysphere_spawn(2); });
 		command::add("rtx_sky_overcast", [](command::params) { main_module::skysphere_spawn(3); });
 		command::add("rtx_sky_sunset", [](command::params) { main_module::skysphere_spawn(4); });
+
+		/*command::add("fog_update", [this](command::params)
+		{
+			update_fog_settings();
+		});*/
 
 		command::add("noborder", [this](command::params)
 		{

@@ -316,6 +316,9 @@ namespace components::sp
 		if (state->material && state->material->info.sortKey == 5)
 		{
 			custom_scalar = 1000.0f;
+
+			// disable fog for skysphere
+			state->prim.device->SetRenderState(D3DRS_FOGENABLE, FALSE);
 		}
 
 		// #
@@ -1142,6 +1145,7 @@ namespace components::sp
 			pushad;
 			//call	build_static_model_buffers; // no need - we hook 'XSurfaceOptimize'
 			call	build_gfxworld_buffers;
+			call	main_module::on_map_load;
 			popad;
 
 			call	stock_func;
@@ -1176,6 +1180,7 @@ namespace components::sp
 		{
 			pushad;
 			call	free_fixed_function_buffers;
+			call	main_module::on_map_shutdown;
 			popad;
 
 			call	stock_func;

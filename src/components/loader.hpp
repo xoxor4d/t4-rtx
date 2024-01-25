@@ -27,6 +27,7 @@ namespace components
 
 #include "modules/sp/main_module.hpp"
 #include "modules/sp/fixed_function.hpp"
+#include "modules/sp/fog.hpp"
 
 #include "modules/mp/main_module.hpp"
 

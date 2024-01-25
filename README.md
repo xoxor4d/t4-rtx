@@ -67,6 +67,8 @@ remix runtime - https://github.com/NVIDIAGameWorks/dxvk-remix/actions
 (set dvars `vid_xpos 0` and `vid_ypos 0` to put the window in the top left corner)
 - `fx_cull_elem_draw` :: (0) to not cull effects based on viewing direction
 
+> + fog settings can be tweaked using `fog.ini` found in the `t4rtx` folder
+
 Visit the Wiki section for more in-depth info: https://github.com/xoxor4d/t4-rtx/wiki/Home-%E2%80%90-General-Tips-%E2%80%90-Troubleshooting-%E2%80%90-etc
 
 
@@ -78,6 +80,7 @@ Visit the Wiki section for more in-depth info: https://github.com/xoxor4d/t4-rtx
 - A. Commandline Arguments:  
   - `-no_default_sky` :: disable spawning of a default sky on each map
   - `-stock_effects` :: render effects using shaders
+  - `-no_fog` :: disable fog
   > eg: &ensp;`c:\path\CoDWaWmp.exe -no_default_sky -stock_effects` 
 
   - Notes: 
@@ -87,7 +90,7 @@ Visit the Wiki section for more in-depth info: https://github.com/xoxor4d/t4-rtx
 <br>
 
 - B. Console commands:  
-  - `set export_entities 1` to export map entities and static models (misc_models) to `cod5root/t4rtx-export/mapname.map`  
+  - `set export_entities 1` to export map entities and static models (misc_models) to `cod5root/t4rtx/entity-export/mapname.map`  
 
 <br>
 
