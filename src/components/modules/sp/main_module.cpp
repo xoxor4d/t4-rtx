@@ -82,24 +82,10 @@ namespace components::sp
 		{
 			const float fog_start = 1.0f;
 			dev->SetRenderState(D3DRS_FOGENABLE, TRUE);
-			dev->SetRenderState(D3DRS_FOGCOLOR, fog::m_color.packed);
+			dev->SetRenderState(D3DRS_FOGCOLOR, map_settings::m_color.packed);
 			dev->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
 			dev->SetRenderState(D3DRS_FOGSTART, *(DWORD*)(&fog_start));
-			dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)(&fog::m_max_distance));
-		}
-
-		if (!flags::has_flag("no_default_sky") && !main_module::skysphere_is_model_valid())
-		{
-			main_module::skysphere_spawn(4); // always spawn sunset
-		}
-
-		if (const auto& export_entities = Dvar_FindVar("export_entities");
-			export_entities && std::string_view(export_entities->current.string) == "1")
-		{
-			export_entities->current.string = "0";
-			export_entities->latched.string = "0";
-			export_entities->modified = true;
-			export_entity_string();
+			dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)(&map_settings::m_max_distance));
 		}
 	}
 
@@ -178,8 +164,6 @@ namespace components::sp
 
 	int r_set_material(game::MaterialTechniqueType type, game::GfxCmdBufSourceState* src, game::GfxCmdBufState* state, game::GfxDrawSurf drawSurf)
 	{
-		//const auto rgp = reinterpret_cast<game::r_global_permanent_t*>(0x3BF1880); // updated SP
-
 		game::switch_material_t mat = {};
 
 		mat.current_material = game::sp::rgp->sortedMaterials[(HIDWORD(drawSurf.packed) >> 1) & 2047];
@@ -201,17 +185,6 @@ namespace components::sp
 		{
 			return 0;
 		}
-
-		/*if (utils::starts_with(mat.current_material->info.name, "mc/mtl_rtx_"))
-		{
-			int x = 1;
-		}*/
-
-		/*if (std::string_view(mat.current_material->techniqueSet->name) == std::string_view("wc_water"))
-		{
-			mat.switch_technique_type = true;
-			mat.technique_type = TECHNIQUE_LIT;
-		}*/
 
 		if (!mat.switch_material && !mat.switch_technique && !mat.switch_technique_type)
 		{
@@ -250,28 +223,13 @@ namespace components::sp
 			}
 		}
 
-		/*if ((drawSurf.packed & 0xF0000) != 0)
-		{
-			float v10 = ((drawSurf.packed >> 16) & 0xF) * *&dword_82A3D4;
-			*&src->pad0[560] = v10;
-			*&src->pad0[564] = v10;
-			*&src->pad0[568] = v10;
-			*&src->pad0[572] = v10;
-			++*&src->pad00[102];
-		}
-
-		if ((&dword_3C00000 & HIDWORD(drawSurf.packed)) == 0 && (current_material->info.gameFlags & 8) != 0)
-		{
-			return 0;
-		}*/
-
 		state->origTechType = state->techType;
 		state->techType = mat.technique_type;
 
 		return 1;
 	}
 
-	void register_rtx_dvars()
+	void set_dvar_defaults()
 	{
 		if (const auto var = Dvar_FindVar("r_lodScaleRigid"); var)
 		{
@@ -288,66 +246,81 @@ namespace components::sp
 			var->flags = game::dvar_flags::userinfo;
 		}
 
-		//if (const auto var = Dvar_FindVar("r_znear"); var)
-		//{
-		//	var->current.value = 40.0f; // 10.0 works but still a little wobble at larger distances
-		//	var->domain.value.min = 0.0f;
-		//	var->domain.value.max = FLT_MAX;
-		//	var->flags = game::dvar_flags::userinfo;
-		//}
-
-		//if (const auto var = Dvar_FindVar("r_znear_depthhack"); var)
-		//{
-		//	var->current.value = 39.9805f; // - 9.99512f see ^
-		//	var->domain.value.min = 0.0f;
-		//	var->domain.value.max = FLT_MAX;
-		//	var->flags = game::dvar_flags::userinfo;
-		//}
+		// reduce wobble on objects rendered using shaders (more wobble the further from 0 0 0 the player is)
+		if (const auto var = Dvar_FindVar("r_znear"); var)
+		{
+			var->current.value = 40.0f;
+			var->domain.value.min = 0.0f;
+			var->domain.value.max = FLT_MAX;
+			var->flags = game::dvar_flags::userinfo;
+		}
 
 		if (const auto var = Dvar_FindVar("r_skinCache"); var)
 		{
-			var->current.enabled = false;
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
 		}
 
 		if (const auto var = Dvar_FindVar("r_fastSkin"); var)
 		{
-			var->current.enabled = false;
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
 		}
 
 		if (const auto var = Dvar_FindVar("r_distortion"); var)
 		{
-			var->current.enabled = false;
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
 		}
 
-		if (const auto var = Dvar_FindVar("r_depthprepass"); var)
+		if (const auto var = Dvar_FindVar("fx_drawClouds"); var)
 		{
-			var->current.enabled = false;
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
 		}
 
-		if (const auto var = Dvar_FindVar("r_smc_enable"); var)
-		{
-			var->current.enabled = false;
-		}
-
-		if (const auto var = Dvar_FindVar("r_smp_backend"); var)
-		{
-			var->current.enabled = false;
-		}
-
-		if (const auto var = Dvar_FindVar("r_smp_worker"); var)
-		{
-			var->current.enabled = false;
-		}
-
-		// force static models to lod 0
-		if (const auto var = Dvar_FindVar("r_warm_static"); var)
+		if (const auto var = Dvar_FindVar("fx_cull_elem_draw"); var)
 		{
 			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
 		}
 
+		if (const auto var = Dvar_FindVar("r_depthprepass"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+		}
+
+		if (const auto var = Dvar_FindVar("r_smc_enable"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+		}
+
+		if (const auto var = Dvar_FindVar("r_smp_backend"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+		}
+
+		if (const auto var = Dvar_FindVar("r_smp_worker"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+		}
+
+		// r_warm_static hinders static models from reaching the lowest lod, thus always drawing all models
+		// ^ model draw distances are not affected by 'r_lodScaleRigid' with it enabled
+		// ^ note: now disabled by default because 'r_forceLod' is now used instead
+		if (const auto var = Dvar_FindVar("r_warm_static"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+		}
+
+		if (!flags::has_flag("no_forced_lod"))
+		{
+			// force lod to LOD0 (doesn't work on some models for unkown reasons)
+			// max draw distances of models are unaffected by this and can be tweaked using 'r_lodScaleRigid'
+			if (const auto var = Dvar_FindVar("r_forceLod"); var)
+			{
+				var->current.integer = 0; var->flags = game::dvar_flags::userinfo;
+			}
+		}
+
 		if (const auto var = Dvar_FindVar("r_fovScaleThresholdRigid"); var)
 		{
-			var->current.value = 10000.0f;
+			var->current.value = 10000.0f; var->flags = game::dvar_flags::userinfo;
 		}
 
 		//if (const auto var = Dvar_FindVar("r_fovScaleThresholdSkinned"); var)
@@ -364,7 +337,7 @@ namespace components::sp
 		// batch surfaces (def. needed)
 		if (const auto var = Dvar_FindVar("r_pretess"); var)
 		{
-			var->current.enabled = true;
+			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
 		}
 
 		// #
@@ -391,7 +364,7 @@ namespace components::sp
 			call	stock_func;
 
 			pushad;
-			call	register_rtx_dvars;
+			call	set_dvar_defaults;
 			popad;
 
 			jmp		retn_addr;
@@ -498,6 +471,7 @@ namespace components::sp
 
 	// *
 	// fix resolution issues by removing duplicates returned by EnumAdapterModes
+	// ^ this was fixed on the dxvk branch - TODO: remove when latest dxvk changes were merged into dxvk-remix
 
 	namespace resolution
 	{
@@ -635,11 +609,6 @@ namespace components::sp
 			return;
 		}
 
-		// needs :: 
-		// s->index = modelIndex
-		// linked = 0x1;
-		// svFlags = 0x04; // even = visible, uneven = hidden
-
 		const std::int16_t model_index = game::sp::G_ModelIndex(skysphere_get_name_for_variant(variant));
 
 		skysphere_model = game::sp::G_Spawn();
@@ -683,36 +652,161 @@ namespace components::sp
 		skysphere_variant = variant;
 	}
 
-	// ------------------------------------------------------------------------
 
-	__declspec(naked) void force_lod_stub01()
+	// *
+	// LOD
+
+	int forcelod_get_lod(const int lod_count)
 	{
-		const static uint32_t retn_addr = 0x732CFD;
+		const auto& r_forceLod = game::sp::Dvar_FindVar("r_forceLod");
+		//const auto& r_warm_static = game::sp::Dvar_FindVar("r_warm_static");
+
+		if (r_forceLod->current.integer > lod_count // force lowest possible LOD
+			|| (r_forceLod->current.integer >= lod_count)) // force second lowest possible LOD
+		{
+			return lod_count - 1 >= 0 ? lod_count - 1 : 0;
+		}
+
+		return r_forceLod->current.integer;
+	}
+
+	int forcelod_is_enabled()
+	{
+		const auto& r_forceLod = game::sp::Dvar_FindVar("r_forceLod");
+
+		// 4 = none - disabled
+		if (r_forceLod->current.integer == r_forceLod->reset.integer)
+		{
+			return 0;
+		}
+
+		return 1;
+	}
+
+	int xmodel_get_lod_for_dist_global_1 = 0;
+	__declspec(naked) void skinned_xmodel_get_lod_for_dist_inlined()
+	{
+		const static uint32_t break_addr = 0x6D9C4D;
+		const static uint32_t og_logic_addr = 0x6D9C17;
 		__asm
 		{
-			xor		ebx, ebx;	// clear
-			mov		ebx, 0;		// LOD
+			pushad;
+			push	ecx;					// save ecx
+			call	forcelod_is_enabled;
+			cmp		eax, 1;
+			pop		ecx;					// restore ecx
+			jne		OG_LOGIC;				// if r_forceLod != 1
 
-			jmp		retn_addr;
+			push	ecx;					// holds model->numLods
+			call	forcelod_get_lod;
+			add		esp, 4;
+			mov		xmodel_get_lod_for_dist_global_1, eax;
+			popad;
+
+			mov		eax, xmodel_get_lod_for_dist_global_1; // move returned lodindex into the register the game expects it to be
+			jmp		break_addr;
+
+
+		OG_LOGIC:
+			popad;
+			movss   xmm1, dword ptr[edx];
+			comiss  xmm1, xmm0;
+			jmp		og_logic_addr;
 		}
 	}
 
-	__declspec(naked) void force_lod_stub02()
+	int xmodel_get_lod_for_dist_global_2 = 0;
+	__declspec(naked) void rigid_xmodel_get_lod_for_dist_inlined()
 	{
-		const static uint32_t retn_addr = 0x7332A9;
+		const static uint32_t break_addr = 0x732CEC;
+		const static uint32_t og_logic_addr = 0x732CDD;
 		__asm
 		{
-			xor		esi, esi;	// clear
-			mov		esi, 0;		// LOD
+			pushad;
 
-			jmp		retn_addr;
+			push	eax;					// save eax
+			call	forcelod_is_enabled;
+			cmp		eax, 1;
+			jne		OG_LOGIC;				// if r_forceLod != 1
+
+			pop		eax;					// restore eax
+			push	eax;					// holds model->numLods
+			call	forcelod_get_lod;
+			add		esp, 4;
+			mov		xmodel_get_lod_for_dist_global_2, eax;
+			popad;
+
+			mov		ebx, xmodel_get_lod_for_dist_global_2; // move returned lodindex into the register the game expects it to be
+			jmp		break_addr;
+
+
+		OG_LOGIC:
+			pop		eax;					// restore eax
+			popad;
+			movss   xmm1, dword ptr[ecx];
+			comiss  xmm1, xmm0;
+			jmp		og_logic_addr;
 		}
 	}
+
+	// returns true if inside radius
+	int fx_cullsphere_radius_check(const float* camera_pos,const float* fx_world_pos)
+	{
+		if (const auto var = Dvar_FindVar("fx_cull_elem_draw"); 
+			var && var->current.enabled)
+		{
+			const auto dist = utils::distance(fx_world_pos, camera_pos);
+
+			if (dvars::fx_cull_elem_draw_radius &&
+				dist < dvars::fx_cull_elem_draw_radius->current.value)
+			{
+				return 1;
+			}
+		}
+
+		return 0;
+	}
+
+	int fx_cullsphere_global_helper = 0;
+	__declspec(naked) void fx_cullsphere_stub()
+	{
+		const static uint32_t break_addr = 0x732CEC;
+		const static uint32_t og_continue_addr = 0x4B4126;
+		const static uint32_t og_retn_addr = 0x4B4185;
+		__asm
+		{
+			mov     eax, [esp + 4];			// FxCamera*
+			pushad;
+			push	ecx;					// float* fx worldpos
+			push	eax;					// FxCamera*
+			call	fx_cullsphere_radius_check;
+			add		esp, 8;
+			mov		fx_cullsphere_global_helper, eax;
+			popad;
+			xor		eax, eax;
+
+			cmp		fx_cullsphere_global_helper, 1;
+			je		loc_4B4185;				// do not cull if within radius
+
+			// OG_LOGIC
+			xor		eax, eax;
+			test    edx, edx;
+			jbe		loc_4B4185;
+			jmp		og_continue_addr;
+
+		loc_4B4185:
+			jmp		og_retn_addr;
+		}
+	}
+
+
+	// *
+	// Event stubs
 
 	// > fixed_function::init_fixed_function_buffers_stub
 	void main_module::on_map_load()
 	{
-		fog::get()->set_settings_for_loaded_map();
+		map_settings::get()->set_settings_for_loaded_map();
 	}
 
 	// > fixed_function::free_fixed_function_buffers_stub
@@ -769,48 +863,28 @@ namespace components::sp
 
 		// ------------------------------------------------------------------------
 
-
-		//if (flags::has_flag("disable_culling"))
-		//{
-		//	// R_AddWorldSurfacesPortalWalk :: less culling
-		//	utils::hook::set<BYTE>(0x6A945E, 0xEB);
-
-		//	// R_AddAabbTreeSurfacesInFrustum_r :: disable all surface culling (bad fps)
-		//	utils::hook::nop(0x6F6F29, 6);
-		//	utils::hook::set<BYTE>(0x6F6F65, 0xEB);
-
-		//	// TODO: entities
-		//}
-
 		// disable dynent drawing (could have stable hashes but no stable lods right now)
 		//utils::hook::nop(0x6DD7DD, 5);
 
-		// force static model LOD via 'r_warm_static' dvar (R_AddAllStaticModelSurfacesCamera)
-		utils::hook::nop(0x732CF7, 6);
-		utils::hook(0x732CF7, force_lod_stub01, HOOK_JUMP).install()->quick();
+		// note: dvar 'r_fovScaleThresholdRigid' can be used to stop fov related lod changes
 
-		// ^ (R_AddAllStaticModelSurfacesRangeSunShadow)
-		utils::hook::nop(0x7332A3, 6);
-		utils::hook(0x7332A3, force_lod_stub02, HOOK_JUMP).install()->quick();
+		// implement r_forcelod logic for skinned models (R_SkinXModel)
+		utils::hook::nop(0x6D9C10, 7);  utils::hook(0x6D9C10, skinned_xmodel_get_lod_for_dist_inlined, HOOK_JUMP).install()->quick();
 
-		// remove 'r_warm_static' check that adds all meshes to the scene no matter what 'r_lodScaleRigid' is set to (R_AddAllStaticModelSurfacesCamera)
-		// jz (0F 84 AC 01 00 00) to jmp (E9 AD 01 00 00 + 0x90)
-		utils::hook::set<BYTE>(0x732B95, 0xE9);
-		utils::hook::set<BYTE>(0x732B95 + 1, 0xAD); // < yes
-		utils::hook::set<BYTE>(0x732B95 + 2, 0x01);
-		utils::hook::set<BYTE>(0x732B95 + 3, 0x00);
-		utils::hook::set<BYTE>(0x732B95 + 4, 0x00);
-		utils::hook::set<BYTE>(0x732B95 + 5, 0x90);
+		// implement r_forcelod logic for all other static models (R_AddAllStaticModelSurfacesCamera)
+		utils::hook::nop(0x732CD6, 7);  utils::hook(0x732CD6, rigid_xmodel_get_lod_for_dist_inlined, HOOK_JUMP).install()->quick();
 
-		// stop 'r_warm_dpvs' dvar from resetting itself je 0x74 -> jmp 0xEB
-		// can be used as anti cull
+		// DISABLE CULLING :: stop 'r_warm_dpvs' dvar from resetting itself je 0x74 -> jmp 0xEB
 		utils::hook::set<BYTE>(0x6DDED8, 0xEB);
 
-		// now using dvar 'r_fovScaleThresholdRigid'
-		//utils::hook::nop(0x6DEA6F, 4); // do not scale lodScaleRigid with fov
-		//utils::hook::nop(0x6DEA78, 4); // do not scale lodBiasRigid with fov
-		//utils::hook::nop(0x6DEAC2, 4); // do not scale lodScaleSkinned with fov
-		//utils::hook::nop(0x6DEACB, 4); // do not scale lodBiasSkinned with fov
+		// hook FX_CullSphere to implement an additional radius check
+		utils::hook::nop(0x4B4120, 6); utils::hook(0x4B4120, fx_cullsphere_stub, HOOK_JUMP).install()->quick();
+
+		dvars::fx_cull_elem_draw_radius = game::Dvar_RegisterFloat(
+			"fx_cull_elem_draw_radius",
+			1200.0f, 0.0f, 100000.0f,
+			game::dvar_flags::archive,
+			"fx elements inside this radius are not affected by culling (fx_cull_elem_draw)");
 
 		// ------------------------------------------------------------------------
 
@@ -832,10 +906,10 @@ namespace components::sp
 		command::add("rtx_sky_overcast", [](command::params) { main_module::skysphere_spawn(3); });
 		command::add("rtx_sky_sunset", [](command::params) { main_module::skysphere_spawn(4); });
 
-		/*command::add("fog_update", [this](command::params)
+		command::add("export_entities", [this](command::params)
 		{
-			update_fog_settings();
-		});*/
+			export_entity_string();
+		});
 
 		command::add("noborder", [this](command::params)
 		{

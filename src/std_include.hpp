@@ -47,6 +47,7 @@
 #pragma warning(pop)
 
 #include "game/structs.hpp"
+#include "game/dvars.hpp"
 #include "utils/utils.hpp"
 #include "utils/memory.hpp"
 #include "utils/hooking.hpp"

@@ -22,14 +22,22 @@ namespace utils
 
 		function& operator=(const std::uintptr_t& address)
 		{
-			this->func_ = std::function<T>(reinterpret_cast<T*>(address));
+			this->set(address);
+			return *this;
+		}
+		function& operator=(const function<T>& function)
+		{
+			this->set(function);
 			return *this;
 		}
 
-		function& operator=(const function<T>& function)
+		void set(const std::uintptr_t& address)
+		{
+			this->func_ = reinterpret_cast<T*>(address);
+		}
+		void set(const function<T>& function)
 		{
 			this->func_ = function.func_;
-			return *this;
 		}
 
 		template <typename ...Args>
@@ -48,7 +56,7 @@ namespace utils
 			return func_;
 		}
 
-		operator void*() const
+		operator void* () const
 		{
 			return this->func_;
 		}

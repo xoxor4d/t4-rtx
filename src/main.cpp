@@ -20,6 +20,7 @@ BOOL APIENTRY DllMain(HMODULE /*hModule*/, DWORD  ul_reason_for_call, LPVOID /*l
 			}
 		}
 
+		game::init_offsets();
 		components::loader::initialize();
 
 		// cookie 0x7A8256 --- sp == 0x7AF316

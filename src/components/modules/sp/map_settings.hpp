@@ -2,15 +2,15 @@
 
 namespace components::sp
 {
-	class fog : public component
+	class map_settings : public component
 	{
 	public:
-		fog();
-		~fog() = default;
-		const char* get_name() override { return "fog_sp"; }
+		map_settings();
+		~map_settings() = default;
+		const char* get_name() override { return "map_settings_sp"; }
 
-		static fog* p_this;
-		static fog* get();
+		static map_settings* p_this;
+		static map_settings* get();
 
 		static inline float m_max_distance = 5000.0f;
 		static inline game::GfxColor m_color = { 0x00FFFFFF };
@@ -18,15 +18,15 @@ namespace components::sp
 		void set_settings_for_loaded_map(bool reload_settings = false);
 
 	private:
-		struct fog_settings
+		struct settings_s
 		{
 			std::string mapname;
+			int skybox;
 			float max_distance = 5000.0f;
 			game::GfxColor m_color = { 0x00FFFFFF };
 		};
 
-		static inline std::vector<fog_settings> m_settings;
-
+		static inline std::vector<settings_s> m_settings;
 		bool load_settings();
 	};
 }

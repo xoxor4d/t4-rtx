@@ -84,4 +84,9 @@ namespace game
 	extern GfxBackEndData* get_backenddata();
 
 	void Cmd_AddCommand(const char* name, void(*callback)(), cmd_function_s* data, char);
+	dvar_s* Dvar_RegisterFloat(const char* name, float value, float min, float max, game::dvar_flags flags, const char* description);
+
+	// mp-sp functions
+	extern utils::function<dvar_s* (const char*, int, int, DvarValue, DvarLimits, const char*)> Dvar_RegisterVariant;
+	void init_offsets();
 }

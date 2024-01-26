@@ -1,6 +1,9 @@
 #include "std_include.hpp"
 using namespace game::sp;
 
+// TODO:
+// fx_cull_elem_draw 0 :: disable culling within radius defined by dvar so culling can happen outside of that radius
+
 namespace components::sp
 {
 	struct unpacked_model_vert
@@ -879,7 +882,8 @@ namespace components::sp
 
 	IDirect3DVertexShader9* _og_codemesh_vertex_shader;
 	IDirect3DPixelShader9* _og_codemesh_pixel_shader;
-	constexpr auto MAX_EFFECT_VERTS = 0x1000; // !ADJUST hook::set (0x73D70F)
+	//constexpr auto MAX_EFFECT_VERTS = 0x4000; // 0x1000
+	constexpr auto MAX_EFFECT_VERTS_FOR_HOOK = 0x40; // vertcount for DrawIndexedPrimitive // og: 0x40
 
 	void R_TessCodeMeshList_begin(game::GfxDrawSurfListArgs* listArgs)
 	{
@@ -893,8 +897,8 @@ namespace components::sp
 		prim->device->SetFVF(MODEL_VERTEX_FORMAT);
 
 		// save shaders
-		prim->device->GetVertexShader(&_og_codemesh_vertex_shader);
-		prim->device->GetPixelShader(&_og_codemesh_pixel_shader);
+		//prim->device->GetVertexShader(&_og_codemesh_vertex_shader);
+		//prim->device->GetPixelShader(&_og_codemesh_pixel_shader);
 
 		// def. needed or the game will render the mesh using shaders
 		prim->device->SetVertexShader(nullptr);
@@ -921,14 +925,14 @@ namespace components::sp
 		// unpack codemesh vertex data and place new data into the dynamic vertex buffer
 
 		void* og_buffer_data;
-		if (const auto hr = source->data->codeMesh.vb.buffer->Lock(0, source->data->codeMesh.vertSize * MAX_EFFECT_VERTS, &og_buffer_data, D3DLOCK_READONLY);
+		if (const auto hr = source->data->codeMesh.vb.buffer->Lock(0, source->data->codeMesh.vb.used /*source->data->codeMesh.vertSize * MAX_EFFECT_VERTS*/, &og_buffer_data, D3DLOCK_READONLY);
 			hr < 0)
 		{
 			//R_FatalLockError(hr);
 			game::sp::Com_Error(0, "Fatal lock error - codeMesh :: R_TessCodeMeshList_begin");
 		}
 
-		if ((int)(MODEL_VERTEX_STRIDE * MAX_EFFECT_VERTS + game::sp::gfx_buf->dynamicVertexBuffer->used) > game::sp::gfx_buf->dynamicVertexBuffer->total)
+		if ((int)(source->data->codeMesh.vb.used /*MODEL_VERTEX_STRIDE * MAX_EFFECT_VERTS*/ + game::sp::gfx_buf->dynamicVertexBuffer->used) > game::sp::gfx_buf->dynamicVertexBuffer->total)
 		{
 			game::sp::gfx_buf->dynamicVertexBuffer->used = 0;
 		}
@@ -936,7 +940,7 @@ namespace components::sp
 		// R_SetVertexData
 		void* buffer_data;
 		if (const auto hr = game::sp::gfx_buf->dynamicVertexBuffer->buffer->Lock(
-			game::sp::gfx_buf->dynamicVertexBuffer->used, MODEL_VERTEX_STRIDE * MAX_EFFECT_VERTS, &buffer_data, 
+			game::sp::gfx_buf->dynamicVertexBuffer->used, source->data->codeMesh.vb.used /*MODEL_VERTEX_STRIDE * MAX_EFFECT_VERTS*/, &buffer_data,
 				game::sp::gfx_buf->dynamicVertexBuffer->used != 0 ? 0x1000 : 0x2000); 
 					hr < 0)
 		{
@@ -947,10 +951,15 @@ namespace components::sp
 		// #
 		// unpack verts
 
-		for (auto i = 0u; i < MAX_EFFECT_VERTS; i++)
+		for (auto i = 0u; i * source->data->codeMesh.vertSize < (unsigned)source->data->codeMesh.vb.used; i++) /*i < MAX_EFFECT_VERTS*/
 		{
 			// position of vert within the vertex buffer
 			const auto v_pos_in_buffer = i * source->data->codeMesh.vertSize; // size of GfxPackedVertex
+
+			/*if (v_pos_in_buffer > source->data->codeMesh.vb.used)
+			{
+				break;
+			}*/
 
 			// interpret GfxPackedVertex as unpacked_model_vert
 			const auto v = reinterpret_cast<unpacked_model_vert*>(((DWORD)buffer_data + v_pos_in_buffer));
@@ -981,7 +990,7 @@ namespace components::sp
 		game::sp::gfx_buf->dynamicVertexBuffer->buffer->Unlock();
 
 		const std::uint32_t vert_offset = game::sp::gfx_buf->dynamicVertexBuffer->used;
-		game::sp::gfx_buf->dynamicVertexBuffer->used += (MODEL_VERTEX_STRIDE * MAX_EFFECT_VERTS);
+		game::sp::gfx_buf->dynamicVertexBuffer->used += source->data->codeMesh.vb.used /*(MODEL_VERTEX_STRIDE * MAX_EFFECT_VERTS)*/;
 
 		// #
 		// #
@@ -1143,7 +1152,6 @@ namespace components::sp
 		__asm
 		{
 			pushad;
-			//call	build_static_model_buffers; // no need - we hook 'XSurfaceOptimize'
 			call	build_gfxworld_buffers;
 			call	main_module::on_map_load;
 			popad;
@@ -1166,9 +1174,6 @@ namespace components::sp
 			gfx_world_vertexbuffer->Release();
 			gfx_world_vertexbuffer = nullptr;
 		}
-
-		// cleanup model buffer
-		// we dont need to cleanup in waw because the game already does that for us
 	}
 
 	// called on renderer shutdown (R_Shutdown)
@@ -1210,11 +1215,9 @@ namespace components::sp
 		// fixed-function rendering of skinned (animated) models (R_TessXModelSkinnedDrawSurfList)
 		utils::hook(0x73F190, R_DrawXModelSkinnedUncached_stub, HOOK_JUMP).install()->quick();
 
-		// #
 		// fixed-function rendering of world surfaces (R_TessTrianglesPreTessList)
 		// :: R_SetStreamsForBspSurface -> R_ClearAllStreamSources -> Stream 1 (world->vld.layerVb) handles 'decals'
 		// :: see technique 'lm_r0c0t1c1n1_nc_sm3.tech'
-
 		utils::hook(0x741408, R_DrawBspDrawSurfsPreTess, HOOK_CALL).install()->quick(); // unlit
 
 		// fixed-function rendering of brushmodels
@@ -1223,7 +1226,7 @@ namespace components::sp
 		// fixed-function rendering of effects - R_TessCodeMeshList (particle clounds are still shader based)
 		if (!flags::has_flag("stock_effects"))
 		{
-			utils::hook::set<BYTE>(0x73D70F + 5, 0x10); // change max verts from 0x4000 to 0x1000 
+			utils::hook::set<BYTE>(0x73D70F + 5, MAX_EFFECT_VERTS_FOR_HOOK); // change max verts from 0x4000 to 0x1000 
 			utils::hook::nop(0x73D5CB, 5); // R_UpdateVertexDecl
 			utils::hook::nop(0x73D6E2, 5); // R_SetStreamSource
 			utils::hook::nop(0x73D59C, 7); utils::hook(0x73D59C, R_TessCodeMeshList_begin_stub, HOOK_JUMP).install()->quick();

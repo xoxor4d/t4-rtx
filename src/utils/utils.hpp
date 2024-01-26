@@ -3,6 +3,8 @@
 
 namespace utils
 {
+	#define VECTOR_SUBTRACT(a,b,c)	((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1],(c)[2]=(a)[2]-(b)[2])
+
 	int try_stoi(const std::string& str, const int& default_return_val);
 	float try_stof(const std::string& str, const float& default_return_val = 0.0f);
 
@@ -61,8 +63,8 @@ namespace utils
 		return split(str, std::vector < char >({ delimiter }));
 	}
 
-	bool starts_with(std::string haystack, std::string needle);
-	bool string_contains(const std::string& s1, const std::string s2);
+	bool starts_with(std::string_view haystack, std::string_view needle);
+	bool string_contains(const std::string_view& s1, const std::string_view s2);
 	void replace_all(std::string& source, const std::string_view& from, const std::string_view& to);
 	bool erase_substring(std::string& base, const std::string& replace);
 	std::string str_to_lower(std::string input);
@@ -74,6 +76,9 @@ namespace utils
 	void axis_to_angles(game::vec3_t axis[3], game::vec3_t angles);
 	void axis_transpose(const float(*in)[3], float(*out)[3]);
 	void unit_quat_to_axis(const float* quat, float(*axis)[3]);
+
+	game::vec_t	length(const game::vec3_t v);
+	game::vec_t	distance(const game::vec3_t p1, const game::vec3_t p2);
 
 	void byte3_pack_rgba(const float* from, unsigned char* to);
 	void byte4_pack_rgba(const float* from, char* to);

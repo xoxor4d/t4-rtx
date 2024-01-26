@@ -118,4 +118,26 @@ namespace game
 			__debugbreak(); // TODO
 		}
 	}
+
+	// *
+	// mp-sp functions
+
+	utils::function<dvar_s* (const char* dvarName, int type, int flags, DvarValue value, DvarLimits domain, const char* description)> Dvar_RegisterVariant;
+
+	dvar_s* Dvar_RegisterFloat(const char* name, float value, float min, float max, game::dvar_flags flags, const char* description)
+	{
+		game::DvarValue val = {};
+		val.value = value;
+
+		game::DvarLimits lim = {};
+		lim.value.min = min;
+		lim.value.max = max;
+
+		return game::Dvar_RegisterVariant(name, game::dvar_type::value, flags, val, lim, description);
+	}
+
+	void init_offsets()
+	{
+		Dvar_RegisterVariant = SELECT(0x5C5100, 0x5EED90);
+	}
 }

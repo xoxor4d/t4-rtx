@@ -15,7 +15,7 @@ namespace components
 		{
 			_register(new sp::main_module());
 			_register(new sp::fixed_function());
-			_register(new sp::fog());
+			_register(new sp::map_settings());
 		}
 
 		if (game::is_mp)

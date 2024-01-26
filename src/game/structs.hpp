@@ -2648,6 +2648,7 @@ namespace game
 		rgb = 0x9,
 	};
 
+	#pragma pack(push, 4)
 	union DvarValue
 	{
 		bool enabled;
@@ -2657,7 +2658,7 @@ namespace game
 		float vector[4];
 		const char* string;
 		char color[4];
-	};
+	}; STATIC_ASSERT_SIZE(DvarValue, 0x10);
 
 	union DvarLimits
 	{

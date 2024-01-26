@@ -37,12 +37,12 @@ namespace utils
 		return ret;
 	}
 
-	bool starts_with(std::string haystack, std::string needle)
+	bool starts_with(std::string_view haystack, std::string_view needle)
 	{
 		return (haystack.size() >= needle.size() && !strncmp(needle.data(), haystack.data(), needle.size()));
 	}
 
-	bool string_contains(const std::string& s1, const std::string s2)
+	bool string_contains(const std::string_view& s1, const std::string_view s2)
 	{
 		const auto it = s1.find(s2);
 		if (it != std::string::npos)
@@ -577,6 +577,18 @@ namespace utils
 		(*axis)[6] = xz + yw;
 		(*axis)[7] = yz - xw;
 		(*axis)[8] = 1.0f - (xx + yy);
+	}
+
+	game::vec_t length(const game::vec3_t v)
+	{
+		return (game::vec_t)sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+	}
+
+	game::vec_t distance(const game::vec3_t p1, const game::vec3_t p2)
+	{
+		game::vec3_t v;
+		VECTOR_SUBTRACT(p2, p1, v);
+		return length(v);
 	}
 
 	void byte3_pack_rgba(const float* from, unsigned char* to)

@@ -6,7 +6,7 @@ This client modification is made to make the game compatible with nvidia's [rtx-
 It does __not__ come with a 'rtx mod' -> meaning no custom models nor materials.  
 
 A demo mod can be found over at modDB: https://www.moddb.com/mods/cod5-nacht-der-untoten-demo  
-Footage: https://www.youtube.com/watch?v=hCv3p1qT3q0
+^ Footage: https://www.youtube.com/watch?v=hCv3p1qT3q0
 
 <br>
 
@@ -60,14 +60,15 @@ remix runtime - https://github.com/NVIDIAGameWorks/dxvk-remix/actions
 
 ## Dvars / Console Commands to further tweak the game to your liking:
 
+> 🔸 skybox and fog settings can be tweaked per map by using `map_settings.ini` found in the `t4rtx` folder 🔸
+
 - use console commands starting with `rtx_sky_` to spawn/change the skybox
-- `r_lodScaleRigid` :: (1) adjust static model draw distances (lower values increase draw distance)
-- `r_aspectRatio` :: (AUTO) is truly auto now and supports any aspect ratio
+- `r_forceLod` :: force all models to a specific LOD (highest by default)
+- `r_lodScaleRigid` :: adjust static model draw distances (lower values increase draw distance)
+- `r_aspectRatio` :: **AUTO** is truly auto now and supports any aspect ratio
 - use console commands `noborder` & `windowed` to switch between borderless and normal windowed mode  
 (set dvars `vid_xpos 0` and `vid_ypos 0` to put the window in the top left corner)
-- `fx_cull_elem_draw` :: (0) to not cull effects based on viewing direction
-
-> + fog settings can be tweaked using `fog.ini` found in the `t4rtx` folder
+- `fx_cull_elem_draw_radius` :: fx elements inside this radius are not affected by culling (`fx_cull_elem_draw` needs to be enabled for this)
 
 Visit the Wiki section for more in-depth info: https://github.com/xoxor4d/t4-rtx/wiki/Home-%E2%80%90-General-Tips-%E2%80%90-Troubleshooting-%E2%80%90-etc
 
@@ -81,16 +82,18 @@ Visit the Wiki section for more in-depth info: https://github.com/xoxor4d/t4-rtx
   - `-no_default_sky` :: disable spawning of a default sky on each map
   - `-stock_effects` :: render effects using shaders
   - `-no_fog` :: disable fog
+  - `-no_forced_lod` :: do not set `r_forceLod` to `high` by default  
+  
   > eg: &ensp;`c:\path\CoDWaWmp.exe -no_default_sky -stock_effects` 
 
   - Notes: 
-    - `r_warm_static` :: (1) force static models to LOD0
     - `r_warm_dpvs` :: (1) disable all culling 
+    - `r_warm_static` :: (1) unlimited draw distance for static models (not recommended, use `r_lodScaleRigid`)
 
 <br>
 
 - B. Console commands:  
-  - `set export_entities 1` to export map entities and static models (misc_models) to `cod5root/t4rtx/entity-export/mapname.map`  
+  - `export_entities` :: export map entities and static models (misc_models) to `cod5root/t4rtx/entity-export/mapname.map`  
 
 <br>
 
@@ -98,18 +101,13 @@ Visit the Wiki section for more in-depth info: https://github.com/xoxor4d/t4-rtx
 
 <br>
 
-## Current issues:
-- changing resolution or anything else that requires the game to semi-restart might crash the game
-  > use commandline arguments like `c:\path\CoDWaWmp.exe +set r_fullscreen 0` or edit your player config (`appdata/local/Activision/CoDWaW/players/yourprofile`)
+## ⚠️ Current issues:
+- changing resolution or anything else that requires the game to restart the renderer might crash the game
+  > use commandline arguments like `c:\path\CoDWaWmp.exe +set r_fullscreen 0` or edit your player config (`appdata/local/Activision/CoDWaW/players/yourprofile`) before starting the game
 - captures taken with the remix runtime currently need to be captured in `USDA` format so that they can be edited with a text editor
   > see: https://github.com/xoxor4d/t4-rtx/wiki/Home-%E2%80%90-General-Tips-%E2%80%90-Troubleshooting-%E2%80%90-etc
-- the gun gets a little wobbly the further from 0 0 0 you are -> "fix" with following dvars:
-  > r_znear "40.0"  
-  > too heigh values will cause wrong volumetrics (visualize with Surface Volume Radiance)  
-  > too low values will result in wobble
-- if your map is mostly black, open remix and go to textures -> hover your mouse over the sky is and select the sky category.
-- effects will slow down the game (really depends on the effect and the amount - use `fx_enable 0` to disable effects completely) 
-- static models might look weird at times because motion vectors are not correct (remix issue?)
+
+- effects will slow down the game (really depends on the effect and the amount - use `fx_enable 0` or `fx_cull_` dvars to adjust to your liking - marking certain effect textures as _ignore_ might help as well) 
 - don't use shadermodel 2.0. The game itself does not support it.  
 
 <br>
