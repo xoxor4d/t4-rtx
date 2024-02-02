@@ -28,6 +28,7 @@ namespace game
 		extern cmd_function_s** cmd_ptr;
 
 		static DWORD* gfxCmdBufSourceState_ptr = (DWORD*)(0x829EA8);
+		static DWORD* frontEndDataOut_ptr = (DWORD*)(0x3DCB498);
 		static DWORD* backEndDataOut_ptr = (DWORD*)(0x3DCB4CC);
 
 		static utils::function<dvar_s* __cdecl (const char* name)> Dvar_FindVar = 0x5EDE30;
@@ -81,6 +82,7 @@ namespace game
 	}
 
 	extern GfxCmdBufSourceState* get_cmdbufsourcestate();
+	extern GfxBackEndData* get_frontenddata();
 	extern GfxBackEndData* get_backenddata();
 
 	void Cmd_AddCommand(const char* name, void(*callback)(), cmd_function_s* data, char);

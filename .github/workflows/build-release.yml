@@ -55,7 +55,7 @@ jobs:
           path: |
             ./nvapi.dll
             ./t4-rtx.pdb
-            ./assets/*
+            ./assets/
   
   webbook:
     needs: build

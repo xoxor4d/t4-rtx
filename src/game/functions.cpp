@@ -97,6 +97,12 @@ namespace game
 		return out;
 	}
 
+	GfxBackEndData* get_frontenddata()
+	{
+		const auto out = reinterpret_cast<GfxBackEndData*>(game::is_mp ? NULL : *sp::frontEndDataOut_ptr);
+		return out;
+	}
+
 	GfxBackEndData* get_backenddata()
 	{
 		const auto out = reinterpret_cast<GfxBackEndData*>(game::is_mp ? *mp::backEndDataOut_ptr : *sp::backEndDataOut_ptr);

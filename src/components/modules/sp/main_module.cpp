@@ -749,6 +749,60 @@ namespace components::sp
 		}
 	}
 
+
+
+	// return true if material / surface / ... is invalid - HACK!
+	int r_add_bmodel_surfaces_camera_check(game::GfxSurface* bsp_surf)
+	{
+		const auto mem_x = (DWORD)game::get_frontenddata();
+		const auto mem_mat = (DWORD)bsp_surf->material;
+		const auto mem_surf = (DWORD) & *bsp_surf;
+
+		// HACK 1
+		if (mem_x == 0xcccccccc || mem_surf < 0x400000 || mem_mat < 0x400000)
+		{
+			return 1;
+		}
+
+		// HACK 2
+		if (!bsp_surf || !bsp_surf->flags || (!bsp_surf->tris.triCount && !bsp_surf->pad) || !bsp_surf->material)
+		{
+			return 1;
+		}
+
+		return 0;
+	}
+
+	__declspec(naked) void r_add_bmodel_surfaces_camera_stub()
+	{
+		const static uint32_t stock_addr = 0x6DACB6;
+		const static uint32_t skip_surface_addr = 0x6DAD97; // retn
+		__asm
+		{
+			// og code
+			mov     edx, [ecx - 4];
+
+			pushad;
+			push	edx; // gfxsurf
+			call	r_add_bmodel_surfaces_camera_check;
+			add		esp, 4;
+			cmp		eax, 1;
+			je		SKIP_SURF;				// skip if material invalid
+			popad;
+
+			// og code
+			mov     edx, [ecx - 4];
+			mov     eax, [edx + 0x14];
+			jmp		stock_addr;
+
+		SKIP_SURF:
+			popad;
+			jmp		skip_surface_addr;
+		}
+	}
+
+
+
 	// returns true if inside radius
 	int fx_cullsphere_radius_check(const float* camera_pos,const float* fx_world_pos)
 	{
@@ -869,13 +923,22 @@ namespace components::sp
 		// note: dvar 'r_fovScaleThresholdRigid' can be used to stop fov related lod changes
 
 		// implement r_forcelod logic for skinned models (R_SkinXModel)
+		// TODO: this causes crashes on some maps
 		utils::hook::nop(0x6D9C10, 7);  utils::hook(0x6D9C10, skinned_xmodel_get_lod_for_dist_inlined, HOOK_JUMP).install()->quick();
 
 		// implement r_forcelod logic for all other static models (R_AddAllStaticModelSurfacesCamera)
 		utils::hook::nop(0x732CD6, 7);  utils::hook(0x732CD6, rigid_xmodel_get_lod_for_dist_inlined, HOOK_JUMP).install()->quick();
 
+		// r_warm_dpvs check @ 0x6E5D21 adds static models per cell
+		// ^ @ 0x7398B4 frustum culling
 		// DISABLE CULLING :: stop 'r_warm_dpvs' dvar from resetting itself je 0x74 -> jmp 0xEB
 		utils::hook::set<BYTE>(0x6DDED8, 0xEB);
+
+		// do not add dynent bmodels
+		//utils::hook::nop(0x6DD7BE, 5);
+
+		// fix nullptr access (gfxsurface->material ptr) that can occur when culling is disabled (certain sp maps)
+		utils::hook::nop(0x6DACB0, 6); utils::hook(0x6DACB0, r_add_bmodel_surfaces_camera_stub, HOOK_JUMP).install()->quick();
 
 		// hook FX_CullSphere to implement an additional radius check
 		utils::hook::nop(0x4B4120, 6); utils::hook(0x4B4120, fx_cullsphere_stub, HOOK_JUMP).install()->quick();

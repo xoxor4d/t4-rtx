@@ -951,7 +951,7 @@ namespace components::sp
 		// #
 		// unpack verts
 
-		for (auto i = 0u; i * source->data->codeMesh.vertSize < (unsigned)source->data->codeMesh.vb.used; i++) /*i < MAX_EFFECT_VERTS*/
+		for (auto i = 0u; i * source->data->codeMesh.vertSize < (unsigned)source->data->codeMesh.vb.used && i < 16384; i++)
 		{
 			// position of vert within the vertex buffer
 			const auto v_pos_in_buffer = i * source->data->codeMesh.vertSize; // size of GfxPackedVertex
