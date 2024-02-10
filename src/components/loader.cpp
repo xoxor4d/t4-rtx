@@ -22,6 +22,13 @@ namespace components
 		{
 			_register(new mp::main_module());
 		}
+
+#if DEBUG
+		for (const auto& str : game::loaded_modules)
+		{
+			printf(str.c_str());
+		}
+#endif
 	}
 
 	void loader::uninitialize()

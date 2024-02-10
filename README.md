@@ -3,6 +3,8 @@
 <div align="center" markdown="1"> 
 
 This client modification is made to make the game compatible with nvidia's [rtx-remix](https://github.com/NVIDIAGameWorks/rtx-remix).  
+How? By manually reimplementing fixed function rendering :) 
+
 It does __not__ come with a 'rtx mod' -> meaning no custom models nor materials.  
 
 A demo mod can be found over at modDB: https://www.moddb.com/mods/cod5-nacht-der-untoten-demo  
@@ -102,13 +104,22 @@ Visit the Wiki section for more in-depth info: https://github.com/xoxor4d/t4-rtx
 <br>
 
 ## ⚠️ Current issues:
-- changing resolution or anything else that requires the game to restart the renderer might crash the game
-  > use commandline arguments like `c:\path\CoDWaWmp.exe +set r_fullscreen 0` or edit your player config (`appdata/local/Activision/CoDWaW/players/yourprofile`) before starting the game
-- captures taken with the remix runtime currently need to be captured in `USDA` format so that they can be edited with a text editor
-  > see: https://github.com/xoxor4d/t4-rtx/wiki/Home-%E2%80%90-General-Tips-%E2%80%90-Troubleshooting-%E2%80%90-etc
-
+- fullscreen, changing resolution or anything else that requires the game to restart the renderer might crash the game
 - effects will slow down the game (really depends on the effect and the amount - use `fx_enable 0` or `fx_cull_` dvars to adjust to your liking - marking certain effect textures as _ignore_ might help as well) 
-- don't use shadermodel 2.0. The game itself does not support it.  
+
+<br>
+
+## 💭 Troubleshoot:
+- game wont load or shows an error on startup?  
+  - make sure you are on the latest version (1.7)
+  - disable your onboard gpu (BIOS)
+  - download a [debug build](https://github.com/xoxor4d/t4-rtx/actions) and watch for descriptive errors in the external console
+  - try to run the game in windowed mode: 
+    - use commandline arguments like `c:\path\CoDWaW.exe +set r_fullscreen 0`
+	- or edit your player config (`appdata/local/Activision/CoDWaW/players/yourprofile`)
+
+- captures loaded in the toolkit dont work correctly (UTF8 error), look [here](https://github.com/xoxor4d/t4-rtx/wiki/Home-%E2%80%90-General-Tips-%E2%80%90-Troubleshooting-%E2%80%90-etc)
+- shadermodel 2.0 is not supported. 
 
 <br>
 <br>

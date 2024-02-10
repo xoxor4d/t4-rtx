@@ -4,9 +4,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 
-// *
-// gui
-#define IMGUI_DEFINE_MATH_OPERATORS
+#ifndef DEBUG
+#define DEBUG 0
+#endif
 
 // Version number
 #include <version.hpp>
@@ -25,6 +25,7 @@
 #include <mutex>
 #include <map>
 #include <unordered_set>
+#include <cassert>
 
 #pragma warning(push)
 #pragma warning(disable: 26495)
@@ -32,19 +33,20 @@
 #include <d3dx9.h>
 #pragma warning(pop)
 
+#if DEBUG
+	#define DEBUG_PRINT(_MSG) if constexpr (DEBUG) { printf(_MSG); }
+	#define DEBUG_ASSERT(cond, msg, ...) if constexpr (DEBUG) { assert((cond) || !fprintf(stderr, (msg "\n"), ##__VA_ARGS__)); }
+#else
+	#define DEBUG_PRINT(_MSG)
+	#define DEBUG_ASSERT(cond, msg, ...)
+#endif
+
+#define ASSERT(cond, msg, ...) assert((cond) || !fprintf(stderr, (msg "\n"), ##__VA_ARGS__))
 #define STRINGIZE_(x) #x
 #define STRINGIZE(x) STRINGIZE_(x)
 #define AssertSize(x, size)								static_assert(sizeof(x) == size, STRINGIZE(x) " structure has an invalid size.")
 #define STATIC_ASSERT_SIZE(struct, size)				static_assert(sizeof(struct) == size, "Size check")
 #define STATIC_ASSERT_OFFSET(struct, member, offset)	static_assert(offsetof(struct, member) == offset, "Offset check")
-
-#pragma warning(push)
-#pragma warning(disable: 6011)
-#pragma warning(disable: 28182)
-#include <imgui.h>
-#include <imgui_impl_dx9.h>
-#include <imgui_impl_win32.h>
-#pragma warning(pop)
 
 #include "game/structs.hpp"
 #include "game/dvars.hpp"
@@ -58,4 +60,3 @@
 #include "components/loader.hpp"
 
 using namespace std::literals;
-namespace imgui = ImGui;

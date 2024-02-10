@@ -60,6 +60,14 @@ namespace components::sp
 	
 	void setup_rtx()
 	{
+#if DEBUG
+		if (static bool p_once = false; !p_once)
+		{
+			DEBUG_PRINT("[T4RTX-DEBUG] # Function: setup_rtx()\n");
+			p_once = true;
+		}
+#endif
+
 		const auto dev = dx->device;
 		const auto data = game::get_backenddata();
 		const auto src = game::get_cmdbufsourcestate();
@@ -377,6 +385,8 @@ namespace components::sp
 
 	void load_common_fast_files()
 	{
+		DEBUG_PRINT("[T4RTX-DEBUG] # Function: load_common_fast_files()\n");
+
 		const char** zone_code_post_gfx = reinterpret_cast<const char**>(0x3BF6800);
 		const char** zone_patch = reinterpret_cast<const char**>(0x3BF6804);
 		const char** zone_ui = reinterpret_cast<const char**>(0x3BF6808);
@@ -431,6 +441,12 @@ namespace components::sp
 			xzone_info_stack[i].freeFlags = 0;
 			++i;
 		}
+#if DEBUG
+		else
+		{
+			DEBUG_PRINT("[T4RTX-DEBUG] # ERR: could not find 'xcommon_rtx.ff'\n");
+		}
+#endif
 
 		// ---------------------------------------------------------------------------------------------------------
 
@@ -853,7 +869,6 @@ namespace components::sp
 		}
 	}
 
-
 	// *
 	// Event stubs
 
@@ -868,8 +883,41 @@ namespace components::sp
 	{
 	}
 
+#if DEBUG
+	void Com_PrintMessage_intercept(const char* msg)
+	{
+		if (msg && !utils::string_contains(msg, "dvar set"))
+		{
+			printf(msg);
+		}
+	}
+
+	__declspec(naked) void Com_PrintMessage_stub()
+	{
+		const static uint32_t og_retn_addr = 0x59A225;
+		__asm
+		{
+			pushad;
+			push	edi;
+			call	Com_PrintMessage_intercept;
+			add		esp, 4;
+			popad;
+
+			// og code
+			mov     esi, [ebp + 8];
+			cmp     esi, 6;
+			jmp		og_retn_addr;
+		}
+	}
+#endif
+
 	main_module::main_module()
 	{
+#if DEBUG
+		utils::hook::nop(0x59A21F, 6);
+		utils::hook(0x59A21F, Com_PrintMessage_stub, HOOK_JUMP).install()->quick();
+#endif
+
 		// *
 		// general
 
@@ -915,6 +963,8 @@ namespace components::sp
 		utils::hook::set<BYTE>(0x70B92D + 1, 0x01); // was 0x48
 		utils::hook::set<BYTE>(0x70B92D + 1, 0x01);
 
+		utils::hook::set<BYTE>(0x707AA2 + 1, 0x0); // change default value of r_fullscreen to 0
+
 		// ------------------------------------------------------------------------
 
 		// disable dynent drawing (could have stable hashes but no stable lods right now)
@@ -956,6 +1006,8 @@ namespace components::sp
 #else
 		static auto version_str = "t4-rtx > "s;
 #endif
+
+		
 
 		// console string ;)
 		utils::hook::set<const char*>(0x472E13 + 1, version_str.c_str());

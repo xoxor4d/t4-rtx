@@ -8,6 +8,8 @@ namespace components::sp
 
 	void map_settings::set_settings_for_loaded_map(bool reload_settings)
 	{
+		DEBUG_PRINT("[T4RTX-DEBUG] # Function: map_settings::set_settings_for_loaded_map()\n");
+
 		if ((m_settings.empty() || reload_settings) && !map_settings::load_settings())
 		{
 			return;
@@ -55,6 +57,8 @@ namespace components::sp
 
 	bool map_settings::load_settings()
 	{
+		DEBUG_PRINT("[T4RTX-DEBUG] # Function: map_settings::load_settings()\n");
+
 		m_settings.clear();
 		m_settings.reserve(32);
 

@@ -1,9 +1,5 @@
 #include "std_include.hpp"
 using namespace game::sp;
-
-// TODO:
-// fx_cull_elem_draw 0 :: disable culling within radius defined by dvar so culling can happen outside of that radius
-
 namespace components::sp
 {
 	struct unpacked_model_vert
@@ -951,7 +947,7 @@ namespace components::sp
 		// #
 		// unpack verts
 
-		for (auto i = 0u; i * source->data->codeMesh.vertSize < (unsigned)source->data->codeMesh.vb.used && i < 16384; i++)
+		for (auto i = 0u; i * source->data->codeMesh.vertSize < (unsigned)source->data->codeMesh.vb.used && i < 0x4000; i++)
 		{
 			// position of vert within the vertex buffer
 			const auto v_pos_in_buffer = i * source->data->codeMesh.vertSize; // size of GfxPackedVertex
@@ -1060,6 +1056,8 @@ namespace components::sp
 
 	void build_gfxworld_buffers()
 	{
+		DEBUG_PRINT("[T4RTX-DEBUG] # Function: build_gfxworld_buffers()\n");
+
 		const auto dev = dx->device;
 		void* vertex_buffer_data = nullptr;
 

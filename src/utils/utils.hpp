@@ -5,7 +5,7 @@ namespace utils
 {
 	#define VECTOR_SUBTRACT(a,b,c)	((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1],(c)[2]=(a)[2]-(b)[2])
 
-	int try_stoi(const std::string& str, const int& default_return_val);
+	int try_stoi(const std::string& str, const int& default_return_val = 0);
 	float try_stof(const std::string& str, const float& default_return_val = 0.0f);
 
 	static std::vector<std::string> split(const std::string& raw_input, const std::vector<char>& delims)
