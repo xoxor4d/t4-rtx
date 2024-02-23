@@ -23,6 +23,7 @@ namespace game
 		extern clipMap_t* cm;
 		extern r_global_permanent_t* rgp;
 		extern GfxBuffers* gfx_buf;
+		extern game::cg_s* cgs;
 
 		extern CmdArgs* cmd_args;
 		extern cmd_function_s** cmd_ptr;
@@ -87,6 +88,8 @@ namespace game
 
 	void Cmd_AddCommand(const char* name, void(*callback)(), cmd_function_s* data, char);
 	dvar_s* Dvar_RegisterFloat(const char* name, float value, float min, float max, game::dvar_flags flags, const char* description);
+	dvar_s* Dvar_RegisterEnum(const char* dvar_name, const char** values, std::uint32_t value_count, int default_value, int flags, const char* description);
+	dvar_s* Dvar_RegisterBool(const char* name, const char* description, bool value, int flags);
 
 	// mp-sp functions
 	extern utils::function<dvar_s* (const char*, int, int, DvarValue, DvarLimits, const char*)> Dvar_RegisterVariant;

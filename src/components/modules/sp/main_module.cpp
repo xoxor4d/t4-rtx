@@ -95,6 +95,28 @@ namespace components::sp
 			dev->SetRenderState(D3DRS_FOGSTART, *(DWORD*)(&fog_start));
 			dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)(&map_settings::m_max_distance));
 		}
+
+		if (dvars::rtx_sky_follow_player && dvars::rtx_sky_follow_player->current.enabled)
+		{
+			main_module::skysphere_update_pos(game::sp::cgs->predictedPlayerState.origin);
+		}
+
+		// update culling vars at the end of a frame (so we don't change culling behaviour mid-frame -> not safe)
+		{
+			// update world culling
+			if (dvars::rtx_disable_world_culling)
+			{
+				main_module::loc_disable_world_culling = dvars::rtx_disable_world_culling->current.integer;
+				main_module::loc_disable_world_culling = main_module::loc_disable_world_culling < 0 ? 0 :
+					main_module::loc_disable_world_culling > 3 ? 3 : main_module::loc_disable_world_culling;
+			}
+
+			// update entity culling
+			if (dvars::rtx_disable_entity_culling)
+			{
+				main_module::loc_disable_entity_culling = dvars::rtx_disable_entity_culling->current.enabled ? 1 : 0;
+			}
+		}
 	}
 
 	__declspec(naked) void rb_draw3d_internal_stub()
@@ -337,10 +359,10 @@ namespace components::sp
 		//}
 
 		// disable culling
-		if (const auto var = Dvar_FindVar("r_warm_dpvs"); var)
+		/*if (const auto var = Dvar_FindVar("r_warm_dpvs"); var)
 		{
 			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
-		}
+		}*/
 
 		// batch surfaces (def. needed)
 		if (const auto var = Dvar_FindVar("r_pretess"); var)
@@ -617,6 +639,26 @@ namespace components::sp
 		skysphere_variant = variant;
 	}
 
+	void main_module::skysphere_update_pos(const float* pos)
+	{
+		if (skysphere_spawned)
+		{
+			skysphere_model->r.svFlags = 0x04;
+			skysphere_model->s.lerp.pos.trBase[0] = pos[0];
+			skysphere_model->s.lerp.pos.trBase[1] = pos[1];
+			skysphere_model->s.lerp.pos.trBase[2] = pos[2];
+			skysphere_model->s.lerp.pos.trType = game::trType_t::TR_STATIONARY;
+			skysphere_model->s.lerp.pos.trTime = 0;
+			skysphere_model->s.lerp.pos.trDuration = 0;
+			skysphere_model->s.lerp.pos.trDelta[0] = 0.0f;
+			skysphere_model->s.lerp.pos.trDelta[1] = 0.0f;
+			skysphere_model->s.lerp.pos.trDelta[2] = 0.0f;
+			skysphere_model->r.currentOrigin[0] = pos[0];
+			skysphere_model->r.currentOrigin[1] = pos[1];
+			skysphere_model->r.currentOrigin[2] = pos[2];
+		}
+	}
+
 	void main_module::skysphere_spawn(int variant)
 	{
 		if (skysphere_is_model_valid())
@@ -869,20 +911,6 @@ namespace components::sp
 		}
 	}
 
-	// *
-	// Event stubs
-
-	// > fixed_function::init_fixed_function_buffers_stub
-	void main_module::on_map_load()
-	{
-		map_settings::get()->set_settings_for_loaded_map();
-	}
-
-	// > fixed_function::free_fixed_function_buffers_stub
-	void main_module::on_map_shutdown()
-	{
-	}
-
 #if DEBUG
 	void Com_PrintMessage_intercept(const char* msg)
 	{
@@ -911,6 +939,199 @@ namespace components::sp
 	}
 #endif
 
+	namespace cull
+	{
+		// R_AddWorldSurfacesPortalWalk
+		__declspec(naked) void world_stub_01()
+		{
+			const static uint32_t retn_skip = 0x6E5585;
+			const static uint32_t retn_stock = 0x6E551E;
+			__asm
+			{
+				// jump if culling is less or disabled
+				cmp		main_module::loc_disable_world_culling, 1;
+				jge		SKIP;
+
+				// og code
+				cmp     esi, ebp;
+				mov		[esp + 0x10], eax;
+				jmp		retn_stock;
+
+			SKIP:
+				mov		[esp + 0x10], eax;
+				jmp		retn_skip;
+			}
+		}
+
+		int _skipped_cull = 0; // helper var
+		__declspec(naked) void world_stub_02_reset_helper()
+		{
+			const static uint32_t retn_stock = 0x739D18;
+			__asm
+			{
+				mov		_skipped_cull, 0;
+				mov		[ecx + 0xC], edi;
+				mov		[ecx + 8], edx;
+				jmp		retn_stock;
+			}
+		}
+
+		__declspec(naked) void world_stub_02_skip_static_model()
+		{
+			const static uint32_t retn_stock = 0x7399B3;
+			const static uint32_t retn_stock_jumped = 0x7399DB;
+			__asm
+			{
+				// do we want to cull static models the way geo would be culled?
+				cmp		main_module::loc_disable_world_culling, 3;
+				jl		STOCK;
+
+				// did we skip the culling check in 'r_cull_world_stub_02'?
+				cmp		_skipped_cull, 1;
+				je		SKIP;
+
+			STOCK:		// og code
+				test    edx, edx;
+				jz		loc_7399DB;
+				mov     esi, [ecx + 0x20];
+				jmp		retn_stock;
+
+			loc_7399DB: // og code
+				jmp		retn_stock_jumped;
+
+
+			SKIP:		// skip static model rendering
+				mov     esi, [ecx + 0x20];
+				jmp		retn_stock_jumped;
+			}
+		}
+
+		// R_AddAabbTreeSurfacesInFrustum_r
+		__declspec(naked) void world_stub_02()
+		{
+			const static uint32_t retn_skip = 0x73991F;
+			const static uint32_t retn_stock = 0x739919;
+			__asm
+			{
+				// jump if culling is disabled
+				cmp		main_module::loc_disable_world_culling, 2;
+				jge		SKIP;
+
+				// og code
+				addss   xmm5, xmm6;
+				comiss  xmm4, xmm5;
+				jmp		retn_stock;
+
+			SKIP: // jumped here because culling is disabled 
+				addss   xmm5, xmm6;
+				comiss  xmm4, xmm5;
+				jnb		HACKED_CULLING;
+				jmp		retn_skip;
+
+			HACKED_CULLING: // jumped here because the game would have culled this object
+				mov		_skipped_cull, 1;
+				jmp		retn_skip;
+			}
+		}
+
+		// R_AddAabbTreeSurfacesInFrustum_r
+		__declspec(naked) void world_stub_03()
+		{
+			const static uint32_t retn_skip = 0x739988;
+			const static uint32_t retn_stock = 0x739955;
+			__asm
+			{
+				// jump if culling is less or disabled
+				cmp		main_module::loc_disable_world_culling, 1;
+				jge		SKIP;
+
+				// og code
+				addss   xmm5, xmm0;
+				comiss  xmm5, xmm4;
+				jmp		retn_stock;
+
+			SKIP:
+				addss   xmm5, xmm0;
+				comiss  xmm5, xmm4;
+				jmp		retn_skip;
+			}
+		}
+
+		// R_AddCellSceneEntSurfacesInFrustumCmd
+		__declspec(naked) void entities_stub()
+		{
+			const static uint32_t retn_skip = 0x74A31B;
+			const static uint32_t retn_stock = 0x74A315;
+			__asm
+			{
+				cmp		main_module::loc_disable_entity_culling, 1;
+				je		SKIP;
+
+				// stock op's
+				and		[esp + 0xC], esi;
+				mov     esi, [esp + 0x4C];
+				jmp		retn_stock;
+
+			SKIP:
+				and		[esp + 0xC], esi;
+				mov     esi, [esp + 0x4C];
+				jmp		retn_skip;
+			}
+		}
+	}
+
+	int skip_image_load(game::GfxImage* img)
+	{
+		// 0x2 = color, 0x5 = normal, 0x8 = spec
+		if (img->semantic == 0x5 || img->semantic == 0x8)
+		{
+			return 1;
+	}
+
+		return 0;
+	}
+
+	__declspec(naked) void load_image_stub()
+	{
+		const static uint32_t skip_img_addr = 0x73C6B3;
+		const static uint32_t og_logic_addr = 0x73C6AB;
+		__asm
+		{
+			pushad;
+			push	ebx;					// img
+			call	skip_image_load;
+			pop		ebx;
+			cmp		eax, 1;
+			jne		OG_LOGIC;
+
+			popad;
+			jmp		skip_img_addr;
+
+			// og code
+		OG_LOGIC:
+			popad;
+			push    ebx;
+			mov     edx, edi;
+			lea     eax, [esp + 0x10];
+			jmp		og_logic_addr;
+		}
+	}
+
+
+	// *
+	// Event stubs
+
+	// > fixed_function::init_fixed_function_buffers_stub
+	void main_module::on_map_load()
+	{
+		map_settings::get()->set_settings_for_loaded_map();
+	}
+
+	// > fixed_function::free_fixed_function_buffers_stub
+	void main_module::on_map_shutdown()
+	{
+	}
+
 	main_module::main_module()
 	{
 #if DEBUG
@@ -929,6 +1150,13 @@ namespace components::sp
 
 		// precaching xmodels beyond level load (dynamic skysphere spawning)
 		utils::hook::set<BYTE>(0x54A4D6, 0xEB);
+
+		// disable loading of specular and normalmaps (de-clutter remix ui)
+		if (!flags::has_flag("load_normal_spec"))
+		{
+			utils::hook::nop(0x70F85C, 5);
+			utils::hook::nop(0x73C6A4, 7); utils::hook(0x73C6A4, load_image_stub, HOOK_JUMP).install()->quick();
+		}
 
 		// load custom fastfile containing required assets
 		utils::hook(0x6D63A5, load_common_fast_files, HOOK_CALL).install()->quick();
@@ -970,19 +1198,71 @@ namespace components::sp
 		// disable dynent drawing (could have stable hashes but no stable lods right now)
 		//utils::hook::nop(0x6DD7DD, 5);
 
-		// note: dvar 'r_fovScaleThresholdRigid' can be used to stop fov related lod changes
-
 		// implement r_forcelod logic for skinned models (R_SkinXModel)
-		// TODO: this causes crashes on some maps
 		utils::hook::nop(0x6D9C10, 7);  utils::hook(0x6D9C10, skinned_xmodel_get_lod_for_dist_inlined, HOOK_JUMP).install()->quick();
 
 		// implement r_forcelod logic for all other static models (R_AddAllStaticModelSurfacesCamera)
 		utils::hook::nop(0x732CD6, 7);  utils::hook(0x732CD6, rigid_xmodel_get_lod_for_dist_inlined, HOOK_JUMP).install()->quick();
 
-		// r_warm_dpvs check @ 0x6E5D21 adds static models per cell
-		// ^ @ 0x7398B4 frustum culling
-		// DISABLE CULLING :: stop 'r_warm_dpvs' dvar from resetting itself je 0x74 -> jmp 0xEB
+		// note: dvar 'r_fovScaleThresholdRigid' can be used to stop fov related lod changes
+
+
+		// dvar 'r_warm_dpvs' can be used to disable all culling (no longer needed > use dvar 'rtx_disable_world_culling')
+		// DISABLE CULLING :: stop 'r_warm_dpvs' dvar from resetting itself -- 0x6E5D21 adds static models per cell -- 0x7398B4 frustum culling
 		utils::hook::set<BYTE>(0x6DDED8, 0xEB);
+
+		// ^ do not enable 'r_warm_dpvs' by default
+		utils::hook::nop(0x6F69EE, 5);
+
+
+		// *
+		// culling
+		{
+			// R_AddWorldSurfacesPortalWalk :: less culling
+			utils::hook::nop(0x6E5518, 6); utils::hook(0x6E5518, cull::world_stub_01, HOOK_JUMP).install()->quick();
+
+			{
+				// note: using 'rtx_disable_world_culling' = 'less' results in unstable world geometry hashes (but stable static model hashes)
+				// -> using 'all-but-models' leaves culling logic for static models at 'less' but does not cull world geometry
+
+				// R_AddCellStaticSurfacesInFrustumCmd :: stub used to reset the skip model check from the stub below
+				utils::hook::nop(0x739D12, 6); utils::hook(0x739D12, cull::world_stub_02_reset_helper, HOOK_JUMP).install()->quick();
+				// R_AddAabbTreeSurfacesInFrustum_r :: check if culling mode 'all-but-models' is active - check note above
+				utils::hook(0x7399AE, cull::world_stub_02_skip_static_model, HOOK_JUMP).install()->quick();
+
+				// R_AddAabbTreeSurfacesInFrustum_r :: mins check
+				utils::hook::nop(0x739912, 7); utils::hook(0x739912, cull::world_stub_02, HOOK_JUMP).install()->quick();
+			}
+
+			// R_AddAabbTreeSurfacesInFrustum_r :: maxs check
+			utils::hook::nop(0x73994E, 7); utils::hook(0x73994E, cull::world_stub_03, HOOK_JUMP).install()->quick();
+
+			// R_AddCellSceneEntSurfacesInFrustumCmd :: active ents like destructible cars / players
+			utils::hook::nop(0x74A30D, 8); utils::hook(0x74A30D, cull::entities_stub, HOOK_JUMP).install()->quick();
+
+			// R_AddCellSceneEntSurfacesInFrustumCmd :: brushmodels
+			utils::hook::nop(0x74A50A, 2);
+
+			dvars::rtx_disable_world_culling = game::Dvar_RegisterEnum(
+				/* name		*/ "rtx_disable_world_culling",
+				/* enumData */ main_module::rtx_disable_world_culling_enum.data(),
+				/* enumSize	*/ main_module::rtx_disable_world_culling_enum.size(),
+				/* default	*/ 1,
+				/* flags	*/ game::dvar_flags::saved,
+				/* desc		*/ "Disable world culling. 'all' is needed for stable geometry hashes!\n"
+							   "- less: reduces culling to portals only (unstable world geo hashes!)\n"
+							   "- all: disable culling of all surfaces including models\n"
+							   "- all-but-models: disable culling of all surfaces excluding models");
+
+			dvars::rtx_disable_entity_culling = game::Dvar_RegisterBool(
+				/* name		*/ "rtx_disable_entity_culling",
+				/* desc		*/ "Disable culling of game entities (script objects/destructible cars ...)",
+				/* default	*/ true,
+				/* flags	*/ game::dvar_flags::saved);
+		}
+
+		// ignore "too many static models ..." msg - still add model to the scene
+		utils::hook::nop(0x732D25, 6); utils::hook::jump(0x732D25, 0x732E22);
 
 		// do not add dynent bmodels
 		//utils::hook::nop(0x6DD7BE, 5);
@@ -998,6 +1278,12 @@ namespace components::sp
 			1200.0f, 0.0f, 100000.0f,
 			game::dvar_flags::archive,
 			"fx elements inside this radius are not affected by culling (fx_cull_elem_draw)");
+
+		dvars::rtx_sky_follow_player = game::Dvar_RegisterBool(
+			/* name		*/ "rtx_sky_follow_player",
+			/* desc		*/ "Sky will follow the player (can help with culling issues)",
+			/* default	*/ true,
+			/* flags	*/ game::dvar_flags::saved);
 
 		// ------------------------------------------------------------------------
 
@@ -1046,6 +1332,11 @@ namespace components::sp
 				SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
 				SetWindowPos(hwnd, nullptr, 0, 0, game::sp::dx->windows->width, game::sp::dx->windows->height + sp::main_module::noborder_titlebar_height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
 			}
+		});
+
+		command::add("unlockall", [this](command::params)
+		{
+			game::sp::Cmd_ExecuteSingleCommand(0, 0, "seta mis_01 50");
 		});
 	}
 }

@@ -6,6 +6,8 @@
 #define HK_JUMP Detours::X86Option::USE_JUMP
 #define HK_CALL Detours::X86Option::USE_CALL
 
+#define CalculateRelativeJMPAddress(X, Y) (((std::uintptr_t)Y - (std::uintptr_t)X) - 5)
+
 namespace utils
 {
 	class hook
@@ -62,6 +64,8 @@ namespace utils
 		static void redirect_jump(void* place, void* stub);
 		static void redirect_jump(DWORD place, void* stub);
 
+		static void jump(std::uintptr_t address, std::uintptr_t destination);
+
 		template <typename T> static void set(void* place, T value)
 		{
 			DWORD oldProtect;
@@ -76,6 +80,17 @@ namespace utils
 		template <typename T> static void set(DWORD place, T value)
 		{
 			return set<T>(reinterpret_cast<void*>(place), value);
+		}
+
+		static void set(std::uintptr_t address, void* buffer, size_t size)
+		{
+			DWORD oldProtect = 0;
+
+			auto* place = reinterpret_cast<void*>(address);
+			VirtualProtect(place, size, PAGE_EXECUTE_READWRITE, &oldProtect);
+			memcpy(place, buffer, size);
+			VirtualProtect(place, size, oldProtect, &oldProtect);
+			FlushInstructionCache(GetCurrentProcess(), place, size);
 		}
 
 	private:

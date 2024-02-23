@@ -17,6 +17,7 @@ namespace game
 		clipMap_t* cm = reinterpret_cast<clipMap_t*>(0x1F41A00);
 		r_global_permanent_t* rgp = reinterpret_cast<r_global_permanent_t*>(0x3BF1880);
 		game::GfxBuffers* gfx_buf = reinterpret_cast<game::GfxBuffers*>(0x42C2000);
+		game::cg_s* cgs = reinterpret_cast<game::cg_s*>(0x34732B8);
 
 		CmdArgs* cmd_args = reinterpret_cast<CmdArgs*>(0x1F41670);
 		cmd_function_s** cmd_ptr = reinterpret_cast<cmd_function_s**>(0x1F416F4);
@@ -140,6 +141,30 @@ namespace game
 		lim.value.max = max;
 
 		return game::Dvar_RegisterVariant(name, game::dvar_type::value, flags, val, lim, description);
+	}
+
+	dvar_s* Dvar_RegisterEnum(const char* dvar_name, const char** values, std::uint32_t value_count, int default_value, int flags, const char* description)
+	{
+		game::DvarValue val = {};
+		val.integer = default_value;
+
+		game::DvarLimits lim = {};
+		lim.enumeration.stringCount = static_cast<int>(value_count);
+		lim.enumeration.strings = values;
+
+		return game::Dvar_RegisterVariant(dvar_name, game::enumeration, flags, val, lim, description);
+	}
+
+	dvar_s* Dvar_RegisterBool(const char* name, const char* description, bool value, int flags)
+	{
+		game::DvarValue val = {};
+		val.enabled = value;
+
+		game::DvarLimits lim = {};
+		lim.integer.min = 0;
+		lim.integer.max = 1;
+
+		return game::Dvar_RegisterVariant(name, game::boolean, flags, val, lim, description);
 	}
 
 	void init_offsets()

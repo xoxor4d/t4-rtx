@@ -164,4 +164,20 @@ namespace utils
 	{
 		hook::redirect_jump(reinterpret_cast<void*>(place), stub);
 	}
+
+	void hook::jump(std::uintptr_t address, std::uintptr_t destination)
+	{
+		if (!address) 
+		{
+			return;
+		}
+
+		const auto bytes = new std::uint8_t[5];
+
+		*bytes = 0xE9;
+		*reinterpret_cast<std::uint32_t*>(bytes + 1) = CalculateRelativeJMPAddress(address, destination);
+
+		utils::hook::set(address, bytes, 5);
+		delete[] bytes;
+	}
 }
