@@ -882,7 +882,6 @@ namespace components::sp
 	int fx_cullsphere_global_helper = 0;
 	__declspec(naked) void fx_cullsphere_stub()
 	{
-		const static uint32_t break_addr = 0x732CEC;
 		const static uint32_t og_continue_addr = 0x4B4126;
 		const static uint32_t og_retn_addr = 0x4B4185;
 		__asm
@@ -1189,9 +1188,9 @@ namespace components::sp
 
 		// un-cheat + userinfo flag for sv_cheats
 		utils::hook::set<BYTE>(0x70B92D + 1, 0x01); // was 0x48
-		utils::hook::set<BYTE>(0x70B92D + 1, 0x01);
 
-		utils::hook::set<BYTE>(0x707AA2 + 1, 0x0); // change default value of r_fullscreen to 0
+		// change default value of r_fullscreen to 0
+		utils::hook::set<BYTE>(0x707AA2 + 1, 0x0); 
 
 		// ------------------------------------------------------------------------
 

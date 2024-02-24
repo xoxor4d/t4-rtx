@@ -12,12 +12,14 @@ namespace components
 			return "";
 		}
 
-		return game::is_sp ? game::sp::cmd_args->argv[this->command_id][index]: nullptr; // TODO
+		return game::is_sp ? game::sp::cmd_args->argv[this->command_id][index]
+			: game::mp::cmd_args->argv[this->command_id][index];
 	}
 
 	size_t command::params::length()
 	{
-		return game::is_sp ? game::sp::cmd_args->argc[this->command_id] : 0; // TODO
+		return game::is_sp ? game::sp::cmd_args->argc[this->command_id]
+			: game::mp::cmd_args->argc[this->command_id];
 	}
 
 	void command::add(const char* name, std::function<command::callback> callback)
@@ -33,11 +35,13 @@ namespace components
 
 		if (sync)
 		{
-			game::is_sp ? game::sp::Cmd_ExecuteSingleCommand(0, 0, command.data()) : __debugbreak(); // TODO
+			game::is_sp ? game::sp::Cmd_ExecuteSingleCommand(0, 0, command.data())
+				: game::mp::Cmd_ExecuteSingleCommand(0, 0, command.data());
 		}
 		else
 		{
-			game::is_sp ? game::sp::Cbuf_AddText(command.data()) : __debugbreak(); // TODO
+			game::is_sp ? game::sp::Cbuf_AddText(command.data())
+				: game::mp::Cbuf_AddText(command.data());
 		}
 	}
 
@@ -51,7 +55,7 @@ namespace components
 
 	void command::main_callback()
 	{
-		command::params params(game::is_sp ? game::sp::cmd_args->nesting : NULL); // TODO
+		command::params params(game::is_sp ? game::sp::cmd_args->nesting : game::mp::cmd_args->nesting);
 		const std::string command = utils::str_to_lower(params[0]);
 
 		if (command::function_map.contains(command))

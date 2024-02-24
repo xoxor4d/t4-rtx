@@ -3305,7 +3305,242 @@ namespace game
 
 	namespace mp
 	{
+		struct __declspec(align(4)) cg_s // TODO
+		{
+			int clientNum;
+			int localClientNum;
+			DemoType demoType;
+			CubemapShot cubemapShot;
+			int cubemapSize;
+			int renderScreen;
+			int latestSnapshotNum;
+			int snapServerTime;
+			int loaded;
+			snapshot_s* snap;
+			snapshot_s* nextSnap;
+			snapshot_s activeSnapshots[2];
+			void* centity_s_currTarget;
+			XModel* knifeModel;
+			float frameInterpolation;
+			int frametime;
+			int time;
+			int time_real;
+			int oldTime;
+			int physicsTime;
+			char mapRestart;
+			int renderingThirdPerson;
+			void* script_camera;
+			playerState_s predictedPlayerState;
+			// ......
+		}; // 0x45C0
 
+		struct predicted_playerstate_s
+		{
+			int pad[8];
+			float origin[3];
+			float velocity[3];
+		};
+
+		enum entityType_t : __int32
+		{
+			ET_GENERAL = 0x0,
+			ET_PLAYER = 0x1,
+			ET_PLAYER_CORPSE = 0x2,
+			ET_ITEM = 0x3,
+			ET_MISSILE = 0x4,
+			ET_INVISIBLE = 0x5,
+			ET_SCRIPTMOVER = 0x6,
+			ET_SOUND_BLEND = 0x7,
+			ET_FX = 0x8,
+			ET_LOOP_FX = 0x9,
+			ET_PRIMARY_LIGHT = 0xA,
+			ET_MG42 = 0xB,
+			ET_PLANE = 0xC,
+			ET_VEHICLE = 0xD,
+			ET_VEHICLE_COLLMAP = 0xE,
+			ET_VEHICLE_CORPSE = 0xF,
+			ET_ACTOR = 0x10,
+			ET_ACTOR_SPAWNER = 0x11,
+			ET_ACTOR_CORPSE = 0x12,
+			ET_EVENTS = 0x13,
+		};
+
+		enum trType_t : __int32
+		{
+			TR_STATIONARY = 0x0,
+			TR_INTERPOLATE = 0x1,
+			TR_LINEAR = 0x2,
+			TR_LINEAR_STOP = 0x3,
+			TR_SINE = 0x4,
+			TR_GRAVITY = 0x5,
+			TR_ACCELERATE = 0x6,
+			TR_DECELERATE = 0x7,
+			TR_PHYSICS = 0x8,
+			TR_XDOLL = 0x9,
+			TR_FIRST_RAGDOLL = 0xA,
+			TR_RAGDOLL = 0xA,
+			TR_RAGDOLL_GRAVITY = 0xB,
+			TR_RAGDOLL_INTERPOLATE = 0xC,
+			TR_LAST_RAGDOLL = 0xC,
+			TR_COUNT = 0xD,
+		};
+
+		struct trajectory_t
+		{
+			trType_t trType; //OFS: 0x0 SIZE: 0x4
+			int trTime; //OFS: 0x4 SIZE: 0x4
+			int trDuration; //OFS: 0x8 SIZE: 0x4
+			float trBase[3]; //OFS: 0xC SIZE: 0xC
+			float trDelta[3]; //OFS: 0x18 SIZE: 0xC
+		};
+
+		struct LerpEntityState
+		{
+			int eFlags; //OFS: 0x0 SIZE: 0x4
+			trajectory_t pos; //OFS: 0x4 SIZE: 0x24
+			trajectory_t apos; //OFS: 0x28 SIZE: 0x24
+			char pad_u[0x3C]; //OFS: 0x4C SIZE: 0x3C
+			int usecount; //OFS: 0x88 SIZE: 0x4
+		};
+
+		struct __declspec(align(2)) LoopSound
+		{
+			unsigned __int16 soundAlias; //OFS: 0x0 SIZE: 0x2
+			__int16 fadeTime; //OFS: 0x2 SIZE: 0x2
+		};
+
+		union entityState_index
+		{
+			__int16 brushmodel; //OFS: 0x0 SIZE: 0x2
+			__int16 xmodel; //OFS: 0x1 SIZE: 0x2
+			__int16 primaryLight; //OFS: 0x2 SIZE: 0x2
+			unsigned __int16 bone; //OFS: 0x3 SIZE: 0x2
+			int pad; //OFS: 0x4 SIZE: 0x4
+		};
+
+		struct entityState_s
+		{
+			int number; //OFS: 0x0 SIZE: 0x4
+			entityType_t eType; //OFS: 0x4 SIZE: 0x4
+			LerpEntityState lerp; //OFS: 0x8 SIZE: 0x8C
+			int time2; //OFS: 0x94 SIZE: 0x4
+			int otherEntityNum; //OFS: 0x98 SIZE: 0x4
+			int groundEntityNum; //OFS: 0x9C SIZE: 0x4
+			LoopSound loopSound; //OFS: 0xA0 SIZE: 0x4
+			int surfType; //OFS: 0xA4 SIZE: 0x4
+			entityState_index index; //OFS: 0xA8 SIZE: 0x4
+			int clientnum; //OFS: 0xAC SIZE: 0x4
+			int iHeadIcon; //OFS: 0xB0 SIZE: 0x4
+			int solid; //OFS: 0xB4 SIZE: 0x4
+			int eventParm; //OFS: 0xB8 SIZE: 0x4
+			int eventSequence; //OFS: 0xBC SIZE: 0x4
+			int events[4]; //OFS: 0xC0 SIZE: 0x10
+			int eventParms[4]; //OFS: 0xD0 SIZE: 0x10
+			int weapon; //OFS: 0xE0 SIZE: 0x4
+			int weaponModel; //OFS: 0xE4 SIZE: 0x4
+			int targetname; //OFS: 0xE8 SIZE: 0x4
+			char un1[0x4]; //OFS: 0xEC SIZE: 0x4
+			char un2[0x10]; //OFS: 0xF0 SIZE: 0x10
+			char un3[0x8]; //OFS: 0x100 SIZE: 0x4
+			int animtreeIndex; //OFS: 0x104 SIZE: 0x4
+			int partBits[4]; //OFS: 0x108 SIZE: 0x10
+		};
+
+		struct __declspec(align(2)) EntHandle
+		{
+			unsigned __int16 number; //OFS: 0x0 SIZE: 0x2
+			unsigned __int16 infoIndex; //OFS: 0x2 SIZE: 0x2
+		};
+
+		enum contents_e
+		{
+			CONTENTS_SOLID = 0x1,
+			CONTENTS_FOLIAGE = 0x2,
+			CONTENTS_NONCOLLIDING = 0x4,
+			CONTENTS_GLASS = 0x10,
+			CONTENTS_WATER = 0x20,
+			CONTENTS_CANSHOOTCLIP = 0x40,
+			CONTENTS_MISSILECLIP = 0x80,
+			CONTENTS_ITEM = 0x100,
+			CONTENTS_VEHICLECLIP = 0x200,
+			CONTENTS_ITEMCLIP = 0x400,
+			CONTENTS_SKY = 0x800,
+			CONTENTS_AI_NOSIGHT = 0x1000,
+			CONTENTS_CLIPSHOT = 0x2000,
+			CONTENTS_CORPSE_CLIPSHOT = 0x4000,
+			CONTENTS_ACTOR = 0x8000,
+			CONTENTS_FAKE_ACTOR = 0x8000,
+			CONTENTS_PLAYERCLIP = 0x10000,
+			CONTENTS_MONSTERCLIP = 0x20000,
+			CONTENTS_PLAYERVEHICLECLIP = 0x40000,
+			CONTENTS_USE = 0x200000,
+			CONTENTS_UTILITYCLIP = 0x400000,
+			CONTENTS_VEHICLE = 0x800000,
+			CONTENTS_MANTLE = 0x1000000,
+			CONTENTS_PLAYER = 0x2000000,
+			CONTENTS_CORPSE = 0x4000000,
+			CONTENTS_DETAIL = 0x8000000,
+			CONTENTS_STRUCTURAL = 0x10000000,
+			CONTENTS_LOOKAT = 0x10000000,
+			CONTENTS_TRIGGER = 0x40000000,
+			CONTENTS_NODROP = 0x80000000,
+		};
+
+		struct entityShared_s
+		{
+			unsigned __int8 linked; //OFS: 0x0 SIZE: 0x1
+			unsigned __int8 bmodel; //OFS: 0x1 SIZE: 0x1
+			unsigned __int16 svFlags; //OFS: 0x2 SIZE: 0x2
+			unsigned __int8 eventType; //OFS: 0x4 SIZE: 0x1
+			unsigned __int8 inuse; //OFS: 0x5 SIZE: 0x1
+			int clientMask[2]; //OFS: 0x8 SIZE: 0x8
+			int broadcastTime; //OFS: 0x10 SIZE: 0x4
+			float mins[3]; //OFS: 0x14 SIZE: 0xC
+			float maxs[3]; //OFS: 0x20 SIZE: 0xC
+			contents_e contents; //OFS: 0x2C SIZE: 0x4
+			float absmin[3]; //OFS: 0x30 SIZE: 0xC
+			float absmax[3]; //OFS: 0x3C SIZE: 0xC
+			float currentOrigin[3]; //OFS: 0x48 SIZE: 0xC
+			float currentAngles[3]; //OFS: 0x54 SIZE: 0xC
+			EntHandle ownerNum; //OFS: 0x60 SIZE: 0x4
+			int eventTime; //OFS: 0x64 SIZE: 0x4
+		};
+
+		struct __declspec(align(8)) gentity_s
+		{
+			entityState_s s; //OFS: 0x0 SIZE: 0x118
+			entityShared_s r; //OFS: 0x118 SIZE: 0x68
+			void* gclient_s__client; //OFS: 0x180 SIZE: 0x4
+			void* actor_s__actor; //OFS: 0x184 SIZE: 0x4
+			void* sentient_s__sentient; //OFS: 0x188 SIZE: 0x4
+			void* scr_vehicle_s__scr_vehicle; //OFS: 0x18C SIZE: 0x4
+			void* TurretInfo__pTurretInfo; //OFS: 0x190 SIZE: 0x4
+			void* Destructible__destructible; //OFS: 0x194 SIZE: 0x4
+			unsigned __int16 model; //OFS: 0x198 SIZE: 0x2
+			unsigned __int8 physicsObject; //OFS: 0x19A SIZE: 0x1
+			unsigned __int8 takedamage; //OFS: 0x19B SIZE: 0x1
+			unsigned __int8 active; //OFS: 0x19C SIZE: 0x1
+			unsigned __int8 nopickup; //OFS: 0x19D SIZE: 0x1
+			unsigned __int8 handler; //OFS: 0x19E SIZE: 0x1
+			unsigned __int16 classname; //OFS: 0x1A0 SIZE: 0x2
+			unsigned __int16 script_linkName; //OFS: 0x1A2 SIZE: 0x2
+			unsigned __int16 script_noteworthy; //OFS: 0x1A4 SIZE: 0x2
+			unsigned __int16 target; //OFS: 0x1A6 SIZE: 0x2
+			int targetname; //OFS: 0x1A8 SIZE: 0x4
+			int spawnflags2; //OFS: 0x1AC SIZE: 0x4
+			int spawnflags; //OFS: 0x1B0 SIZE: 0x4
+			int flags; //OFS: 0x1B4 SIZE: 0x4
+			int clipmask; //OFS: 0x1B8 SIZE: 0x4
+			int processedFrame; //OFS: 0x1BC SIZE: 0x4
+			EntHandle parent; //OFS: 0x1C0 SIZE: 0x4
+			int nextthink; //OFS: 0x1C4 SIZE: 0x4
+			int health; //OFS: 0x1C8 SIZE: 0x4
+			int maxhealth; //OFS: 0x1CC SIZE: 0x4
+			int nexteq; //OFS: 0x1D0 SIZE: 0x4
+			// ...
+		};
+		STATIC_ASSERT_OFFSET(gentity_s, r, 0x11C);
+		STATIC_ASSERT_OFFSET(gentity_s, model, 0x19C);
 	}
 }
 

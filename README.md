@@ -5,23 +5,29 @@
 This client modification is made to make the game compatible with nvidia's [rtx-remix](https://github.com/NVIDIAGameWorks/rtx-remix).  
 How? By manually reimplementing fixed function rendering :) 
 
+
 It does __not__ come with a 'rtx mod' -> meaning no custom models nor materials.  
 
 A demo mod can be found over at modDB: https://www.moddb.com/mods/cod5-nacht-der-untoten-demo  
 ^ Footage: https://www.youtube.com/watch?v=hCv3p1qT3q0
 
+<h3 align="center">fully sp / mp compatible</h3>
 <br>
 
 </div>
+
 
 <div align="center" markdown="1">
 	
 ![img](img/01.jpg)
 	
+
+
+If you want to buy me a coffee:
+
+[![ko-fi](https://xoxor4d.github.io/assets/img/social/kofi.png)](https://ko-fi.com/xoxor4d)
 </div>
 
-<h3 align="center">sp / mp compatible (sp is mostly feature complete - mp has basic support)</h3>
-<br>
 
 # Usage
 

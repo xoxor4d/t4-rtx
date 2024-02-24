@@ -1,13 +1,13 @@
 #pragma once
 
-namespace components::sp
+namespace components
 {
 	class map_settings : public component
 	{
 	public:
 		map_settings();
 		~map_settings() = default;
-		const char* get_name() override { return "map_settings_sp"; }
+		const char* get_name() override { return "map_settings"; }
 
 		static map_settings* p_this;
 		static map_settings* get();

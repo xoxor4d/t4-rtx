@@ -10,8 +10,8 @@ namespace components
 		{
 		public:
 			params(DWORD id) : command_id(id) {};
-			params(const params &obj) { this->command_id = obj.command_id; };
-			params() : params(game::is_sp ? game::sp::cmd_args->nesting : 0) {}; // TODO
+			params(const params &obj) { this->command_id = obj.command_id; }
+			params() : params(game::is_sp ? game::sp::cmd_args->nesting : game::mp::cmd_args->nesting) {}
 
 			const char* operator[](size_t index);
 			size_t length();

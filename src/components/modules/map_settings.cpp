@@ -1,7 +1,6 @@
 #include "std_include.hpp"
-using namespace game::sp;
 
-namespace components::sp
+namespace components
 {
 	map_settings* map_settings::p_this = nullptr;
 	map_settings* map_settings::get() { return p_this; }
@@ -15,9 +14,10 @@ namespace components::sp
 			return;
 		}
 
-		if (game::sp::rgp->world && game::sp::rgp->world->name)
+		if (const auto rgp = SELECT(game::mp::rgp, game::sp::rgp); 
+			rgp && rgp->world && rgp->world->name)
 		{
-			std::string map_name = game::sp::rgp->world->name;
+			std::string map_name = rgp->world->name;
 			utils::replace_all(map_name, std::string("maps/mp/"), "");	// if mp map
 			utils::replace_all(map_name, std::string("maps/"), "");		// if sp map
 			utils::replace_all(map_name, std::string(".d3dbsp"), "");
@@ -30,7 +30,14 @@ namespace components::sp
 					m_max_distance = s.max_distance;
 					m_color = s.m_color;
 
-					main_module::skysphere_spawn(s.skybox);
+					if (game::is_sp)
+					{
+						sp::main_module::skysphere_spawn(s.skybox);
+					}
+					else
+					{
+						mp::main_module::skysphere_spawn(s.skybox);
+					}
 
 					found = true;
 					break;
@@ -42,9 +49,18 @@ namespace components::sp
 				m_max_distance = 5000.0f;
 				m_color.packed = D3DCOLOR_XRGB(200, 200, 220);
 
-				if (!flags::has_flag("no_default_sky") && !main_module::skysphere_is_model_valid())
+				const bool is_skysphere_model_valid = game::is_sp ? sp::main_module::skysphere_is_model_valid() : mp::main_module::skysphere_is_model_valid();
+				if (!flags::has_flag("no_default_sky") && !is_skysphere_model_valid)
 				{
-					main_module::skysphere_spawn(4); // always spawn sunset
+					// always spawn sunset
+					if (game::is_sp)
+					{
+						sp::main_module::skysphere_spawn(4);
+					}
+					else
+					{
+						mp::main_module::skysphere_spawn(4);
+					}
 				}
 			}
 		}

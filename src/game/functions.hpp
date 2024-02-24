@@ -73,13 +73,50 @@ namespace game
 	{
 		extern DxGlobals* dx;
 		extern clipMap_t* cm;
+		extern r_global_permanent_t* rgp;
+		extern GfxBuffers* gfx_buf;
+		//extern game::mp::cg_s* cgs;
+
+		extern CmdArgs* cmd_args;
+		extern cmd_function_s** cmd_ptr;
 
 		static DWORD* gfxCmdBufSourceState_ptr = (DWORD*)(0x829B04);
+		static DWORD* frontEndDataOut_ptr = (DWORD*)(0x10882FB4);
 		static DWORD* backEndDataOut_ptr = (DWORD*)(0x10CF9B5C);
 
-		static utils::function<Material* __fastcall (const char* name, int)> Material_RegisterHandle = 0x6BBA90;
 		static utils::function<dvar_s* __cdecl (const char* name)> Dvar_FindVar = 0x5C4170;
+		static utils::function<Material* __fastcall (const char* name, int)> Material_RegisterHandle = 0x6BBA90;
 		static utils::function<dvar_s* __cdecl (dvar_s* dvar, const char* name, int dvar_type, int flags, const char* description, std::int64_t val, std::int64_t unk, float mins, float maxs)> Dvar_Reregister = 0x5C4DA0;
+
+		
+		static utils::function<void __fastcall (int, GfxCmdBufSourceState*)> R_Set3D = 0x6FEBB0;
+
+		typedef void(*Cmd_ExecuteSingleCommand_t)(int controller, int a2, const char* cmd);
+		extern Cmd_ExecuteSingleCommand_t Cmd_ExecuteSingleCommand;
+
+		typedef void(*Com_PrintMessage_t)(int, const char*, char);
+		extern Com_PrintMessage_t Com_PrintMessage;
+
+		typedef void(*Com_Error_t)(int type, const char* message, ...);
+		extern Com_Error_t Com_Error;
+
+		typedef void(*DB_EnumXAssets_FastFile_t)(XAssetType type, void(*)(XAssetHeader, void*), void* userdata, bool overrides);
+		extern DB_EnumXAssets_FastFile_t DB_EnumXAssets_FastFile;
+
+		typedef void(*DB_LoadXAssets_t)(XZoneInfo* zoneInfo, unsigned int zone_count, int sync);
+		extern DB_LoadXAssets_t DB_LoadXAssets;
+
+		extern scr_const_t* scr_const;
+
+		void Cbuf_AddText(const char* text /*eax*/);
+		void Vec2UnpackTexCoords(unsigned int packed, float* texcoord_out /*ecx*/);
+
+		static utils::function<std::int16_t(const char* model_name)> G_ModelIndex = 0x541020;
+		extern bool DB_FileExists(const char* file_name, game::DB_FILE_EXISTS_PATH);
+
+		static utils::function<game::gentity_s* ()> G_Spawn = 0x543760;
+		static utils::function<bool(game::gentity_s*)> G_CallSpawnEntity = 0x5399B0;
+		static utils::function<void(entityState_s*)> G_DObjUpdate = 0x541310;
 	}
 
 	extern GfxCmdBufSourceState* get_cmdbufsourcestate();

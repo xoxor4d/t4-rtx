@@ -10,17 +10,19 @@ namespace components
 		mem_allocator_.clear();
 
 		_register(new command());
+		_register(new map_settings());
 
 		if (game::is_sp)
 		{
 			_register(new sp::main_module());
 			_register(new sp::fixed_function());
-			_register(new sp::map_settings());
+			
 		}
 
 		if (game::is_mp)
 		{
 			_register(new mp::main_module());
+			_register(new mp::fixed_function());
 		}
 
 #if DEBUG

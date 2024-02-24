@@ -73,7 +73,7 @@ namespace game
 				mov		eax, file_name;
 
 				call	DB_FileExists_func;
-				add     esp, 4h;
+				add     esp, 4;
 			}
 		}
 	} // sp-end
@@ -86,6 +86,58 @@ namespace game
 	{
 		DxGlobals* dx = reinterpret_cast<DxGlobals*>(0x1087DD04);
 		clipMap_t* cm = reinterpret_cast<clipMap_t*>(0x2223A80);
+
+		r_global_permanent_t* rgp = reinterpret_cast<r_global_permanent_t*>(0x1087BA80);
+		game::GfxBuffers* gfx_buf = reinterpret_cast<game::GfxBuffers*>(0x10F3A7C8);
+		//game::mp::cg_s* cgs = reinterpret_cast<game::mp::cg_s*>(0x98FCE0);
+
+		CmdArgs* cmd_args = reinterpret_cast<CmdArgs*>(0x22236F8);
+		cmd_function_s** cmd_ptr = reinterpret_cast<cmd_function_s**>(0x222377C);
+
+		Cmd_ExecuteSingleCommand_t	Cmd_ExecuteSingleCommand = Cmd_ExecuteSingleCommand_t(0x55CD90);
+
+		Com_PrintMessage_t Com_PrintMessage = Com_PrintMessage_t(0x5622B0);
+		Com_Error_t Com_Error = Com_Error_t(0x562DA0);
+		DB_EnumXAssets_FastFile_t DB_EnumXAssets_FastFile = DB_EnumXAssets_FastFile_t(0x4B9AE0);
+		DB_LoadXAssets_t DB_LoadXAssets = DB_LoadXAssets_t(0x4BAD70);
+
+		scr_const_t* scr_const = reinterpret_cast<scr_const_t*>(0x221A910);
+
+		void Cbuf_AddText(const char* text /*eax*/)
+		{
+			const static uint32_t Cbuf_AddText_func = 0x55C130;
+			__asm
+			{
+				mov		ecx, 0;
+				mov		eax, text;
+				call	Cbuf_AddText_func;
+			}
+		}
+
+		void Vec2UnpackTexCoords(unsigned int packed, float* texcoord_out /*ecx*/)
+		{
+			const static uint32_t func_addr = 0x5BB880;
+			__asm
+			{
+				mov		ecx, texcoord_out;
+				push	packed;
+				call	func_addr;
+				add		esp, 4;
+			}
+		}
+
+		bool DB_FileExists(const char* file_name, game::DB_FILE_EXISTS_PATH src)
+		{
+			const static uint32_t DB_FileExists_func = 0x4BC460;
+			__asm
+			{
+				push	src;
+				mov		eax, file_name;
+
+				call	DB_FileExists_func;
+				add     esp, 4;
+			}
+		}
 	} // mp-end
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -100,7 +152,7 @@ namespace game
 
 	GfxBackEndData* get_frontenddata()
 	{
-		const auto out = reinterpret_cast<GfxBackEndData*>(game::is_mp ? NULL : *sp::frontEndDataOut_ptr);
+		const auto out = reinterpret_cast<GfxBackEndData*>(game::is_mp ? *mp::frontEndDataOut_ptr : *sp::frontEndDataOut_ptr);
 		return out;
 	}
 
@@ -114,7 +166,7 @@ namespace game
 	{
 		data->name = name;
 		data->function = callback;
-		data->next = game::is_sp ? *sp::cmd_ptr : nullptr;
+		data->next = game::is_sp ? *sp::cmd_ptr : *mp::cmd_ptr;
 
 		if (game::is_sp)
 		{
@@ -122,7 +174,7 @@ namespace game
 		}
 		else
 		{
-			__debugbreak(); // TODO
+			*game::mp::cmd_ptr = data;
 		}
 	}
 

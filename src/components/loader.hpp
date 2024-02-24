@@ -27,9 +27,10 @@ namespace components
 
 #include "modules/sp/main_module.hpp"
 #include "modules/sp/fixed_function.hpp"
-#include "modules/sp/map_settings.hpp"
 
 #include "modules/mp/main_module.hpp"
+#include "modules/mp/fixed_function.hpp"
 
+#include "modules/map_settings.hpp"
 #include "modules/flags.hpp"
 #include "modules/command.hpp"
