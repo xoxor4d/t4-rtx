@@ -60,10 +60,12 @@ Temporary Items
 
 # Additional stuff
 build
+PETool.exe
+verpatch.exe
 user*.bat
-*.psd
-*.tmp
-*.aps
+*.zip
+submodules.txt
+Resource.aps
 
 .vs/*
 .vscode/*

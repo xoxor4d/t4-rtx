@@ -1,5 +1,35 @@
 #include "std_include.hpp"
 
+// rename window title to get rid of the trademark (R) which currently causes issues with the remix toolkit
+DWORD WINAPI find_window_loop(LPVOID)
+{
+	const char* hwnd_title = "Call of Duty\xAE";
+	std::uint32_t _time = 0;
+
+	// wait for window creation
+	while (!game::main_window)
+	{
+		// get main window hwnd
+		game::main_window = FindWindowExA(nullptr, nullptr, "CoD-WaW", hwnd_title);
+
+		Sleep(1000); _time += 500;
+		if (_time >= 30000)
+		{
+			return TRUE;
+		}
+	}
+
+#ifdef GIT_DESCRIBE
+	static auto version_str = std::string("t4-rtx-"s + GIT_DESCRIBE);
+	SetWindowTextA(game::main_window, version_str.c_str());
+
+#else
+	SetWindowTextA(game::main_window, "t4-rtx");
+#endif
+
+	return TRUE;
+}
+
 BOOL APIENTRY DllMain(HMODULE /*hModule*/, DWORD  ul_reason_for_call, LPVOID /*lpReserved*/)
 {
 	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
@@ -40,6 +70,7 @@ BOOL APIENTRY DllMain(HMODULE /*hModule*/, DWORD  ul_reason_for_call, LPVOID /*l
 			}
 		}
 
+		CreateThread(nullptr, 0, find_window_loop, nullptr, 0, nullptr);
 		game::init_offsets();
 		components::loader::initialize();
 

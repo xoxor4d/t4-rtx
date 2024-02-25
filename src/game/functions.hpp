@@ -9,6 +9,7 @@ namespace game
 	extern bool is_mp;
 
 	extern std::vector<std::string> loaded_modules;
+	extern HWND main_window;
 
 	static inline float COLOR_WHITE[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	static inline float COLOR_BLACK[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
