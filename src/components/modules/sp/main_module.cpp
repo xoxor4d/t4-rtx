@@ -456,19 +456,7 @@ namespace components::sp
 			i = 0;
 		}
 
-		if (game::sp::DB_FileExists("xcommon_rtx", game::DB_FILE_EXISTS_PATH::DB_PATH_ZONE))
-		{
-			xzone_info_stack[i].name = "xcommon_rtx";
-			xzone_info_stack[i].allocFlags = 4;
-			xzone_info_stack[i].freeFlags = 0;
-			++i;
-		}
-#if DEBUG
-		else
-		{
-			DEBUG_PRINT("[T4RTX-DEBUG] # ERR: could not find 'xcommon_rtx.ff'\n");
-		}
-#endif
+		
 
 		// ---------------------------------------------------------------------------------------------------------
 
@@ -500,6 +488,20 @@ namespace components::sp
 			xzone_info_stack[i].freeFlags = 0;
 			++i;
 		}
+
+		if (game::sp::DB_FileExists("xcommon_rtx", game::DB_FILE_EXISTS_PATH::DB_PATH_ZONE))
+		{
+			xzone_info_stack[i].name = "xcommon_rtx";
+			xzone_info_stack[i].allocFlags = 512;
+			xzone_info_stack[i].freeFlags = 0;
+			++i;
+		}
+#if DEBUG
+		else
+		{
+			DEBUG_PRINT("[T4RTX-DEBUG] # ERR: could not find 'xcommon_rtx.ff'\n");
+		}
+#endif
 
 		// ------------------------------------
 
