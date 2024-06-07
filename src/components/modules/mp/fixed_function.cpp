@@ -667,8 +667,8 @@ namespace components::mp
 		dev->SetPixelShader(nullptr);
 
 		const auto saved_x = src->matrices.matrix[0].m[3][0];
-		const auto saved_y = src->matrices.matrix[0].m[3][0];
-		const auto saved_z = src->matrices.matrix[0].m[3][0];
+		const auto saved_y = src->matrices.matrix[0].m[3][1];
+		const auto saved_z = src->matrices.matrix[0].m[3][2];
 
 		// #
 		// draw prims

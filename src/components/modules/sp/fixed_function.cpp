@@ -587,7 +587,7 @@ namespace components::sp
 			state->prim.device->SetFVF(NULL);
 			//state->prim.device->SetVertexShader(og_vertex_shader);
 			//state->prim.device->SetPixelShader(og_pixel_shader);
-			state->prim.device->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&src->matrices.matrix[0].m));
+			//state->prim.device->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&src->matrices.matrix[0].m));
 		}
 	}
 
@@ -681,8 +681,8 @@ namespace components::sp
 		dev->SetPixelShader(nullptr);
 
 		const auto saved_x = src->matrices.matrix[0].m[3][0];
-		const auto saved_y = src->matrices.matrix[0].m[3][0];
-		const auto saved_z = src->matrices.matrix[0].m[3][0];
+		const auto saved_y = src->matrices.matrix[0].m[3][1];
+		const auto saved_z = src->matrices.matrix[0].m[3][2];
 
 		// #
 		// draw prims
