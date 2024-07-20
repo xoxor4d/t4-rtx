@@ -708,6 +708,63 @@ namespace game
 		unsigned int vertSize;
 	};
 
+	struct GfxDebugPoly
+	{
+		float color[4];
+		int firstVert;
+		int vertCount;
+	};
+
+	struct trDebugString_t
+	{
+		float xyz[3];
+		float color[4];
+		float scale;
+		char text[96];
+	};
+
+	struct trDebugLine_t
+	{
+		float start[3];
+		float end[3];
+		float color[4];
+		int depthTest;
+	};
+
+	struct GfxDebugPlume
+	{
+		float origin[3];
+		float color[4];
+		int score;
+		int startTime;
+		int duration;
+	};
+
+	struct DebugGlobals
+	{
+		float(*verts)[3];
+		int vertCount;
+		int vertLimit;
+		GfxDebugPoly* polys;
+		int polyCount;
+		int polyLimit;
+		trDebugString_t* strings;
+		int stringCount;
+		int stringLimit;
+		trDebugString_t* externStrings;
+		int externStringCount;
+		int externMaxStringCount;
+		trDebugLine_t* lines;
+		int lineCount;
+		int lineLimit;
+		trDebugLine_t* externLines;
+		int externLineCount;
+		int externMaxLineCount;
+		GfxDebugPlume* plumes;
+		int plumeCount;
+		int plumeLimit;
+	};
+
 	struct __declspec(align(4)) GfxBackEndData
 	{
 		char surfsBuffer[262144];
@@ -720,9 +777,13 @@ namespace game
 		unsigned int viewInfoIndex;
 		unsigned int viewInfoCount;
 		GfxViewInfo* viewInfo;
+		char pad2[78];
+		DebugGlobals debugGlobals;
+		unsigned int drawType;
 	};
 	STATIC_ASSERT_OFFSET(GfxBackEndData, markMesh, 0x144D70);
 	STATIC_ASSERT_OFFSET(GfxBackEndData, viewInfo, 0x144DD4);
+	STATIC_ASSERT_OFFSET(GfxBackEndData, debugGlobals, 0x144E28);
 
 	struct ModelLodFade
 	{
@@ -807,7 +868,9 @@ namespace game
 		GfxBackEndData* data;
 		char padx0[8];
 		GfxViewParms viewParms;
-		char pad00[382];
+		char pad00[364];
+		float eyeOffset[4];
+		unsigned int shadowableLightForShadowLookupMatrix;
 		GfxScaledPlacement* objectPlacement;
 		GfxViewParms* viewParms3D;
 		bool depthHack;
@@ -3111,6 +3174,7 @@ namespace game
 
 	enum dvar_flags : unsigned __int16
 	{
+		none = 0,
 		archive = 1 << 0,			// 0x0001
 		userinfo = 1 << 1,			// 0x0002
 		serverinfo = 1 << 2,		// 0x0004

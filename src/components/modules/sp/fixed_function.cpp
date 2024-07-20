@@ -312,7 +312,10 @@ namespace components::sp
 			fixed_function::build_worldmatrix_for_object(&mtx[0], &inst->placement.axis[0], inst->placement.origin, inst->placement.scale);
 			dev->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&mtx));
 
-			// #TODO showTess
+			if (dvars::r_showTess && dvars::r_showTess->current.enabled && dvars::r_showTess->current.integer <= 2)
+			{
+				main_module::rb_show_tess(source, state, &mtx[3][0], "Static", game::COLOR_WHITE);
+			}
 
 			// get indexbuffer offset
 			const auto offset = 0;
@@ -389,6 +392,10 @@ namespace components::sp
 		fixed_function::build_worldmatrix_for_object(&mtx[0], model->placement.base.quat, obj_origin, model->placement.scale * custom_scalar);
 		dev->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&mtx));
 
+		if (dvars::r_showTess && dvars::r_showTess->current.enabled && dvars::r_showTess->current.integer <= 2)
+		{
+			main_module::rb_show_tess(source, state, &mtx[3][0], "XMRigid", game::COLOR_WHITE);
+		}
 
 		// #
 		// draw prim
@@ -472,10 +479,10 @@ namespace components::sp
 	/**
 	 * @brief	draw skinned meshes using fixed function. Uses a dynamic vertex buffer.
 	 */
-	void R_DrawXModelSkinnedUncached(const game::GfxModelSkinnedSurface* skinned_surf, game::GfxCmdBufSourceState* source, game::GfxCmdBufState* state)
+	void R_DrawXModelSkinnedUncached(game::GfxModelRigidSurface* skinned_surf, game::GfxCmdBufSourceState* source, game::GfxCmdBufState* state, int is_skinned_vert)
 	{
 		const auto dev = game::get_device();
-		const auto surf = skinned_surf->xsurf;
+		const auto surf = skinned_surf->surf.xsurf;
 		const auto dyn_vb = game::sp::gfx_buf->dynamicVertexBuffer;
 		const auto start_index = R_SetIndexData(&state->prim, surf->triIndices, surf->triCount);
 
@@ -497,7 +504,7 @@ namespace components::sp
 			for (auto i = 0u; i < surf->vertCount; i++)
 			{
 				// packed source vertex
-				const auto src_vert = &skinned_surf->u.skinnedVert[i];
+				const auto src_vert = is_skinned_vert ? &skinned_surf->surf.u.skinnedVert[i] : &surf->verts0[i];
 
 				// position of our unpacked vert within the vertex buffer
 				const auto v_pos_in_buffer = i * MODEL_VERTEX_STRIDE;
@@ -536,24 +543,41 @@ namespace components::sp
 
 		//transform model into the scene by updating the worldmatrix
 		float mtx[4][4] = {};
-		fixed_function::build_worldmatrix_for_object(&mtx[0], source->skinnedPlacement.base.quat, source->skinnedPlacement.base.origin, source->skinnedPlacement.scale);
+		fixed_function::build_worldmatrix_for_object(&mtx[0], 
+			is_skinned_vert ? source->skinnedPlacement.base.quat : skinned_surf->placement.base.quat,
+			is_skinned_vert ? source->skinnedPlacement.base.origin : skinned_surf->placement.base.origin,
+			is_skinned_vert ? source->skinnedPlacement.scale : skinned_surf->placement.scale);
 		dev->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&mtx));
-
 		dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, surf->vertCount, start_index, surf->triCount);
 		dev->SetFVF(NULL);
+
+		// skinned vertices have the world transform baked in and 'skinnedPlacement.base.origin' holds the player origin
+		// so use the first vertex position as the origin of the debug string
+		if (is_skinned_vert)
+		{
+			mtx[3][0] += skinned_surf->surf.u.skinnedVert[0].xyz[0];
+			mtx[3][1] += skinned_surf->surf.u.skinnedVert[0].xyz[1];
+			mtx[3][2] += skinned_surf->surf.u.skinnedVert[0].xyz[2];
+		}
+
+		if (dvars::r_showTess && dvars::r_showTess->current.enabled && dvars::r_showTess->current.integer <= 2
+			&& dvars::r_showTessSkin && dvars::r_showTessSkin->current.enabled)
+		{
+			main_module::rb_show_tess(source, state, &mtx[3][0], "XMSkin", game::COLOR_WHITE);
+		}
 	}
 
 	__declspec(naked) void R_DrawXModelSkinnedUncached_stub()
 	{
-		const static uint32_t retn_addr = 0x73F195;
+		const static uint32_t retn_addr = 0x73F198;
 		__asm
 		{
-			// GfxPackedVertex (skinnedVert) pushed (we ignore that because we push GfxModelSkinnedSurface which holds it)
-			// state pushed
-			// source pushed
+			push	1;
+			push    eax; // state
+			push    ebx; // source
 			push	edi; // GfxModelSkinnedSurface
 			call	R_DrawXModelSkinnedUncached;
-			add		esp, 4;
+			add		esp, 16;
 			jmp		retn_addr;
 		}
 	}
@@ -607,7 +631,16 @@ namespace components::sp
 		dev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
 		dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
 
-		// # TODO showTess
+		if (dvars::r_showTess && dvars::r_showTess->current.enabled && dvars::r_showTess->current.integer >= 3 && dvars::r_showTess->current.integer < 5)
+		{
+			const game::vec3_t center =
+			{
+				(surf->bounds[0][0] + surf->bounds[1][0]) * 0.5f,
+				(surf->bounds[0][1] + surf->bounds[1][1]) * 0.5f,
+				(surf->bounds[0][2] + surf->bounds[1][2]) * 0.5f
+			};
+			main_module::rb_show_tess(source, state, center, "BSP", game::COLOR_WHITE);
+		}
 
 		dev->SetStreamSource(0, gfx_world_vertexbuffer, WORLD_VERTEX_STRIDE * tris->firstVertex, WORLD_VERTEX_STRIDE);
 		dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, tris->vertexCount, base_index, tri_count);
@@ -737,6 +770,11 @@ namespace components::sp
 			const auto base_vertex = WORLD_VERTEX_STRIDE * gfxsurf->tris.firstVertex;
 
 			set_stream_source(state, gfx_world_vertexbuffer, base_vertex, WORLD_VERTEX_STRIDE);
+
+			if (dvars::r_showTess && dvars::r_showTess->current.enabled && dvars::r_showTess->current.integer >= 5)
+			{
+				main_module::rb_show_tess(source, state, bsurf->placement->base.origin, "BModel", game::COLOR_WHITE);
+			}
 
 			const auto base_index = R_SetIndexData(prim, &game::sp::rgp->world->indices[gfxsurf->tris.baseIndex], gfxsurf->tris.triCount);
 			dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, gfxsurf->tris.vertexCount, base_index, gfxsurf->tris.triCount);
@@ -1290,7 +1328,8 @@ namespace components::sp
 		utils::hook(0x74D064, R_DrawXModelRigidModelSurf2_stub, HOOK_JUMP).install()->quick();
 
 		// fixed-function rendering of skinned (animated) models (R_TessXModelSkinnedDrawSurfList)
-		utils::hook(0x73F190, R_DrawXModelSkinnedUncached_stub, HOOK_JUMP).install()->quick();
+		utils::hook::nop(0x73F186, 6);
+		utils::hook(0x73F186, R_DrawXModelSkinnedUncached_stub, HOOK_JUMP).install()->quick();
 
 		// fixed-function rendering of world surfaces (R_TessTrianglesPreTessList)
 		// :: R_SetStreamsForBspSurface -> R_ClearAllStreamSources -> Stream 1 (world->vld.layerVb) handles 'decals'

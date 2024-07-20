@@ -38,6 +38,9 @@ namespace game
 
 		static utils::function<void __fastcall (int, GfxCmdBufSourceState*)> R_Set3D = 0x7244C0;
 
+		static utils::function<void(game::DebugGlobals* debugGlobalsEntry, const float* origin, const float* color, float scale, const char* string)>
+			R_AddDebugString = 0x70C140;
+
 		typedef void(*Cmd_ExecuteSingleCommand_t)(int controller, int a2, const char* cmd);
 			extern Cmd_ExecuteSingleCommand_t Cmd_ExecuteSingleCommand;
 
