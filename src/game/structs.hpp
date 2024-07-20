@@ -3205,7 +3205,7 @@ namespace game
 		rgb = 0x9,
 	};
 
-	#pragma pack(push, 4)
+#pragma pack(push, 4)
 	union DvarValue
 	{
 		bool enabled;
@@ -3216,6 +3216,7 @@ namespace game
 		const char* string;
 		char color[4];
 	}; STATIC_ASSERT_SIZE(DvarValue, 0x10);
+#pragma pack(pop)
 
 	union DvarLimits
 	{
@@ -3318,36 +3319,33 @@ namespace game
 		ASSET_TYPE_ASSETLIST = 0x24,
 	};
 
+	struct FxEffectDef
+	{
+		const char* name;
+		int flags;
+		int totalSize;
+		int msecLoopingLife;
+		int elemDefCountLooping;
+		int elemDefCountOneShot;
+		int elemDefCountEmission;
+		void* FxElemDef___elemDefs;
+	};
+
+	struct FxEffect
+	{
+		void* def;
+	};
+
 	union XAssetHeader
 	{
-		//XModelPieces *xmodelPieces;
-		//PhysPreset *physPreset;
-		//XAnimParts *parts;
-		XModel *model;
-		//Material *material;
-		//MaterialPixelShader *pixelShader;
-		//MaterialVertexShader *vertexShader;
-		//MaterialTechniqueSet *techniqueSet;
-		GfxImage *image;
-		//snd_alias_list_t *sound;
-		//SndCurve *sndCurve;
-		//clipMap_t *clipMap;
-		//ComWorld *comWorld;
-		//GameWorldSp *gameWorldSp;
-		//GameWorldMp *gameWorldMp;
-		//MapEnts *mapEnts;
-		//GfxWorld *gfxWorld;
-		//GfxLightDef *lightDef;
-		//Font_s *font;
-		//MenuList *menuList;
-		//menuDef_t *menu;
-		//LocalizeEntry *localize;
-		//WeaponDef *weapon;
-		//SndDriverGlobals *sndDriverGlobals;
-		//FxEffectDef *fx;
-		//FxImpactTable *impactFx;
-		//RawFile *rawfile;
-		//StringTable *stringTable;
+		XModel* model;
+		Material* material;
+		MaterialTechniqueSet* techniqueSet;
+		GfxImage* image;
+		clipMap_t* clipMap;
+		MapEnts* mapEnts;
+		GfxWorld* gfxWorld;
+		FxEffectDef* fx;
 		void* data;
 	};
 
@@ -3357,6 +3355,52 @@ namespace game
 		XAssetHeader header;
 	};
 
+	struct DpvsView
+	{
+		unsigned int renderFxFlagsCull;
+		DpvsPlane frustumPlanes[14];
+		int frustumPlaneCount;
+	};
+
+	struct DpvsGlob
+	{
+		DpvsPlane viewPlane;
+		DpvsPlane fogPlane;
+		DpvsPlane* nearPlane;
+		DpvsPlane* farPlane;
+		GfxMatrix* viewProjMtx;
+		GfxMatrix* invViewProjMtx;
+		int pad;
+		float viewOrg[4];
+		int viewOrgIsDir;
+		int queuedCount;
+		void* PortalHeapNode___portalQueue;
+		void* GfxHullPointsPool___nextFreeHullPoints;
+		float cullDist;
+		DpvsPlane childPlanes[2048];
+		DpvsView views[4][3];
+		unsigned int cameraCellIndex;
+		DpvsPlane* sideFrustumPlanes;
+		unsigned int* entVisBits[4];
+		unsigned int* cellBits;
+		unsigned int cellVisibleBits[32];
+	};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	// ------------------------------------------------------------------------------------------------------------
 	// ############################################################################################################
 	// ------------------------------------------------------------------------------------------------------------
@@ -3365,6 +3409,22 @@ namespace game
 	{
 
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	// ------------------------------------------------------------------------------------------------------------
 	// ############################################################################################################

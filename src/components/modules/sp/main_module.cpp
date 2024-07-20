@@ -57,6 +57,34 @@ namespace components::sp
 			ents.close();
 		}
 	}
+
+	void main_module::force_dvars_on_frame()
+	{
+		// update culling vars at the end of a frame (so we don't change culling behaviour mid-frame -> not safe)
+		{
+			//if (dvars::rtx_culling_tweak_mins) loc_culling_tweak_mins = dvars::rtx_culling_tweak_mins->current.enabled;
+			//if (dvars::rtx_culling_tweak_maxs) loc_culling_tweak_maxs = dvars::rtx_culling_tweak_maxs->current.enabled;
+			if (dvars::rtx_culling_tweak_frustum) loc_culling_tweak_frustum = dvars::rtx_culling_tweak_frustum->current.enabled;
+			if (dvars::rtx_culling_tweak_smodel) loc_culling_tweak_smodel = dvars::rtx_culling_tweak_smodel->current.enabled;
+
+			// #
+			// old anti culling - activ if flag 'old_anti_culling' is set
+
+			// update world culling
+			if (dvars::rtx_disable_world_culling)
+			{
+				main_module::loc_disable_world_culling = dvars::rtx_disable_world_culling->current.integer;
+				main_module::loc_disable_world_culling = main_module::loc_disable_world_culling < 0 ? 0 :
+					main_module::loc_disable_world_culling > 3 ? 3 : main_module::loc_disable_world_culling;
+			}
+
+			// update entity culling
+			if (dvars::rtx_disable_entity_culling)
+			{
+				main_module::loc_disable_entity_culling = dvars::rtx_disable_entity_culling->current.enabled ? 1 : 0;
+			}
+		}
+	}
 	
 	void setup_rtx()
 	{
@@ -86,36 +114,41 @@ namespace components::sp
 		// needed for skysphere
 		dev->SetRenderState(D3DRS_LIGHTING, FALSE);
 
+		main_module::force_dvars_on_frame();
+
 		if (!flags::has_flag("no_fog"))
 		{
+			const auto s = map_settings::settings();
 			const float fog_start = 1.0f;
+
 			dev->SetRenderState(D3DRS_FOGENABLE, TRUE);
-			dev->SetRenderState(D3DRS_FOGCOLOR, map_settings::m_color.packed);
+			dev->SetRenderState(D3DRS_FOGCOLOR, s->fog_color.packed);
 			dev->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
-			dev->SetRenderState(D3DRS_FOGSTART, *(DWORD*)(&fog_start));
-			dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)(&map_settings::m_max_distance));
+			dev->SetRenderState(D3DRS_FOGSTART, *(DWORD*)&fog_start);
+			dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)&s->fog_distance);
+		}
+
+		if (!flags::has_flag("no_sun"))
+		{
+			{
+				const auto s = map_settings::settings();
+
+				D3DLIGHT9 light = {};
+				light.Type = D3DLIGHT_DIRECTIONAL;
+				light.Diffuse.r = s->sun_color[0] * s->sun_intensity;
+				light.Diffuse.g = s->sun_color[1] * s->sun_intensity;
+				light.Diffuse.b = s->sun_color[2] * s->sun_intensity;
+
+				D3DXVec3Normalize((D3DXVECTOR3*)&light.Direction, (const D3DXVECTOR3*)&s->sun_direction);
+
+				dev->SetLight(0, &light);
+				dev->LightEnable(0, TRUE);
+			}
 		}
 
 		if (dvars::rtx_sky_follow_player && dvars::rtx_sky_follow_player->current.enabled)
 		{
 			main_module::skysphere_update_pos(game::sp::cgs->predictedPlayerState.origin);
-		}
-
-		// update culling vars at the end of a frame (so we don't change culling behaviour mid-frame -> not safe)
-		{
-			// update world culling
-			if (dvars::rtx_disable_world_culling)
-			{
-				main_module::loc_disable_world_culling = dvars::rtx_disable_world_culling->current.integer;
-				main_module::loc_disable_world_culling = main_module::loc_disable_world_culling < 0 ? 0 :
-					main_module::loc_disable_world_culling > 3 ? 3 : main_module::loc_disable_world_culling;
-			}
-
-			// update entity culling
-			if (dvars::rtx_disable_entity_culling)
-			{
-				main_module::loc_disable_entity_culling = dvars::rtx_disable_entity_culling->current.enabled ? 1 : 0;
-			}
 		}
 	}
 
@@ -1041,6 +1074,195 @@ namespace components::sp
 
 	namespace cull
 	{
+		int _last_active_valid_cell = 0; //-1;
+		void R_AddWorldSurfacesPortalWalk_hk(int camera_cell_index, game::DpvsView* dpvs)
+		{
+			const auto glob = game::sp::dpvsGlob;
+
+			// never show the complete map, only the last valid cell
+			if (camera_cell_index < 0)
+			{
+				const auto cell = &game::sp::rgp->world->cells[_last_active_valid_cell];
+				const auto cell_index = cell - game::sp::rgp->world->cells;
+				game::sp::R_AddCellSurfacesAndCullGroupsInFrustumDelayed(cell, dpvs->frustumPlanes, dpvs->frustumPlaneCount, dpvs->frustumPlaneCount);
+				glob->cellVisibleBits[(cell_index >> 5) + 3] |= (1 << (cell_index & 0x1F)); // is the +3 correct here?
+			}
+			else
+			{
+				_last_active_valid_cell = camera_cell_index;
+
+				// hack - disable most frustum culling
+				glob->views[0][0].frustumPlanes[0].coeffs[3] += main_module::m_frustum_plane_offsets[0]; //5000.0f;
+				glob->views[0][0].frustumPlanes[1].coeffs[3] += main_module::m_frustum_plane_offsets[1];
+				glob->views[0][0].frustumPlanes[2].coeffs[3] += main_module::m_frustum_plane_offsets[2];
+				glob->views[0][0].frustumPlanes[3].coeffs[3] += main_module::m_frustum_plane_offsets[3];
+				glob->views[0][0].frustumPlanes[4].coeffs[3] += main_module::m_frustum_plane_offsets[4];
+				glob->views[0][0].frustumPlanes[5].coeffs[3] += main_module::m_frustum_plane_offsets[5];
+				glob->viewPlane.coeffs[3] += main_module::m_frustum_plane_offsets[6]; //5000.0f;
+				// ^ needs to be viewPlane here?
+
+				const auto& var = game::sp::Dvar_FindVar("r_singleCell");
+				const bool single_cell = (var && var->current.enabled) ? true : false;
+
+				// #
+				// always add full cell the player is in (same as r_singlecell)
+				const auto cell = &game::sp::rgp->world->cells[camera_cell_index];
+				const auto cell_index = cell - game::sp::rgp->world->cells;
+
+				if (single_cell)
+				{
+					glob->farPlane = nullptr;
+				}
+
+				game::sp::R_AddCellSurfacesAndCullGroupsInFrustumDelayed(cell, dpvs->frustumPlanes, dpvs->frustumPlaneCount, dpvs->frustumPlaneCount); // dpvs->frustumPlaneCount
+				glob->cellVisibleBits[(cell_index >> 5) + 3] |= (1 << (cell_index & 0x1F));
+
+
+				// #
+				// draw cell index at the center of the current cell
+				if (dvars::r_showCellIndex && dvars::r_showCellIndex->current.enabled)
+				{
+					const game::vec3_t center =
+					{
+						(cell->mins[0] + cell->maxs[0]) * 0.5f,
+						(cell->mins[1] + cell->maxs[1]) * 0.5f,
+						(cell->mins[2] + cell->maxs[2]) * 0.5f
+					};
+
+					game::sp::R_AddDebugString(&game::get_frontenddata()->debugGlobals, center, game::COLOR_GREEN, 1.0f, utils::va("Cell Index: %d", camera_cell_index));
+				}
+
+
+				// #
+				// force cells defined in map_settings.ini
+
+				if (!single_cell && map_settings::settings()->cell_overrides_exist && camera_cell_index < 1024)
+				{
+					const auto& c_ow = map_settings::settings()->cell_settings[camera_cell_index];
+					if (c_ow.active)
+					{
+						for (const auto& i : c_ow.forced_cell_indices)
+						{
+							const auto forced_cell = &game::sp::rgp->world->cells[i];
+							const auto c_index = forced_cell - game::sp::rgp->world->cells;
+							game::sp::R_AddCellSurfacesAndCullGroupsInFrustumDelayed(forced_cell, dpvs->frustumPlanes, dpvs->frustumPlaneCount, dpvs->frustumPlaneCount);
+							glob->cellVisibleBits[(c_index >> 5) + 3] |= (1 << (c_index & 0x1F));
+						}
+					}
+				}
+
+				if (!single_cell)
+				{
+					// R_VisitPortals
+					game::sp::R_VisitPortals(dpvs->frustumPlaneCount, cell, &glob->viewPlane, dpvs->frustumPlanes); // viewplane here .. or is that the nearplane?
+				}
+			}
+		}
+
+		__declspec(naked) void cell_stub()
+		{
+			const static uint32_t retn_addr = 0x6E557F;
+			__asm
+			{
+				// ebx = world
+				// esi = cameraCellIndex
+				// eax = DpvsView
+
+				push	eax;
+				push	esi;
+				call	R_AddWorldSurfacesPortalWalk_hk;
+				add		esp, 8;
+				jmp		retn_addr;
+			}
+		}
+
+		// #
+		// # tweakable culling dvars
+
+		//__declspec(naked) void disable_mins_culling_stub()
+		//{
+		//	const static uint32_t stock_addr = 0x643B08;
+		//	const static uint32_t disable_culling_addr = 0x643B0E;
+		//	__asm
+		//	{
+		//		// jump if culling is less or disabled
+		//		cmp		rtx::loc_culling_tweak_mins, 1;
+		//		je		SKIP;
+
+		//		fnstsw  ax;
+		//		test    ah, 0x41;
+		//		jmp		stock_addr;
+
+		//	SKIP:
+		//		jmp		disable_culling_addr;
+		//	}
+		//}
+
+		//__declspec(naked) void disable_maxs_culling_stub()
+		//{
+		//	const static uint32_t stock_addr = 0x643B39;
+		//	const static uint32_t disable_culling_addr = 0x643B48;
+		//	__asm
+		//	{
+		//		// jump if culling is less or disabled
+		//		cmp		rtx::loc_culling_tweak_maxs, 1;
+		//		je		SKIP;
+
+		//		fnstsw  ax;
+		//		test    ah, 1;
+		//		jmp		stock_addr;
+
+		//	SKIP:
+		//		jmp		disable_culling_addr;
+		//	}
+		//}
+
+		//__declspec(naked) void disable_frustum_culling_stub()
+		//{
+		//	//const static uint32_t stock_addr = 0x643D44;
+		//	const static uint32_t disable_culling_addr = 0x643D80;
+		//	__asm
+		//	{
+		//		// og
+		//		xor		ecx, ecx;
+
+		//		// jump if culling is less or disabled
+		//		//cmp		rtx::loc_culling_tweak_frustum, 1;
+		//		//je		SKIP;
+		//		//
+		//		//cmp		[esp + 0x54], ecx;
+		//		//jmp		stock_addr;
+
+		//	//SKIP:
+		//		jmp		disable_culling_addr;
+		//	}
+		//}
+
+		//__declspec(naked) void disable_smodel_culling_stub()
+		//{
+		//	const static uint32_t stock_addr = 0x643C79;
+		//	const static uint32_t disable_culling_addr = 0x643CB5;
+		//	__asm
+		//	{
+		//		// og
+		//		xor ecx, ecx;
+
+		//		// jump if culling is less or disabled
+		//		cmp		rtx::loc_culling_tweak_smodel, 1;
+		//		je		SKIP;
+
+		//		cmp[esp + 0x54], ecx;
+		//		jmp		stock_addr;
+
+		//	SKIP:
+		//		jmp		disable_culling_addr;
+		//	}
+		//}
+
+#pragma region OLD_CULLING
+		// #
+		// old anti culling - active if flag 'old_anti_culling' is set
+
 		// R_AddWorldSurfacesPortalWalk
 		__declspec(naked) void world_stub_01()
 		{
@@ -1178,6 +1400,7 @@ namespace components::sp
 				jmp		retn_skip;
 			}
 		}
+#pragma endregion
 	}
 
 	int skip_image_load(game::GfxImage* img)
@@ -1317,7 +1540,11 @@ namespace components::sp
 
 		// *
 		// culling
+
+		if (flags::has_flag("old_anti_culling"))
 		{
+			OLD_CULLING_ACTIVE = true;
+
 			// R_AddWorldSurfacesPortalWalk :: less culling
 			utils::hook::nop(0x6E5518, 6); utils::hook(0x6E5518, cull::world_stub_01, HOOK_JUMP).install()->quick();
 
@@ -1359,6 +1586,79 @@ namespace components::sp
 				/* desc		*/ "Disable culling of game entities (script objects/destructible cars ...)",
 				/* default	*/ true,
 				/* flags	*/ game::dvar_flags::saved);
+		}
+		else // new way of culling
+		{
+			// rewrite some logic in 'R_AddWorldSurfacesPortalWalk'
+			utils::hook::nop(0x6E552F, 9); utils::hook(0x6E552F, cull::cell_stub, HOOK_JUMP).install()->quick();
+
+			// ^ - never show all cells at once when the camera cell index is < 0, we handle that in the func above
+			utils::hook::nop(0x6E551E, 2);
+
+
+			// #
+			// tweakable culling via dvars
+
+			// only frustum and static
+
+			// disable mins culling - 0x643B08 nop 6
+			//utils::hook(0x643B03, cull::disable_mins_culling_stub, HOOK_JUMP).install()->quick();
+
+			// disable maxs culling - 0x643B39 to jmp
+			//utils::hook(0x643B34, cull::disable_maxs_culling_stub, HOOK_JUMP).install()->quick();
+
+			// disable (most) frustum culling - 0x643D44 to jmp
+			//utils::hook::nop(0x7399F6, 6); utils::hook(0x7399F6, cull::disable_frustum_culling_stub, HOOK_JUMP).install()->quick();
+			utils::hook::nop(0x739BBA, 2); // func is not inlined and a little different compared to iw3
+
+			// ^ for smodels - 0x643C79 to jmp
+			//utils::hook::nop(0x643C73, 6); utils::hook(0x643C73, cull::disable_smodel_culling_stub, HOOK_JUMP).install()->quick();
+			utils::hook::nop(0x739B4F, 2); // ^ same
+
+			//dvars::rtx_culling_tweak_mins = game::Dvar_RegisterBool(
+			//	/* name		*/ "rtx_culling_tweak_mins",
+			//	/* desc		*/ "Disable dpvs mins check (reduces culling)",
+			//	/* default	*/ false,
+			//	/* flags	*/ game::dvar_flags::saved);
+
+			//dvars::rtx_culling_tweak_maxs = game::Dvar_RegisterBool(
+			//	/* name		*/ "rtx_culling_tweak_maxs",
+			//	/* desc		*/ "Disable dpvs maxs check (reduces culling)",
+			//	/* default	*/ false,
+			//	/* flags	*/ game::dvar_flags::saved);
+
+			//dvars::rtx_culling_tweak_frustum = game::Dvar_RegisterBool(
+			//	/* name		*/ "rtx_culling_tweak_frustum",
+			//	/* desc		*/ "Disable (most) frustum culling (reduces culling)",
+			//	/* default	*/ true,
+			//	/* flags	*/ game::dvar_flags::saved);
+
+			//dvars::rtx_culling_tweak_smodel = game::Dvar_RegisterBool(
+			//	/* name		*/ "rtx_culling_tweak_smodel",
+			//	/* desc		*/ "Disable static model frustum culling (reduces culling)",
+			//	/* default	*/ true,
+			//	/* flags	*/ game::dvar_flags::saved);
+
+			dvars::rtx_culling_plane_dist = game::Dvar_RegisterFloat(
+				/* name		*/ "rtx_culling_plane_dist",
+				/* default	*/ 1250.0f,
+				/* minVal	*/ -50000.0f,
+				/* maxVal	*/ 50000.0f,
+				/* flags	*/ game::dvar_flags::saved,
+				/* desc		*/ "Distance of dpvs culling-planes"
+			);
+
+			// never cull brushmodels via dpvs
+			//utils::hook::nop(0x64D35B, 2);
+			//utils::hook::set<BYTE>(0x64D368, 0xEB); // ^
+			utils::hook::nop(0x74A50A, 2);
+			utils::hook::nop(0x74A524, 2);
+			
+			// ^ scene ents (spawned map markers (script models))
+			//utils::hook::nop(0x64D17A, 2);
+			//utils::hook::set<BYTE>(0x64D1A9, 0xEB); // ^
+			utils::hook::nop(0x74A319, 2);
+			utils::hook::set<BYTE>(0x74A357, 0xEB); // ^
 		}
 
 		// ignore "too many static models ..." msg - still add model to the scene
@@ -1412,6 +1712,12 @@ namespace components::sp
 			/* flags	*/ game::dvar_flags::saved,
 			/* desc		*/ "radius in which to draw r_showTess debug strings"
 		);
+
+		dvars::r_showCellIndex = game::Dvar_RegisterBool(
+			/* name		*/ "r_showCellIndex",
+			/* desc		*/ "draw cell index at the center of current cell (useful for map_settings)",
+			/* default	*/ false,
+			/* flags	*/ game::dvar_flags::none);
 
 		// ------------------------------------------------------------------------
 

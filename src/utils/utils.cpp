@@ -37,6 +37,17 @@ namespace utils
 		return ret;
 	}
 
+	std::string split_string_between_delims(const std::string& str, const char delim_start, const char delim_end)
+	{
+		const auto first = str.find_last_of(delim_start);
+		if (first == std::string::npos) return "";
+
+		const auto last = str.find_first_of(delim_end, first);
+		if (last == std::string::npos) return "";
+
+		return str.substr(first + 1, last - first - 1);
+	};
+
 	bool starts_with(std::string_view haystack, std::string_view needle)
 	{
 		return (haystack.size() >= needle.size() && !strncmp(needle.data(), haystack.data(), needle.size()));
@@ -103,6 +114,45 @@ namespace utils
 		}
 
 		return result;
+	}
+
+	int is_space(int c)
+	{
+		if (c < -1)
+		{
+			return 0;
+		}
+
+		return _isspace_l(c, nullptr);
+	}
+
+	// trim from start
+	std::string& ltrim(std::string& s)
+	{
+		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int val)
+			{
+				return !is_space(val);
+			}));
+
+		return s;
+	}
+
+	// trim from end
+	std::string& rtrim(std::string& s)
+	{
+		s.erase(std::find_if(s.rbegin(), s.rend(), [](int val)
+			{
+				return !is_space(val);
+
+			}).base(), s.end());
+
+		return s;
+	}
+
+	// trim from both ends
+	std::string& trim(std::string& s)
+	{
+		return ltrim(rtrim(s));
 	}
 
 	int q_stricmpn(const char* s1, const char* s2, int n)
@@ -340,6 +390,54 @@ namespace utils
 		}
 
 		return pitch;
+	}
+
+	// copy x-sized vector
+	void copy(const game::vec_t* in, game::vec_t* out, int size = 3)
+	{
+		for (auto i = 0; i < size; i++)
+		{
+			out[i] = in[i];
+		}
+	}
+
+	void angle_vectors(const game::vec3_t angles, game::vec3_t forward, game::vec3_t right, game::vec3_t up)
+	{
+		float angle;
+		static float sr, sp, sy, cr, cp, cy;
+
+		angle = angles[YAW] * (M_PI * 2.0f / 360.0f);
+		sy = sin(angle);
+		cy = cos(angle);
+
+		angle = angles[PITCH] * (M_PI * 2.0f / 360.0f);
+		sp = sin(angle);
+		cp = cos(angle);
+
+		angle = angles[ROLL] * (M_PI * 2.0f / 360.0f);
+		sr = sin(angle);
+		cr = cos(angle);
+
+		if (forward)
+		{
+			forward[0] = cp * cy;
+			forward[1] = cp * sy;
+			forward[2] = -sp;
+		}
+
+		if (right)
+		{
+			right[0] = -1 * sr * sp * cy + -1 * cr * -sy;
+			right[1] = -1 * sr * sp * sy + -1 * cr * cy;
+			right[2] = -1 * sr * cp;
+		}
+
+		if (up)
+		{
+			up[0] = cr * sp * cy + -sr * -sy;
+			up[1] = cr * sp * sy + -sr * cy;
+			up[2] = cr * cp;
+		}
 	}
 
 	void vec3_copy(const game::vec3_t in, game::vec3_t out)
@@ -589,6 +687,13 @@ namespace utils
 		game::vec3_t v;
 		VECTOR_SUBTRACT(p2, p1, v);
 		return length(v);
+	}
+
+	void scale3(const game::vec3_t v1, float scalar, game::vec3_t out)
+	{
+		out[0] = v1[0] * scalar;
+		out[1] = v1[1] * scalar;
+		out[2] = v1[2] * scalar;
 	}
 
 	void byte3_pack_rgba(const float* from, unsigned char* to)

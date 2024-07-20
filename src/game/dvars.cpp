@@ -7,6 +7,12 @@ namespace dvars
 	game::dvar_s* rtx_disable_entity_culling = nullptr;
 	game::dvar_s* rtx_sky_follow_player = nullptr;
 
+	game::dvar_s* rtx_culling_tweak_mins = nullptr;
+	game::dvar_s* rtx_culling_tweak_maxs = nullptr;
+	game::dvar_s* rtx_culling_tweak_frustum = nullptr;
+	game::dvar_s* rtx_culling_tweak_smodel = nullptr;
+	game::dvar_s* rtx_culling_plane_dist = nullptr;
+
 	game::dvar_s* r_showTess = nullptr;
 	game::dvar_s* r_showTessSkin = nullptr;
 	game::dvar_s* r_showTessDist = nullptr;

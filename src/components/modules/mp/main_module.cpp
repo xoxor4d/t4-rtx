@@ -87,12 +87,14 @@ namespace components::mp
 
 		if (!flags::has_flag("no_fog"))
 		{
+			const auto s = map_settings::settings();
 			const float fog_start = 1.0f;
+
 			dev->SetRenderState(D3DRS_FOGENABLE, TRUE);
-			dev->SetRenderState(D3DRS_FOGCOLOR, map_settings::m_color.packed);
+			dev->SetRenderState(D3DRS_FOGCOLOR, s->fog_color.packed);
 			dev->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
-			dev->SetRenderState(D3DRS_FOGSTART, *(DWORD*)(&fog_start));
-			dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)(&map_settings::m_max_distance));
+			dev->SetRenderState(D3DRS_FOGSTART, *(DWORD*)&fog_start);
+			dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)&s->fog_distance);
 		}
 
 		if (dvars::rtx_sky_follow_player && dvars::rtx_sky_follow_player->current.enabled)

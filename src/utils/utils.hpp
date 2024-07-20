@@ -8,6 +8,8 @@ namespace utils
 	int try_stoi(const std::string& str, const int& default_return_val = 0);
 	float try_stof(const std::string& str, const float& default_return_val = 0.0f);
 
+	std::string split_string_between_delims(const std::string& str, const char delim_start, const char delim_end);
+
 	static std::vector<std::string> split(const std::string& raw_input, const std::vector<char>& delims)
 	{
 		std::vector<std::string> strings;
@@ -69,6 +71,9 @@ namespace utils
 	bool erase_substring(std::string& base, const std::string& replace);
 	std::string str_to_lower(std::string input);
 	std::string convert_wstring(const std::wstring& wstr);
+	std::string& ltrim(std::string& s);
+	std::string& rtrim(std::string& s);
+	std::string& trim(std::string& s);
 	int	q_stricmpn(const char* s1, const char* s2, int n);
 	const char* va(const char* fmt, ...);
 	void extract_integer_words(const std::string_view& str, std::vector<int>& integers, bool check_for_duplicates);
@@ -77,8 +82,12 @@ namespace utils
 	void axis_transpose(const float(*in)[3], float(*out)[3]);
 	void unit_quat_to_axis(const float* quat, float(*axis)[3]);
 
+	void copy(const game::vec_t* in, game::vec_t* out, int size);
+	void angle_vectors(const game::vec3_t angles, game::vec3_t forward, game::vec3_t right, game::vec3_t up);
+
 	game::vec_t	length(const game::vec3_t v);
 	game::vec_t	distance(const game::vec3_t p1, const game::vec3_t p2);
+	void scale3(const game::vec3_t v1, float scalar, game::vec3_t out);
 
 	void byte3_pack_rgba(const float* from, unsigned char* to);
 	void byte4_pack_rgba(const float* from, char* to);

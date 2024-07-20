@@ -16,9 +16,13 @@ namespace game
 	{
 		DxGlobals* dx = reinterpret_cast<DxGlobals*>(0x3BF3B04);
 		clipMap_t* cm = reinterpret_cast<clipMap_t*>(0x1F41A00);
+		GfxWorld* gfx_world = reinterpret_cast<GfxWorld*>(0x3DCB4E0);
+
 		r_global_permanent_t* rgp = reinterpret_cast<r_global_permanent_t*>(0x3BF1880);
 		game::GfxBuffers* gfx_buf = reinterpret_cast<game::GfxBuffers*>(0x42C2000);
 		game::cg_s* cgs = reinterpret_cast<game::cg_s*>(0x34732B8);
+
+		game::DpvsGlob* dpvsGlob = reinterpret_cast<game::DpvsGlob*>(0x3DA8D80);
 
 		CmdArgs* cmd_args = reinterpret_cast<CmdArgs*>(0x1F41670);
 		cmd_function_s** cmd_ptr = reinterpret_cast<cmd_function_s**>(0x1F416F4);
@@ -75,6 +79,67 @@ namespace game
 
 				call	DB_FileExists_func;
 				add     esp, 4;
+			}
+		}
+
+		// some wrapper func for FX_SpawnEffect
+		game::FxEffect* FX_SpawnOrientedEffect(const float* axis, game::FxEffectDef* def, int msec_begin, const float* origin)
+		{
+			const static uint32_t func_addr = 0x4AD6B0;
+			__asm
+			{
+				push	origin;
+				push	msec_begin;
+				push	def;
+				mov		ecx, 1023; // bone index?
+				mov		edx, axis;
+				call	func_addr;
+				add		esp, 12;
+			}
+		}
+
+		void FX_KillEffect(game::FxEffect* def)
+		{
+			const static uint32_t func_addr = 0x4ADFB0;
+			__asm
+			{
+				pushad;
+				push	def;
+				mov     esi, [0x16D7100]; // fx_systemPool
+				call	func_addr;
+				add		esp, 4;
+				popad;
+			}
+		}
+
+		// #
+		// portal related
+
+		void R_AddCellSurfacesAndCullGroupsInFrustumDelayed(GfxCell* cell /*eax*/, DpvsPlane* planes /*edi*/, int planeCount, int frustumPlaneCount)
+		{
+			const static uint32_t func_addr = 0x6E3BF0;
+			__asm
+			{
+				push	frustumPlaneCount;
+				push	planeCount;
+				mov		edi, planes;
+				mov		eax, cell;
+				call	func_addr;
+				add		esp, 8;
+			}
+		}
+
+		void R_VisitPortals(int plane_count /*eax*/, GfxCell* cell, DpvsPlane* parent_plane, DpvsPlane* planes)
+		{
+			const static uint32_t func_addr = 0x6E4690;
+			__asm
+			{
+				push	planes;
+				push	parent_plane;
+				push	cell;
+				mov		eax, plane_count;
+				call	func_addr;
+				add		esp, 12;
 			}
 		}
 	} // sp-end
@@ -223,6 +288,20 @@ namespace game
 		lim.integer.max = 1;
 
 		return game::Dvar_RegisterVariant(name, game::boolean, flags, val, lim, description);
+	}
+
+	XAssetHeader DB_FindXAssetHeader(XAssetType type, const char* name)
+	{
+		typedef XAssetHeader(*DB_FindXAssetHeader_t)(XAssetType, const char*, int, int);
+		if (game::is_sp)
+		{
+			auto sp_func = reinterpret_cast<DB_FindXAssetHeader_t>(0x48DA30);
+			return sp_func(type, name, 1, -1);
+		}
+		else
+		{
+			return (XAssetHeader) nullptr;
+		}
 	}
 
 	void init_offsets()

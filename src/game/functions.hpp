@@ -3,6 +3,30 @@
 
 #define SELECT(mp_addr, sp_addr) (game::is_mp ? mp_addr : sp_addr)
 
+#define MPSP_FUNC(func) { \
+		if (game::is_mp) { \
+			mp::##func; \
+		} else { \
+			sp::##func; \
+		} \
+	}
+
+#define MPSP_FUNC_RET(func, dest) { \
+		if (game::is_mp) { \
+			(dest) = mp::##func; \
+		} else { \
+			(dest) = sp::##func; \
+		} \
+	}
+
+#define MPSP_GAME_FUNC(func) { \
+		if (game::is_mp) { \
+			game::mp::##func; \
+		} else { \
+			game::sp::##func; \
+		} \
+	}
+
 namespace game
 {
 	extern bool is_sp;
@@ -13,6 +37,11 @@ namespace game
 
 	static inline float COLOR_WHITE[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	static inline float COLOR_BLACK[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	static inline float COLOR_RED[4] = { 1.0f, 0.0f, 0.0f, 1.0f };
+	static inline float COLOR_GREEN[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
+	static inline float COLOR_BLUE[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+	static inline float vec3_origin[3] = { 0.0f, 0.0f, 0.0f };
+	static inline float IDENTITY_AXIS[3][3] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 
 	// ------------------------------------------------------------------------------------------------------------
 	// ############################################################################################################
@@ -22,9 +51,13 @@ namespace game
 	{
 		extern DxGlobals* dx;
 		extern clipMap_t* cm;
+		extern GfxWorld* gfx_world;
+
 		extern r_global_permanent_t* rgp;
 		extern GfxBuffers* gfx_buf;
 		extern game::cg_s* cgs;
+
+		extern game::DpvsGlob* dpvsGlob;
 
 		extern CmdArgs* cmd_args;
 		extern cmd_function_s** cmd_ptr;
@@ -63,6 +96,12 @@ namespace game
 
 		std::int16_t G_ModelIndex(const char* model_name /*eax*/); // ASM
 		extern bool DB_FileExists(const char* file_name, game::DB_FILE_EXISTS_PATH);
+
+		game::FxEffect* FX_SpawnOrientedEffect(const float* axis, game::FxEffectDef* def, int msec_begin, const float* origin);
+		extern void FX_KillEffect(game::FxEffect* def);
+
+		extern void R_AddCellSurfacesAndCullGroupsInFrustumDelayed(GfxCell* cell /*eax*/, DpvsPlane* planes /*edi*/, int planeCount, int frustumPlaneCount); // ASM
+		extern void R_VisitPortals(int plane_count /*eax*/, GfxCell* cell, DpvsPlane* parent_plane, DpvsPlane* planes); // ASM
 
 		static utils::function<game::gentity_s* ()> G_Spawn = 0x54EAB0;
 		static utils::function<bool(game::gentity_s*)> G_CallSpawnEntity = 0x5465A0;
@@ -132,6 +171,8 @@ namespace game
 	dvar_s* Dvar_RegisterFloat(const char* name, float value, float min, float max, game::dvar_flags flags, const char* description);
 	dvar_s* Dvar_RegisterEnum(const char* dvar_name, const char** values, std::uint32_t value_count, int default_value, int flags, const char* description);
 	dvar_s* Dvar_RegisterBool(const char* name, const char* description, bool value, int flags);
+
+	XAssetHeader DB_FindXAssetHeader(XAssetType type, const char* name);
 
 	// mp-sp functions
 	extern utils::function<dvar_s* (const char*, int, int, DvarValue, DvarLimits, const char*)> Dvar_RegisterVariant;
