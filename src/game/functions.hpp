@@ -106,6 +106,16 @@ namespace game
 		static utils::function<game::gentity_s* ()> G_Spawn = 0x54EAB0;
 		static utils::function<bool(game::gentity_s*)> G_CallSpawnEntity = 0x5465A0;
 		static utils::function<void(entityState_s*)> G_DObjUpdate = 0x54AC40;
+
+		// db
+		extern int** DB_XAssetPool;
+		extern unsigned int* g_poolSize;
+
+		typedef int(__cdecl* DB_GetXAssetSizeHandler_t)();
+			extern DB_GetXAssetSizeHandler_t* DB_GetXAssetSizeHandler;
+
+		extern int DB_GetXAssetTypeSize(int);
+		extern void* DB_ReallocXAssetPool(int, unsigned int);
 	}
 
 	// ------------------------------------------------------------------------------------------------------------

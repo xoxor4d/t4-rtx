@@ -1732,6 +1732,22 @@ namespace components::sp
 		// console string ;)
 		utils::hook::set<const char*>(0x472E13 + 1, version_str.c_str());
 
+		// solo scoreboard
+		utils::hook::nop(0x437ACC, 5);
+
+		// t4m
+		game::sp::DB_ReallocXAssetPool(game::ASSET_TYPE_FX, 600);
+		game::sp::DB_ReallocXAssetPool(game::ASSET_TYPE_IMAGE, 4096);
+		game::sp::DB_ReallocXAssetPool(game::ASSET_TYPE_LOADED_SOUND, 2400);
+		game::sp::DB_ReallocXAssetPool(game::ASSET_TYPE_MATERIAL, 4096);
+		game::sp::DB_ReallocXAssetPool(game::ASSET_TYPE_WEAPON, 320);
+		game::sp::DB_ReallocXAssetPool(game::ASSET_TYPE_XMODEL, 1500);
+
+		// increase g_mem
+		utils::hook::set<DWORD>(0x5F5492, 0x19600000);
+		utils::hook::set<DWORD>(0x5F54D1, 0x19600000);
+		utils::hook::set<DWORD>(0x5F54DB, 0x19600000);
+
 		// no forward/backslash for console cmds
 		//utils::hook::nop(0x493DEF, 5);
 

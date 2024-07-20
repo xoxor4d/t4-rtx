@@ -3277,7 +3277,7 @@ namespace game
 		char** argv[8]; //OFS: 0x64 SIZE: 0x20
 	};
 
-	enum XAssetType
+	enum XAssetType : __int32
 	{
 		ASSET_TYPE_XMODELPIECES = 0x0,
 		ASSET_TYPE_PHYSPRESET = 0x1,
@@ -3338,6 +3338,7 @@ namespace game
 
 	union XAssetHeader
 	{
+		void* data;
 		XModel* model;
 		Material* material;
 		MaterialTechniqueSet* techniqueSet;
@@ -3346,13 +3347,28 @@ namespace game
 		MapEnts* mapEnts;
 		GfxWorld* gfxWorld;
 		FxEffectDef* fx;
-		void* data;
 	};
 
 	struct XAsset
 	{
 		XAssetType type;
 		XAssetHeader header;
+	};
+
+	struct __declspec(align(4)) XAssetEntry
+	{
+		XAsset asset;
+		char zoneIndex;
+		bool inuse;
+		unsigned __int16 nextHash;
+		unsigned __int16 nextOverride;
+		unsigned __int16 usageFrame;
+	};
+
+	union __declspec(align(4)) XAssetEntryPoolEntry
+	{
+		XAssetEntry entry;
+		XAssetEntryPoolEntry* next;
 	};
 
 	struct DpvsView
