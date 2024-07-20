@@ -714,11 +714,14 @@ namespace game
 		FxCodeMeshData codeMeshes[2048];
 		char pad0[569088];
 		GfxMeshData codeMesh;
-		char pad[466604];
+		char pad[466512];
+		GfxMeshData markMesh;
+		char pad1[58];
 		unsigned int viewInfoIndex;
 		unsigned int viewInfoCount;
 		GfxViewInfo* viewInfo;
 	};
+	STATIC_ASSERT_OFFSET(GfxBackEndData, markMesh, 0x144D70);
 	STATIC_ASSERT_OFFSET(GfxBackEndData, viewInfo, 0x144DD4);
 
 	struct ModelLodFade

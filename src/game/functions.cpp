@@ -145,6 +145,11 @@ namespace game
 	// ############################################################################################################
 	// ------------------------------------------------------------------------------------------------------------
 
+	IDirect3DDevice9* get_device()
+	{
+		return game::is_mp ? game::mp::dx->device : game::sp::dx->device;
+	}
+
 	GfxCmdBufSourceState* get_cmdbufsourcestate()
 	{
 		const auto out = reinterpret_cast<GfxCmdBufSourceState*>(game::is_mp ? *game::mp::gfxCmdBufSourceState_ptr : *game::sp::gfxCmdBufSourceState_ptr);

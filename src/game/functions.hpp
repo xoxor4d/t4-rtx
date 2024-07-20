@@ -120,6 +120,7 @@ namespace game
 		static utils::function<void(entityState_s*)> G_DObjUpdate = 0x541310;
 	}
 
+	extern IDirect3DDevice9* get_device();
 	extern GfxCmdBufSourceState* get_cmdbufsourcestate();
 	extern GfxBackEndData* get_frontenddata();
 	extern GfxBackEndData* get_backenddata();
