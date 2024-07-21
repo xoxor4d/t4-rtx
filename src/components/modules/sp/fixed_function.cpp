@@ -582,7 +582,109 @@ namespace components::sp
 		}
 	}
 
-	// # TODO R_DrawStaticModelsSkinnedDrawSurf
+	/**
+	 * @brief Draw static - skinned meshes using fixed function. Uses static and dynamic vertex buffers.
+	 */
+	void R_DrawStaticModelsSkinnedDrawSurf(const game::GfxStaticModelDrawStream* draw_stream, game::GfxCmdBufSourceState* source, game::GfxCmdBufState* state)
+	{
+		const auto dev = game::get_device();
+		const auto surf = draw_stream->localSurf;
+		const auto dyn_vb = game::sp::gfx_buf->dynamicVertexBuffer;
+		const auto start_index = R_SetIndexData(&state->prim, surf->triIndices, surf->triCount);
+		if (!surf->deformed && surf->vb0)
+		{
+			set_stream_source(state, surf->vb0, 0, MODEL_VERTEX_STRIDE);
+		}
+		else
+		{
+			if ((int)(MODEL_VERTEX_STRIDE * surf->vertCount + dyn_vb->used) > dyn_vb->total)
+			{
+				dyn_vb->used = 0;
+			}
+
+			// R_SetVertexData
+			void* buffer_data;
+			if (const auto hr = dyn_vb->buffer->Lock(dyn_vb->used, MODEL_VERTEX_STRIDE * surf->vertCount, &buffer_data, dyn_vb->used != 0 ? D3DLOCK_NOOVERWRITE : D3DLOCK_DISCARD);
+				hr < 0)
+			{
+				game::sp::Com_Error(0, "Fatal lock error :: R_DrawXModelSkinnedUncached");
+			}
+			{
+				for (auto i = 0u; i < surf->vertCount; i++)
+				{
+					// packed source vertex
+					const auto src_vert = &surf->verts0[i];
+
+					// position of our unpacked vert within the vertex buffer
+					const auto v_pos_in_buffer = i * MODEL_VERTEX_STRIDE;
+					const auto v = reinterpret_cast<unpacked_model_vert*>(((DWORD)buffer_data + v_pos_in_buffer));
+
+					// vert pos
+					v->pos[0] = src_vert->xyz[0];
+					v->pos[1] = src_vert->xyz[1];
+					v->pos[2] = src_vert->xyz[2];
+
+					// unpack and assign vert normal
+					fixed_function::unpack_normal(&src_vert->normal, v->normal);
+
+					// uv's
+					game::sp::Vec2UnpackTexCoords(src_vert->texCoord.packed, v->texcoord);
+				}
+			}
+
+			dyn_vb->buffer->Unlock();
+			const std::uint32_t vert_offset = dyn_vb->used;
+			dyn_vb->used += (MODEL_VERTEX_STRIDE * surf->vertCount);
+
+			// #
+			// #
+
+			set_stream_source(state, dyn_vb->buffer, vert_offset, MODEL_VERTEX_STRIDE);
+		}
+
+		// needed or game renders mesh with shaders
+		dev->SetVertexShader(nullptr);
+		dev->SetPixelShader(nullptr);
+
+		// vertex format
+		dev->SetFVF(MODEL_VERTEX_FORMAT);
+
+		// #
+		// build world matrix
+
+		for (auto index = 0u; index < draw_stream->smodelCount; index++)
+		{
+			const auto inst = &game::sp::rgp->world->dpvs.smodelDrawInsts[draw_stream->smodelList[index]];
+
+			//transform model into the scene by updating the worldmatrix
+			float mtx[4][4] = {};
+			fixed_function::build_worldmatrix_for_object(&mtx[0], inst->placement.axis, inst->placement.origin, inst->placement.scale);
+			dev->SetTransform(D3DTS_WORLD, reinterpret_cast<D3DMATRIX*>(&mtx));
+
+			if (dvars::r_showTess && dvars::r_showTess->current.enabled && dvars::r_showTess->current.integer <= 2)
+			{
+				main_module::rb_show_tess(source, state, &mtx[3][0], "StaticSkin", game::COLOR_WHITE);
+			}
+
+			// draw the prim
+			dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, surf->vertCount, start_index, surf->triCount);
+		}
+
+		dev->SetFVF(NULL);
+	}
+
+	__declspec(naked) void R_DrawStaticModelsSkinnedDrawSurf_stub()
+	{
+		const static uint32_t retn_addr = 0x74EA8E;
+		__asm
+		{
+			// state + source pushed
+			push	eax; // draw stream
+			call	R_DrawStaticModelsSkinnedDrawSurf;
+			add		esp, 4;
+			jmp		retn_addr;
+		}
+	}
 
 	// *
 	// world (bsp/terrain) drawing
@@ -1323,18 +1425,25 @@ namespace components::sp
 		// fixed-function rendering of rigid xmodels - call 1 (RB_TessXModelRigidDrawSurfList-> R_DrawXModelSurfCamera-> R_DrawXModelRigidModelSurf1
 		utils::hook::nop(0x74CC61, 3); // dont overwrite eax with xsurf, wee want GfxModelRigidSurface
 		utils::hook(0x74CCB2, R_DrawXModelRigidModelSurf1_stub, HOOK_JUMP).install()->quick();
-
-		// ^ call 2
 		utils::hook(0x74D064, R_DrawXModelRigidModelSurf2_stub, HOOK_JUMP).install()->quick();
 
 		// fixed-function rendering of skinned (animated) models (R_TessXModelSkinnedDrawSurfList)
 		utils::hook::nop(0x73F186, 6);
 		utils::hook(0x73F186, R_DrawXModelSkinnedUncached_stub, HOOK_JUMP).install()->quick();
 
+		// fixed-function rendering of static skinned models // NOTE: draw_stream in eax
+		utils::hook(0x74EA89, R_DrawStaticModelsSkinnedDrawSurf_stub, HOOK_JUMP).install()->quick();
+
+		// 0x73FF9A - flickering water but no difference if nop'd (R_TessXModelWaterList)
+		utils::hook::nop(0x73FF9A, 5);
+
 		// fixed-function rendering of world surfaces (R_TessTrianglesPreTessList)
 		// :: R_SetStreamsForBspSurface -> R_ClearAllStreamSources -> Stream 1 (world->vld.layerVb) handles 'decals'
 		// :: see technique 'lm_r0c0t1c1n1_nc_sm3.tech'
 		utils::hook(0x741408, R_DrawBspDrawSurfsPreTess, HOOK_CALL).install()->quick(); // unlit
+		utils::hook::nop(0x741380, 5); // R_UpdateVertexDecl -- not required to be nop'd but cant hurt
+		utils::hook::nop(0x7412E3, 5); // R_SetPassPixelShaderStableArguments -- ^
+		utils::hook::nop(0x7412A6, 5); // R_SetTerrainScorchTextures -- ^
 
 		// fixed-function rendering of brushmodels
 		utils::hook(0x741420, R_TessBModel, HOOK_JUMP).install()->quick();

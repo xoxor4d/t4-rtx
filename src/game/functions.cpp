@@ -112,6 +112,45 @@ namespace game
 			}
 		}
 
+		void draw_text_with_engine(float x, float y, float scale_x, float scale_y, const char* font, const float* color, const char* text)
+		{
+			void* fontHandle = R_RegisterFont(font);
+			R_AddCmdDrawTextASM(text, 0x7FFFFFFF, fontHandle, x, y, scale_x, scale_y, 0.0f, color, 0);
+		}
+
+		void R_AddCmdDrawTextASM(const char* text, int max_chars, void* font, float x, float y, float x_scale, float y_scale, float rotation, const float* color, int style)
+		{
+			const static uint32_t R_AddCmdDrawText_func = 0x6F5F10;
+			__asm
+			{
+				push	style;
+				sub     esp, 0x14;
+
+				fld		rotation;
+				fstp	[esp + 0x10];
+
+				fld		y_scale;
+				fstp	[esp + 0x0C];
+
+				fld		x_scale;
+				fstp	[esp + 0x8];
+
+				fld		y;
+				fstp	[esp + 0x4];
+
+				fld		x;
+				fstp	[esp];
+
+				push	font;
+				push	max_chars;
+				push	text;
+				mov		ecx, [color];
+
+				call	R_AddCmdDrawText_func;
+				add		esp, 0x24;
+			}
+		}
+
 		// #
 		// portal related
 

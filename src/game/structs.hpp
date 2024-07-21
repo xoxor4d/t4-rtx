@@ -3319,6 +3319,16 @@ namespace game
 		ASSET_TYPE_ASSETLIST = 0x24,
 	};
 
+	struct Font_s
+	{
+		char* fontName;
+		int pixelHeight;
+		int glyphCount;
+		Material* material;
+		Material* glowMaterial;
+		void* Glyph___glyphs;
+	};
+
 	struct FxEffectDef
 	{
 		const char* name;

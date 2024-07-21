@@ -84,6 +84,96 @@ namespace components::sp
 				main_module::loc_disable_entity_culling = dvars::rtx_disable_entity_culling->current.enabled ? 1 : 0;
 			}
 		}
+
+		if (const auto var = Dvar_FindVar("r_depthprepass"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_blur_allowed"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_dof_enable"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_motionblur_enable"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_multiGpu"); var)
+		{
+			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("sc_enable"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("sm_enable"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_smc_enable"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_smp_backend"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_smp_worker"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_drawWater"); var)
+		{
+			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_watersim_enabled"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_skinCache"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_fastSkin"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_distortion"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
 	}
 	
 	void setup_rtx()
@@ -275,7 +365,6 @@ namespace components::sp
 		if (mat
 			&& mat->techniqueSet
 			&& mat->techniqueSet->remappedTechniqueSet
-			&& mat->techniqueSet->remappedTechniqueSet->techniques
 			&& mat->techniqueSet->remappedTechniqueSet->techniques[type])
 		{
 			return true;
@@ -335,17 +424,25 @@ namespace components::sp
 		mat.technique = mat.current_technique;
 		mat.technique_type = type;
 
-
-		if (utils::starts_with(mat.current_material->info.name, "wc/sky_"))
+		if (std::string_view(mat.current_material->info.name).starts_with("wc/sky_"))
 		{
 			mat.technique_type = game::TECHNIQUE_UNLIT;
 			switch_material(&mat, "mc/mtl_test_sphere_silver");
 		}
 
 		// remove skybox model
-		if (utils::starts_with(mat.current_material->info.name, "mc/mtl_skybox"))
+		if (std::string_view(mat.current_material->info.name).starts_with("mc/mtl_skybox"))
 		{
 			return 0;
+		}
+
+		// fix water from switching to random textures
+		if (std::string_view(mat.current_material->info.name).starts_with("wc/water_dynamic_"))
+		{
+			// case64blue
+			std::string replacement = mat.current_material->info.name;
+			utils::replace_all(replacement, "water_dynamic_", "water_");
+			switch_material(&mat, replacement.c_str());
 		}
 
 		if (!mat.switch_material && !mat.switch_technique && !mat.switch_technique_type)
@@ -417,49 +514,16 @@ namespace components::sp
 			var->flags = game::dvar_flags::userinfo;
 		}
 
-		if (const auto var = Dvar_FindVar("r_skinCache"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
-		}
-
-		if (const auto var = Dvar_FindVar("r_fastSkin"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
-		}
-
-		if (const auto var = Dvar_FindVar("r_distortion"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
-		}
-
 		if (const auto var = Dvar_FindVar("fx_drawClouds"); var)
 		{
 			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
 		}
 
 		if (const auto var = Dvar_FindVar("fx_cull_elem_draw"); var)
 		{
 			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
-		}
-
-		if (const auto var = Dvar_FindVar("r_depthprepass"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
-		}
-
-		if (const auto var = Dvar_FindVar("r_smc_enable"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
-		}
-
-		if (const auto var = Dvar_FindVar("r_smp_backend"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
-		}
-
-		if (const auto var = Dvar_FindVar("r_smp_worker"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
 		}
 
 		// r_warm_static hinders static models from reaching the lowest lod, thus always drawing all models
@@ -468,6 +532,7 @@ namespace components::sp
 		if (const auto var = Dvar_FindVar("r_warm_static"); var)
 		{
 			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
 		}
 
 		if (!flags::has_flag("no_forced_lod"))
@@ -477,29 +542,21 @@ namespace components::sp
 			if (const auto var = Dvar_FindVar("r_forceLod"); var)
 			{
 				var->current.integer = 0; var->flags = game::dvar_flags::userinfo;
+				var->latched.integer = var->current.integer;
 			}
 		}
 
 		if (const auto var = Dvar_FindVar("r_fovScaleThresholdRigid"); var)
 		{
 			var->current.value = 10000.0f; var->flags = game::dvar_flags::userinfo;
+			var->latched.value = var->current.value;
 		}
-
-		//if (const auto var = Dvar_FindVar("r_fovScaleThresholdSkinned"); var)
-		//{
-		//	var->current.value = 2.0f;
-		//}
-
-		// disable culling
-		/*if (const auto var = Dvar_FindVar("r_warm_dpvs"); var)
-		{
-			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
-		}*/
 
 		// batch surfaces (def. needed)
 		if (const auto var = Dvar_FindVar("r_pretess"); var)
 		{
 			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
 		}
 
 		// #
@@ -508,12 +565,14 @@ namespace components::sp
 		if (const auto var = Dvar_FindVar("sv_cheats"); var)
 		{
 			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
 		}
 
 		// enable console
 		if (const auto var = Dvar_FindVar("monkeytoy"); var)
 		{
 			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
 		}
 	}
 
@@ -1122,14 +1181,15 @@ namespace components::sp
 				// draw cell index at the center of the current cell
 				if (dvars::r_showCellIndex && dvars::r_showCellIndex->current.enabled)
 				{
-					const game::vec3_t center =
-					{
-						(cell->mins[0] + cell->maxs[0]) * 0.5f,
-						(cell->mins[1] + cell->maxs[1]) * 0.5f,
-						(cell->mins[2] + cell->maxs[2]) * 0.5f
-					};
-
-					game::sp::R_AddDebugString(&game::get_frontenddata()->debugGlobals, center, game::COLOR_GREEN, 1.0f, utils::va("Cell Index: %d", camera_cell_index));
+					const game::vec4_t col = { 1.0f, 1.0f, 1.0f, 1.0f };
+					game::sp::draw_text_with_engine(
+						/* x	*/ 50.0f,
+						/* y	*/ 500.0f,
+						/* scaX */ 1,
+						/* scaY */ 1,
+						/* font */ "fonts/boldFont",
+						/* colr */ col,
+						/* txt	*/ utils::va("Current Cell: %d", camera_cell_index));
 				}
 
 

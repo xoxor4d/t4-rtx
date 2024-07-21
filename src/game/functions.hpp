@@ -68,11 +68,9 @@ namespace game
 
 		static utils::function<dvar_s* __cdecl (const char* name)> Dvar_FindVar = 0x5EDE30;
 		static utils::function<Material* __fastcall (const char* name, int)> Material_RegisterHandle = 0x6E9C20;
-
 		static utils::function<void __fastcall (int, GfxCmdBufSourceState*)> R_Set3D = 0x7244C0;
-
-		static utils::function<void(game::DebugGlobals* debugGlobalsEntry, const float* origin, const float* color, float scale, const char* string)>
-			R_AddDebugString = 0x70C140;
+		static utils::function<Font_s* (const char* fontName)> R_RegisterFont = 0x6E8D80;
+		static utils::function<void(game::DebugGlobals* debugGlobalsEntry, const float* origin, const float* color, float scale, const char* string)> R_AddDebugString = 0x70C140;
 
 		typedef void(*Cmd_ExecuteSingleCommand_t)(int controller, int a2, const char* cmd);
 			extern Cmd_ExecuteSingleCommand_t Cmd_ExecuteSingleCommand;
@@ -99,6 +97,9 @@ namespace game
 
 		game::FxEffect* FX_SpawnOrientedEffect(const float* axis, game::FxEffectDef* def, int msec_begin, const float* origin);
 		extern void FX_KillEffect(game::FxEffect* def);
+
+		extern void draw_text_with_engine(float x, float y, float scale_x, float scale_y, const char* font, const float* color, const char* text);
+		extern void R_AddCmdDrawTextASM(const char* text, int max_chars, void* font, float x, float y, float x_scale, float y_scale, float rotation, const float* color, int style);
 
 		extern void R_AddCellSurfacesAndCullGroupsInFrustumDelayed(GfxCell* cell /*eax*/, DpvsPlane* planes /*edi*/, int planeCount, int frustumPlaneCount); // ASM
 		extern void R_VisitPortals(int plane_count /*eax*/, GfxCell* cell, DpvsPlane* parent_plane, DpvsPlane* planes); // ASM
