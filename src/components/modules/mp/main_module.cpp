@@ -85,6 +85,8 @@ namespace components::mp
 		// needed for skysphere
 		dev->SetRenderState(D3DRS_LIGHTING, FALSE);
 
+		main_module::force_dvars_on_frame();
+
 		if (!flags::has_flag("no_fog"))
 		{
 			const auto s = map_settings::settings();
@@ -102,23 +104,6 @@ namespace components::mp
 			const float* predicted_origin = reinterpret_cast<const float*>(0x9E2AD4);
 			main_module::skysphere_update_pos(predicted_origin);
 		}
-
-		// update culling vars at the end of a frame (so we don't change culling behaviour mid-frame -> not safe)
-		{
-			// update world culling
-			if (dvars::rtx_disable_world_culling)
-			{
-				main_module::loc_disable_world_culling = dvars::rtx_disable_world_culling->current.integer;
-				main_module::loc_disable_world_culling = main_module::loc_disable_world_culling < 0 ? 0 :
-					main_module::loc_disable_world_culling > 3 ? 3 : main_module::loc_disable_world_culling;
-			}
-
-			// update entity culling
-			if (dvars::rtx_disable_entity_culling)
-			{
-				main_module::loc_disable_entity_culling = dvars::rtx_disable_entity_culling->current.enabled ? 1 : 0;
-			}
-		}
 	}
 
 	__declspec(naked) void rb_draw3d_internal_stub()
@@ -135,6 +120,116 @@ namespace components::mp
 			push    ebp;
 			mov     ebp, [esp + 0xC];
 			jmp		retn_addr;
+		}
+	}
+
+	void main_module::force_dvars_on_frame()
+	{
+		// update culling vars at the end of a frame (so we don't change culling behaviour mid-frame -> not safe)
+		{
+			// update world culling
+			if (dvars::rtx_disable_world_culling)
+			{
+				main_module::loc_disable_world_culling = dvars::rtx_disable_world_culling->current.integer;
+				main_module::loc_disable_world_culling = main_module::loc_disable_world_culling < 0 ? 0 :
+					main_module::loc_disable_world_culling > 3 ? 3 : main_module::loc_disable_world_culling;
+			}
+
+			// update entity culling
+			if (dvars::rtx_disable_entity_culling)
+			{
+				main_module::loc_disable_entity_culling = dvars::rtx_disable_entity_culling->current.enabled ? 1 : 0;
+			}
+		}
+
+		if (const auto var = Dvar_FindVar("r_depthprepass"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_blur_allowed"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_dof_enable"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_motionblur_enable"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_multiGpu"); var)
+		{
+			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("sc_enable"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("sm_enable"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_smc_enable"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_smp_backend"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_smp_worker"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_drawWater"); var)
+		{
+			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_watersim_enabled"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_skinCache"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_fastSkin"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
+		}
+
+		if (const auto var = Dvar_FindVar("r_distortion"); var)
+		{
+			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
 		}
 	}
 
@@ -287,49 +382,16 @@ namespace components::mp
 			var->flags = game::dvar_flags::userinfo;
 		}
 
-		if (const auto var = Dvar_FindVar("r_skinCache"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
-		}
-
-		if (const auto var = Dvar_FindVar("r_fastSkin"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
-		}
-
-		if (const auto var = Dvar_FindVar("r_distortion"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
-		}
-
 		if (const auto var = Dvar_FindVar("fx_drawClouds"); var)
 		{
 			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
 		}
 
 		if (const auto var = Dvar_FindVar("fx_cull_elem_draw"); var)
 		{
 			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
-		}
-
-		if (const auto var = Dvar_FindVar("r_depthprepass"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
-		}
-
-		if (const auto var = Dvar_FindVar("r_smc_enable"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
-		}
-
-		if (const auto var = Dvar_FindVar("r_smp_backend"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
-		}
-
-		if (const auto var = Dvar_FindVar("r_smp_worker"); var)
-		{
-			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
 		}
 
 		// r_warm_static hinders static models from reaching the lowest lod, thus always drawing all models
@@ -338,6 +400,7 @@ namespace components::mp
 		if (const auto var = Dvar_FindVar("r_warm_static"); var)
 		{
 			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
 		}
 
 		if (!flags::has_flag("no_forced_lod"))
@@ -347,29 +410,21 @@ namespace components::mp
 			if (const auto var = Dvar_FindVar("r_forceLod"); var)
 			{
 				var->current.integer = 0; var->flags = game::dvar_flags::userinfo;
+				var->latched.integer = var->current.integer;
 			}
 		}
 
 		if (const auto var = Dvar_FindVar("r_fovScaleThresholdRigid"); var)
 		{
 			var->current.value = 10000.0f; var->flags = game::dvar_flags::userinfo;
+			var->latched.value = var->current.value;
 		}
-
-		//if (const auto var = Dvar_FindVar("r_fovScaleThresholdSkinned"); var)
-		//{
-		//	var->current.value = 2.0f;
-		//}
-
-		// disable culling
-		/*if (const auto var = Dvar_FindVar("r_warm_dpvs"); var)
-		{
-			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
-		}*/
 
 		// batch surfaces (def. needed)
 		if (const auto var = Dvar_FindVar("r_pretess"); var)
 		{
 			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
 		}
 
 		// #
@@ -378,12 +433,14 @@ namespace components::mp
 		if (const auto var = Dvar_FindVar("sv_cheats"); var)
 		{
 			var->current.enabled = true; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
 		}
 
 		// enable console
 		if (const auto var = Dvar_FindVar("monkeytoy"); var)
 		{
 			var->current.enabled = false; var->flags = game::dvar_flags::userinfo;
+			var->latched.enabled = var->current.enabled;
 		}
 	}
 
@@ -1233,6 +1290,13 @@ namespace components::mp
 
 		// no forward/backslash for console cmds
 		utils::hook::nop(0x493DEF, 5);
+
+		game::mp::DB_ReallocXAssetPool(game::ASSET_TYPE_FX, 600);
+		game::mp::DB_ReallocXAssetPool(game::ASSET_TYPE_IMAGE, 4096);
+		game::mp::DB_ReallocXAssetPool(game::ASSET_TYPE_LOADED_SOUND, 2400);
+		game::mp::DB_ReallocXAssetPool(game::ASSET_TYPE_MATERIAL, 4096);
+		game::mp::DB_ReallocXAssetPool(game::ASSET_TYPE_WEAPON, 320);
+		game::mp::DB_ReallocXAssetPool(game::ASSET_TYPE_XMODEL, 1500);
 
 		command::add("rtx_sky_clear", [](command::params) { main_module::skysphere_spawn(0); });
 		command::add("rtx_sky_desert", [](command::params) { main_module::skysphere_spawn(1); });

@@ -13,6 +13,8 @@ namespace components::mp
 		static inline auto loc_disable_entity_culling = 0u;
 		static inline std::vector rtx_disable_world_culling_enum = { "default", "less", "all", "all-but-models" };
 
+		static void force_dvars_on_frame();
+
 		static bool skysphere_is_model_valid();
 		static void skysphere_change_model(int variant);
 		static void skysphere_update_pos(const float* pos);

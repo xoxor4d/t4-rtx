@@ -264,6 +264,27 @@ namespace game
 				add     esp, 4;
 			}
 		}
+
+		// db
+		int** DB_XAssetPool = reinterpret_cast<int**>(0x8D0958);
+		unsigned int* g_poolSize = reinterpret_cast<unsigned int*>(0x8D06E8);
+		DB_GetXAssetSizeHandler_t* DB_GetXAssetSizeHandler = reinterpret_cast<DB_GetXAssetSizeHandler_t*>(0x8D0D48);
+
+		int DB_GetXAssetTypeSize(int type)
+		{
+			return DB_GetXAssetSizeHandler[type]();
+		}
+
+		void* DB_ReallocXAssetPool(int type, unsigned int size)
+		{
+			const auto s = DB_GetXAssetTypeSize(type);
+			const auto pool_entry = utils::memory::allocate(size * s);
+
+			DB_XAssetPool[type] = static_cast<int*>(pool_entry);
+			g_poolSize[type] = size;
+
+			return pool_entry;
+		}
 	} // mp-end
 
 	// ------------------------------------------------------------------------------------------------------------
