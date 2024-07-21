@@ -26,6 +26,8 @@
 #include <map>
 #include <unordered_set>
 #include <cassert>
+#include <queue>
+#include <bridge_c.h>
 
 #pragma warning(push)
 #pragma warning(disable: 26495)

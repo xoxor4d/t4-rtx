@@ -1,134 +1,3 @@
-//#include "std_include.hpp"
-//
-//namespace components
-//{
-//	map_settings* map_settings::p_this = nullptr;
-//	map_settings* map_settings::get() { return p_this; }
-//
-//	void map_settings::set_settings_for_loaded_map(bool reload_settings)
-//	{
-//		DEBUG_PRINT("[T4RTX-DEBUG] # Function: map_settings::set_settings_for_loaded_map()\n");
-//
-//		if ((m_settings.empty() || reload_settings) && !map_settings::load_settings())
-//		{
-//			return;
-//		}
-//
-//		if (const auto rgp = SELECT(game::mp::rgp, game::sp::rgp); 
-//			rgp && rgp->world && rgp->world->name)
-//		{
-//			std::string map_name = rgp->world->name;
-//			utils::replace_all(map_name, std::string("maps/mp/"), "");	// if mp map
-//			utils::replace_all(map_name, std::string("maps/"), "");		// if sp map
-//			utils::replace_all(map_name, std::string(".d3dbsp"), "");
-//
-//			bool found = false;
-//			for (const auto& s : m_settings)
-//			{
-//				if (s.mapname == map_name)
-//				{
-//					m_max_distance = s.max_distance;
-//					m_color = s.m_color;
-//
-//					if (game::is_sp)
-//					{
-//						sp::main_module::skysphere_spawn(s.skybox);
-//					}
-//					else
-//					{
-//						mp::main_module::skysphere_spawn(s.skybox);
-//					}
-//
-//					found = true;
-//					break;
-//				}
-//			}
-//
-//			if (!found)
-//			{
-//				m_max_distance = 5000.0f;
-//				m_color.packed = D3DCOLOR_XRGB(200, 200, 220);
-//
-//				const bool is_skysphere_model_valid = game::is_sp ? sp::main_module::skysphere_is_model_valid() : mp::main_module::skysphere_is_model_valid();
-//				if (!flags::has_flag("no_default_sky") && !is_skysphere_model_valid)
-//				{
-//					// always spawn sunset
-//					if (game::is_sp)
-//					{
-//						sp::main_module::skysphere_spawn(4);
-//					}
-//					else
-//					{
-//						mp::main_module::skysphere_spawn(4);
-//					}
-//				}
-//			}
-//		}
-//	}
-//
-//	constexpr auto INI_MAPNAME_ARG = 0;
-//	constexpr auto INI_SKYBOX_ARG = 1;
-//	constexpr auto INI_FOG_MAX_ARG = 2;
-//	constexpr auto INI_FOG_COLOR_ARG_BEGIN = 3;
-//
-//	bool map_settings::load_settings()
-//	{
-//		DEBUG_PRINT("[T4RTX-DEBUG] # Function: map_settings::load_settings()\n");
-//
-//		m_settings.clear();
-//		m_settings.reserve(32);
-//
-//		std::ifstream file;
-//		if (utils::fs::open_file_homepath("t4rtx", "map_settings.ini", false, file))
-//		{
-//			std::string input;
-//			std::vector<std::string> args;
-//
-//			// read line by line
-//			while (std::getline(file, input))
-//			{
-//				// ignore comment
-//				if (utils::starts_with(input, "//"))
-//				{
-//					continue;
-//				}
-//
-//				// split string on ','
-//				args = utils::split(input, ',');
-//
-//				if (args.size() == INI_FOG_COLOR_ARG_BEGIN+3) // fog colors rgb are last
-//				{
-//					const DWORD color = D3DCOLOR_XRGB(
-//						utils::try_stoi(args[INI_FOG_COLOR_ARG_BEGIN+0], 255), 
-//						utils::try_stoi(args[INI_FOG_COLOR_ARG_BEGIN+1], 255), 
-//						utils::try_stoi(args[INI_FOG_COLOR_ARG_BEGIN+2], 255));
-//
-//					m_settings.push_back(
-//						{
-//							args[INI_MAPNAME_ARG],
-//							utils::try_stoi(args[INI_SKYBOX_ARG], 0),
-//							utils::try_stof(args[INI_FOG_MAX_ARG], 5000.0f),
-//							color
-//						});
-//				}
-//			}
-//
-//			file.close();
-//			return true;
-//		}
-//
-//		return false;
-//	}
-//
-//	map_settings::map_settings()
-//	{
-//		command::add("mapsettings_update", [this](command::params)
-//		{
-//			map_settings::set_settings_for_loaded_map(true);
-//		});
-//	}
-//}
-
 #include "std_include.hpp"
 
 namespace components
@@ -185,25 +54,25 @@ namespace components
 								}
 							}
 						}
+
+						if (sp::api::bridge.initialized)
+						{
+							// reload rtx.conf without hash vars
+							open_and_set_var_config("rtx.conf", true, "");
+
+							// auto apply {map_name}.conf (if it exists)
+							open_and_set_var_config(s.mapname + ".conf");
+
+							// apply other manually defined configs
+							for (const auto& f : s.api_var_configs)
+							{
+								open_and_set_var_config(f);
+							}
+						}
+
+						found = true;
+						break;
 					}
-
-					//if (rtx_api::bridge.initialized)
-					//{
-					//	// auto apply _on_map_change.conf (there is no logic to reload the rtx.conf so this holds all rtx.conf "defaults")
-					//	open_and_set_var_config("_on_map_change.conf", false);
-
-					//	// auto apply {map_name}.conf (if it exists)
-					//	open_and_set_var_config(s.mapname + ".conf", false);
-
-					//	// apply other manually defined configs
-					//	for (const auto& f : s.api_var_configs)
-					//	{
-					//		open_and_set_var_config(f);
-					//	}
-					//}
-
-					found = true;
-					break;
 				}
 			}
 
@@ -222,6 +91,12 @@ namespace components
 
 						utils::copy(world->sunParse.sunColor, m_loaded_map_settings.sun_color, 3);
 						m_loaded_map_settings.sun_intensity = world->sunParse.sunLight;
+					}
+
+					if (sp::api::bridge.initialized)
+					{
+						// reload rtx.conf without hash vars
+						open_and_set_var_config("rtx.conf", true, "");
 					}
 				}
 
@@ -242,19 +117,19 @@ namespace components
 		}
 	}
 
-	map_settings::map_settings_s* map_settings::get_or_create_settings()
+	map_settings::map_settings_s* map_settings::get_or_create_settings(bool parse_mode, const char* map_name)
 	{
 		// check if map settings exist
 		for (auto& e : m_settings)
 		{
-			if (e.mapname._Equal(m_args[INI_MAPNAME_ARG]))
+			if (e.mapname._Equal(parse_mode ? m_args[INI_MAPNAME_ARG] : map_name))
 			{
 				return &e;
 			}
 		}
 
 		// create defaults if not
-		m_settings.push_back(map_settings_s(m_args[INI_MAPNAME_ARG]));
+		m_settings.push_back(map_settings_s(parse_mode ? m_args[INI_MAPNAME_ARG] : map_name));
 		return &m_settings.back();
 	}
 
@@ -332,7 +207,16 @@ namespace components
 				{
 					if (m_loaded_map_settings.map_markers[i].active && m_loaded_map_settings.map_markers[i].handle)
 					{
-						game::sp::FX_KillEffect(m_loaded_map_settings.map_markers[i].handle);
+						// uh .. yea
+
+						auto v2 = 16 * HIWORD(m_loaded_map_settings.map_markers[i].handle);
+						auto v4 = v2 + *(DWORD*)(0x16CFD68) - 16;
+
+						if (*(DWORD*)v4)
+						{
+							game::FxEffect* v5 = *(game::FxEffect**)v4;
+							game::sp::FX_KillEffect(v5);
+						}
 					}
 				}
 			}
@@ -384,53 +268,65 @@ namespace components
 		}
 	}
 
-	//void map_settings::open_and_set_var_config(const std::string& config)
-	//{
-	//	std::ifstream file;
-	//	if (utils::fs::open_file_homepath("t4rtx\\map_configs", config, false, file))
-	//	{
-	//		std::string input;
-	//		while (std::getline(file, input))
-	//		{
-	//			if (utils::starts_with(input, "#"))
-	//			{
-	//				continue;
-	//			}
+	void map_settings::open_and_set_var_config(const std::string& config, const bool ignore_hashes, const char* custom_path)
+	{
+		std::string path = "t4rtx\\map_configs";
+		if (custom_path)
+		{
+			path = custom_path;
+		}
 
-	//			if (auto pair = utils::split(input, '=');
-	//				pair.size() == 2u)
-	//			{
-	//				utils::trim(pair[0]);
-	//				utils::trim(pair[1]);
+		std::ifstream file;
+		if (utils::fs::open_file_homepath(path, config, false, file))
+		{
+			std::string input;
+			while (std::getline(file, input))
+			{
+				if (utils::starts_with(input, "#"))
+				{
+					continue;
+				}
 
-	//				//rtx_api::bridge.DebugPrint(utils::va("Set config var: %s to: %s", pair[0].c_str(), pair[1].c_str()));
-	//				rtx_api::bridge.SetConfigVariable(pair[0].c_str(), pair[1].c_str());
-	//			}
-	//		}
+				if (auto pair = utils::split(input, '=');
+					pair.size() == 2u)
+				{
+					utils::trim(pair[0]);
+					utils::trim(pair[1]);
 
-	//		file.close();
-	//	}
-	//}
+					if (ignore_hashes && pair[0].contains("Textures") && pair[1].contains("0x"))
+					{
+						continue;
+					}
 
-	//void map_settings::parse_api_var_configs()
-	//{
-	//	if (map_settings_s* s = get_or_create_settings(); s)
-	//	{
-	//		s->api_var_configs.clear();
-	//		for (auto a = 1u; a < m_args.size(); a++)
-	//		{
-	//			auto str = m_args[a];
-	//			if (str.empty())
-	//			{
-	//				// print msg here
-	//				continue;
-	//			}
+					//sp::api::bridge.DebugPrint(utils::va("Set config var: %s to: %s", pair[0].c_str(), pair[1].c_str()));
+					DEBUG_PRINT(utils::va("[DEBUG] Set rtx var: %s to: %s\n", pair[0].c_str(), pair[1].c_str()));
+					sp::api::bridge.SetConfigVariable(pair[0].c_str(), pair[1].c_str());
+				}
+			}
 
-	//			utils::trim(str);
-	//			s->api_var_configs.emplace_back(str);
-	//		}
-	//	}
-	//}
+			file.close();
+		}
+	}
+
+	void map_settings::parse_api_var_configs()
+	{
+		if (map_settings_s* s = get_or_create_settings(); s)
+		{
+			s->api_var_configs.clear();
+			for (auto a = 1u; a < m_args.size(); a++)
+			{
+				auto str = m_args[a];
+				if (str.empty())
+				{
+					// print msg here
+					continue;
+				}
+
+				utils::trim(str);
+				s->api_var_configs.emplace_back(str);
+			}
+		}
+	}
 
 	void map_settings::parse_settings()
 	{
@@ -439,6 +335,7 @@ namespace components
 			m_settings.push_back(
 				{
 					m_args[INI_MAPNAME_ARG],
+					true,
 					utils::try_stof(m_args[INI_FOG_DIST], 5000.0f),
 					D3DCOLOR_XRGB
 					(
@@ -517,7 +414,7 @@ namespace components
 					parse_markers();
 					break;
 				case API_VARS:
-					//parse_api_var_configs();
+					parse_api_var_configs();
 					break;
 				}
 			}
@@ -555,6 +452,15 @@ namespace components
 			else
 			{
 				MPSP_GAME_FUNC(Com_PrintMessage(0, "No map loaded ..", 0));
+			}
+		});
+
+		command::add("mapsettings_reload_rtx_conf", [this](const command::params&)
+		{
+			if (game::is_sp && sp::api::bridge.initialized)
+			{
+				// reload rtx.conf without hash vars
+				open_and_set_var_config("rtx.conf", true, "");
 			}
 		});
 	}

@@ -29,7 +29,7 @@ namespace components
 		struct marker_settings_s
 		{
 			float origin[3] = {};
-			game::FxEffect* handle = nullptr;
+			int handle = 0;
 			bool active = false;
 		};
 
@@ -42,6 +42,7 @@ namespace components
 		struct map_settings_s
 		{
 			std::string		mapname;
+			bool			settings_from_ini = false;
 			float			fog_distance = 5000.0f;
 			game::GfxColor	fog_color = { 0x00FFFFFF };
 			game::vec3_t	sun_direction = { 75.0f, -15.0f, -35.0f };
@@ -62,11 +63,11 @@ namespace components
 		static inline std::vector<map_settings_s> m_settings;
 		static inline std::vector<std::string> m_args;
 
-		map_settings_s* get_or_create_settings();
+		map_settings_s* get_or_create_settings(bool parse_mode = true, const char* map_name = nullptr);
 		void parse_culling();
 		void parse_markers();
-		//void open_and_set_var_config(const std::string& config);
-		//void parse_api_var_configs();
+		void open_and_set_var_config(const std::string& config, bool ignore_hashes = false, const char* custom_path = nullptr);
+		void parse_api_var_configs();
 		void parse_settings();
 		bool load_settings();
 	};

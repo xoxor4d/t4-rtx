@@ -3343,7 +3343,15 @@ namespace game
 
 	struct FxEffect
 	{
-		void* def;
+		FxEffectDef* def;
+		volatile int status;
+		unsigned __int16 firstElemHandle[3];
+		unsigned __int16 firstSortedElemHandle;
+		unsigned __int16 firstTrailHandle;
+		unsigned __int16 randomSeed;
+		unsigned __int16 owner;
+		unsigned __int16 packedLighting;
+		// incomplete;
 	};
 
 	union XAssetHeader

@@ -95,7 +95,7 @@ namespace game
 		std::int16_t G_ModelIndex(const char* model_name /*eax*/); // ASM
 		extern bool DB_FileExists(const char* file_name, game::DB_FILE_EXISTS_PATH);
 
-		game::FxEffect* FX_SpawnOrientedEffect(const float* axis, game::FxEffectDef* def, int msec_begin, const float* origin);
+		extern int FX_SpawnOrientedEffect(const float* axis, game::FxEffectDef* def, int msec_begin, const float* origin);
 		extern void FX_KillEffect(game::FxEffect* def);
 
 		extern void draw_text_with_engine(float x, float y, float scale_x, float scale_y, const char* font, const float* color, const char* text);

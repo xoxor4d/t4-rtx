@@ -82,8 +82,8 @@ namespace game
 			}
 		}
 
-		// some wrapper func for FX_SpawnEffect
-		game::FxEffect* FX_SpawnOrientedEffect(const float* axis, game::FxEffectDef* def, int msec_begin, const float* origin)
+		// some wrapper func for FX_SpawnEffect (FX_SpawnEffect is not returning a ptr but rather a handle (uint16))
+		int FX_SpawnOrientedEffect(const float* axis, game::FxEffectDef* def, int msec_begin, const float* origin)
 		{
 			const static uint32_t func_addr = 0x4AD6B0;
 			__asm

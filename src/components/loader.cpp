@@ -9,6 +9,7 @@ namespace components
 	{
 		mem_allocator_.clear();
 
+		_register(new scheduler());
 		_register(new command());
 		_register(new map_settings());
 
@@ -16,6 +17,7 @@ namespace components
 		{
 			_register(new sp::main_module());
 			_register(new sp::fixed_function());
+			_register(new sp::api());
 			
 		}
 
