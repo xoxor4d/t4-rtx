@@ -65,6 +65,8 @@ namespace utils
 		return split(str, std::vector < char >({ delimiter }));
 	}
 
+	bool has_matching_symbols(const std::string& str, char opening_symbol = '(', char closing_symbol = ')', bool single_only = false);
+
 	bool starts_with(std::string_view haystack, std::string_view needle);
 	bool string_contains(const std::string_view& s1, const std::string_view s2);
 	void replace_all(std::string& source, const std::string_view& from, const std::string_view& to);

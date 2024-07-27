@@ -152,6 +152,11 @@ namespace components
 					continue;
 				}
 
+				if (!utils::has_matching_symbols(str, '[', ']', true) || !utils::has_matching_symbols(str, '(', ')', true))
+				{
+					continue;
+				}
+
 				// which cell are we writing settings for?
 				const auto cell_index = utils::try_stoi(utils::split_string_between_delims(str, '[', ']'), -1);
 				if (cell_index >= 0)
@@ -183,7 +188,10 @@ namespace components
 
 					for (const auto& i : split_indices)
 					{
-						c->forced_cell_indices.push_back(utils::try_stoi(i, -1));
+						if (const auto n = utils::try_stoi(i, -1); n >= 0)
+						{
+							c->forced_cell_indices.push_back(n);
+						}
 					}
 
 					c->active = true;

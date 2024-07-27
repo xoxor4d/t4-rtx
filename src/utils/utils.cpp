@@ -46,7 +46,36 @@ namespace utils
 		if (last == std::string::npos) return "";
 
 		return str.substr(first + 1, last - first - 1);
-	};
+	}
+
+	bool has_matching_symbols(const std::string& str, char opening_symbol, char closing_symbol, bool single_only)
+	{
+		int count = 0;
+
+		for (char c : str) 
+		{
+			if (c == opening_symbol)
+			{
+				count++;
+			}
+			else if (c == closing_symbol)
+			{
+				count--;
+
+				if (count < 0) 
+				{
+					return false;  // malformed
+				}
+			}
+
+			if (single_only && count > 1)
+			{
+				return false;
+			}
+		}
+
+		return count == 0; 
+	}
 
 	bool starts_with(std::string_view haystack, std::string_view needle)
 	{
