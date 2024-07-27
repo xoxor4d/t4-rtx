@@ -733,6 +733,45 @@ namespace components::sp
 		dev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
 		dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
 
+		// #
+		// take care of water surfaces
+
+		bool is_water = false;
+
+		if (   state
+			&& state->material
+			&& static_cast<std::uint8_t>(state->material->info.sortKey) == 16
+			&& state->material->techniqueSet
+			&& std::string_view(state->material->techniqueSet->name).contains("wc_water"))
+		{
+			is_water = true;
+		}
+
+		D3DMATRIX saved_trans = {};
+		DWORD saved_stage = NULL;
+
+		// scale water UV's
+		if (is_water)
+		{
+			float scale = 0.5f;
+			if (dvars::rtx_water_uv_scale)
+			{
+				scale = dvars::rtx_water_uv_scale->current.value;
+			}
+
+			float m[4][4] = {};
+			m[0][0] = scale;	m[0][1] = 0.0f;		m[0][2] = 0.0f;		m[0][3] = 0.0f;
+			m[1][0] = 0.0f;		m[1][1] = scale;	m[1][2] = 0.0f;		m[1][3] = 0.0f;
+			m[2][0] = 0.0f;		m[2][1] = 0.0f;		m[2][2] = 0.0f;		m[2][3] = 0.0f;
+			m[3][0] = 0.0f;		m[3][1] = 0.0f;		m[3][2] = 0.0f;		m[3][3] = 0.0f;
+
+			dev->GetTransform(D3DTS_TEXTURE0, &saved_trans);
+			dev->GetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, &saved_stage);
+
+			dev->SetTransform(D3DTS_TEXTURE0, reinterpret_cast<D3DMATRIX*>(&m[0]));
+			dev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+		}
+
 		if (dvars::r_showTess && dvars::r_showTess->current.enabled && dvars::r_showTess->current.integer >= 3 && dvars::r_showTess->current.integer < 5)
 		{
 			const game::vec3_t center =
@@ -746,6 +785,12 @@ namespace components::sp
 
 		dev->SetStreamSource(0, gfx_world_vertexbuffer, WORLD_VERTEX_STRIDE * tris->firstVertex, WORLD_VERTEX_STRIDE);
 		dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, tris->vertexCount, base_index, tri_count);
+
+		if (is_water)
+		{
+			dev->SetTransform(D3DTS_TEXTURE0, &saved_trans);
+			dev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, saved_stage);
+		}
 	}
 
 	/**

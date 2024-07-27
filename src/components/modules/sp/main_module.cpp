@@ -448,6 +448,11 @@ namespace components::sp
 			return 0;
 		}
 
+		if (std::string_view(mat.current_material->info.name).contains("water"))
+		{
+			int x = 1;
+		}
+
 		// fix water from switching to random textures
 		if (std::string_view(mat.current_material->info.name) == "wc/water_dynamic")
 		{
@@ -1797,6 +1802,14 @@ namespace components::sp
 			/* desc		*/ "draw cell index at the center of current cell (useful for map_settings)",
 			/* default	*/ false,
 			/* flags	*/ game::dvar_flags::none);
+
+		dvars::rtx_water_uv_scale = game::Dvar_RegisterFloat(
+			/* name		*/ "rtx_water_uv_scale",
+			/* default	*/ 0.25f,
+			/* min		*/ 0.001f,
+			/* max		*/ 100.0f,
+			/* flags	*/ game::dvar_flags::saved,
+			/* desc		*/ "UV scale of water surfaces (global scalar)");
 
 		// ------------------------------------------------------------------------
 

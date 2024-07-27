@@ -17,4 +17,6 @@ namespace dvars
 	game::dvar_s* r_showTessSkin = nullptr;
 	game::dvar_s* r_showTessDist = nullptr;
 	game::dvar_s* r_showCellIndex = nullptr;
+
+	game::dvar_s* rtx_water_uv_scale = nullptr;
 }
