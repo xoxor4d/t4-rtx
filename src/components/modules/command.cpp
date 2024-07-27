@@ -47,7 +47,7 @@ namespace components
 
 	game::cmd_function_s* command::allocate()
 	{
-		const auto cmd = new game::cmd_function_s;
+		const auto cmd = utils::memory::allocate<game::cmd_function_s>();
 		command::functions.push_back(cmd);
 
 		return cmd;
@@ -66,11 +66,6 @@ namespace components
 
 	command::~command()
 	{
-		for (const auto command : command::functions)
-		{
-			delete command;
-		}
-
 		command::functions.clear();
 	}
 }
