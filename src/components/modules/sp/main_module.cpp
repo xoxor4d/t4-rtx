@@ -811,17 +811,14 @@ namespace components::sp
 	// *
 	// skysphere
 
-	const char* main_module::skysphere_get_name_for_variant(int variant)
+	const char* main_module::skysphere_get_name_for_variant(std::uint32_t variant)
 	{
-		switch (variant)
+		if (variant >= SKY::COUNT)
 		{
-		default:
-		case 0: return "rtx_skysphere_oceanrock";
-		case 1: return "rtx_skysphere_desert";
-		case 2: return "rtx_skysphere_night";
-		case 3: return "rtx_skysphere_overcast";
-		case 4: return "rtx_skysphere_sunset_clouds";
+			return SKY_STRINGS[SKY::SUNSET];
 		}
+
+		return SKY_STRINGS[variant];
 	}
 
 	bool main_module::skysphere_is_model_valid()
@@ -1833,11 +1830,18 @@ namespace components::sp
 		// no forward/backslash for console cmds
 		//utils::hook::nop(0x493DEF, 5);
 
-		command::add("rtx_sky_clear", [](command::params) { main_module::skysphere_spawn(0); });
-		command::add("rtx_sky_desert", [](command::params) { main_module::skysphere_spawn(1); });
-		command::add("rtx_sky_night", [](command::params) { main_module::skysphere_spawn(2); });
-		command::add("rtx_sky_overcast", [](command::params) { main_module::skysphere_spawn(3); });
-		command::add("rtx_sky_sunset", [](command::params) { main_module::skysphere_spawn(4); });
+		command::add("rtx_sky", [](command::params p)
+		{
+			if (p.length() > 1)
+			{
+				main_module::skysphere_spawn(utils::try_stoi(p[1]));
+			}
+			else
+			{
+				game::sp::Com_PrintMessage(0, "Usage: rtx_sky <index>\n", 0);
+			}
+			
+		});
 
 		command::add("export_entities", [this](command::params)
 		{
@@ -1846,7 +1850,7 @@ namespace components::sp
 
 		command::add("noborder", [this](command::params)
 		{
-			const auto hwnd = game::sp::dx->windows->hwnd ? game::sp::dx->windows->hwnd : FindWindow(nullptr, L"Call of Dutyï¿½");
+			const auto hwnd = game::sp::dx->windows->hwnd ? game::sp::dx->windows->hwnd : FindWindow(nullptr, L"Call of Duty®");
 
 			// calculate titlebar height
 			RECT w, c; GetWindowRect(hwnd, &w); GetClientRect(hwnd, &c);
@@ -1860,7 +1864,7 @@ namespace components::sp
 		{
 			if (sp::main_module::noborder_titlebar_height)
 			{
-				const auto hwnd = game::sp::dx->windows->hwnd ? game::sp::dx->windows->hwnd : FindWindow(nullptr, L"Call of Dutyï¿½");
+				const auto hwnd = game::sp::dx->windows->hwnd ? game::sp::dx->windows->hwnd : FindWindow(nullptr, L"Call of Duty®");
 				SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
 				SetWindowPos(hwnd, nullptr, 0, 0, game::sp::dx->windows->width, game::sp::dx->windows->height + sp::main_module::noborder_titlebar_height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
 			}

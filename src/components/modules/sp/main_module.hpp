@@ -34,8 +34,81 @@ namespace components::sp
 		static void on_map_load();
 		static void on_map_shutdown();
 
+		enum SKY : std::uint32_t
+		{
+			SUNSET,
+			NIGHT,
+			BERLIN1,
+			BERLIN2,
+			BERLIN3,
+			BGATE,
+			COURT,
+			FLYING,
+			FLYING_DAY,
+			HOLLAND1,
+			HOLLAND3,
+			KNEE,
+			MAKIN,
+			NIGHTFIRE,
+			OKI1,
+			OKI2,
+			OKI3,
+			PELELIU1A,
+			PELELIU1B,
+			PELELIU2,
+			PROLOGUE,
+			RHINE2,
+			RHINE3,
+			SEELOW1,
+			SEELOW2,
+			SNIPER,
+			STAL,
+			VODKA,
+			ZMB_ASYLUM,
+			ZMB_FACTORY,
+			ZMB_FARM,
+			ZMB_PROTOTYPE,
+			COUNT,
+		};
+
+		static inline constexpr const char* SKY_STRINGS[] =
+		{
+			"rtx_skysphere_sunset_clouds",
+			"rtx_skysphere_night",
+			"rtx_polarsky_berlin1",
+			"rtx_polarsky_berlin2",
+			"rtx_polarsky_berlin3",
+			"rtx_polarsky_bgate",
+			"rtx_polarsky_court",
+			"rtx_polarsky_flying",
+			"rtx_polarsky_flying_day",
+			"rtx_polarsky_holland1",
+			"rtx_polarsky_holland3",
+			"rtx_polarsky_knee",
+			"rtx_polarsky_makin",
+			"rtx_polarsky_nightfire",
+			"rtx_polarsky_oki1",
+			"rtx_polarsky_oki2",
+			"rtx_polarsky_oki3",
+			"rtx_polarsky_peleliu_1a",
+			"rtx_polarsky_peleliu_1b",
+			"rtx_polarsky_peleliu2",
+			"rtx_polarsky_prologue",
+			"rtx_polarsky_rhine2",
+			"rtx_polarsky_rhine3",
+			"rtx_polarsky_seelow1",
+			"rtx_polarsky_seelow2",
+			"rtx_polarsky_sniper",
+			"rtx_polarsky_stal",
+			"rtx_polarsky_vodka",
+			"rtx_polarsky_zmb_asylum",
+			"rtx_polarsky_zmb_factory",
+			"rtx_polarsky_zmb_farm",
+			"rtx_polarsky_zmb_proto",
+		};
+
 	private:
-		static const char* skysphere_get_name_for_variant(int variant);
+		static const char* skysphere_get_name_for_variant(std::uint32_t variant);
 		static inline bool skysphere_spawned = false;
 		static inline int skysphere_variant = 0;
 		static inline game::gentity_s* skysphere_model = nullptr;
