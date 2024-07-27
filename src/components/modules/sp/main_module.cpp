@@ -373,11 +373,22 @@ namespace components::sp
 		return false;
 	}
 
-	void switch_material(game::switch_material_t* swm, const char* material_name)
+	bool switch_material(game::switch_material_t* swm, const char* material_name)
 	{
 		if (const auto	material = Material_RegisterHandle(material_name, 3);
 			material)
 		{
+			for (auto t = 0u; t < (uint32_t)material->textureCount; t++)
+			{
+				if (material->textureTable[t].semantic == 2 && material->textureTable[t].u.image && material->textureTable[t].u.image->name)
+				{
+					if (std::string_view(material->textureTable[t].u.image->name) == "default")
+					{
+						return false;
+					}
+				}
+			}
+
 			swm->material = material;
 			swm->technique = nullptr;
 
@@ -387,11 +398,12 @@ namespace components::sp
 			}
 
 			swm->switch_material = true;
-			return;
+			return true;
 		}
 
 		// return stock material if the above failed
 		swm->material = swm->current_material;
+		return false;
 	}
 
 	void switch_technique(game::switch_material_t* swm, game::Material* material)
@@ -437,7 +449,17 @@ namespace components::sp
 		}
 
 		// fix water from switching to random textures
-		if (std::string_view(mat.current_material->info.name).starts_with("wc/water_dynamic_"))
+		if (std::string_view(mat.current_material->info.name) == "wc/water_dynamic")
+		{
+			if (!switch_material(&mat, "wc/temp_water"))
+			{
+				if (!switch_material(&mat, "wc/temp_muddy_water"))
+				{
+					switch_material(&mat, "wc/_default_water");
+				}
+			}
+		}
+		else if (std::string_view(mat.current_material->info.name).starts_with("wc/water_dynamic_"))
 		{
 			// case64blue
 			std::string replacement = mat.current_material->info.name;
@@ -1824,7 +1846,7 @@ namespace components::sp
 
 		command::add("noborder", [this](command::params)
 		{
-			const auto hwnd = game::sp::dx->windows->hwnd ? game::sp::dx->windows->hwnd : FindWindow(nullptr, L"Call of Duty®");
+			const auto hwnd = game::sp::dx->windows->hwnd ? game::sp::dx->windows->hwnd : FindWindow(nullptr, L"Call of Dutyï¿½");
 
 			// calculate titlebar height
 			RECT w, c; GetWindowRect(hwnd, &w); GetClientRect(hwnd, &c);
@@ -1838,7 +1860,7 @@ namespace components::sp
 		{
 			if (sp::main_module::noborder_titlebar_height)
 			{
-				const auto hwnd = game::sp::dx->windows->hwnd ? game::sp::dx->windows->hwnd : FindWindow(nullptr, L"Call of Duty®");
+				const auto hwnd = game::sp::dx->windows->hwnd ? game::sp::dx->windows->hwnd : FindWindow(nullptr, L"Call of Dutyï¿½");
 				SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
 				SetWindowPos(hwnd, nullptr, 0, 0, game::sp::dx->windows->width, game::sp::dx->windows->height + sp::main_module::noborder_titlebar_height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
 			}
