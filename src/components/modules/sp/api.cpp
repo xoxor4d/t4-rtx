@@ -98,7 +98,7 @@ namespace components::sp
 			}
 
 			avail_light->hash = api::bridge.CreateSphereLight(&l, &s);
-			avail_light->framecounter = dvars::rtx_muzzleflash_duration ? (uint16_t)dvars::rtx_muzzleflash_duration->current.integer : 2u;
+			avail_light->framecounter = dvars::rtx_muzzleflash_duration ? (uint8_t) dvars::rtx_muzzleflash_duration->current.integer : 2u;
 		}
 	}
 

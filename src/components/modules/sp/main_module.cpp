@@ -449,11 +449,6 @@ namespace components::sp
 			return 0;
 		}
 
-		if (std::string_view(mat.current_material->info.name).contains("water"))
-		{
-			int x = 1;
-		}
-
 		// fix water from switching to random textures
 		if (std::string_view(mat.current_material->info.name) == "wc/water_dynamic")
 		{
@@ -1822,9 +1817,9 @@ namespace components::sp
 
 		dvars::rtx_muzzleflash_radiance = game::Dvar_RegisterVec3(
 			/* name		*/ "rtx_muzzleflash_radiance",
-			/* x		*/ 40.0f,
-			/* y		*/ 30.0f,
-			/* z		*/ 20.0f,
+			/* x		*/ 50.0f,
+			/* y		*/ 40.0f,
+			/* z		*/ 30.0f,
 			/* min		*/ 0.01f,
 			/* max		*/ 1000.0f,
 			/* flags	*/ game::dvar_flags::saved,
@@ -1832,7 +1827,7 @@ namespace components::sp
 
 		dvars::rtx_muzzleflash_radius = game::Dvar_RegisterFloat(
 			/* name		*/ "rtx_muzzleflash_radius",
-			/* default	*/ 5.0f,
+			/* default	*/ 8.0f,
 			/* min		*/ 0.01f,
 			/* max		*/ 100.0f,
 			/* flags	*/ game::dvar_flags::saved,
