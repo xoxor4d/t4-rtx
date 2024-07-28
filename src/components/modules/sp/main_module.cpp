@@ -1695,6 +1695,9 @@ namespace components::sp
 			//utils::hook::nop(0x643C73, 6); utils::hook(0x643C73, cull::disable_smodel_culling_stub, HOOK_JUMP).install()->quick();
 			utils::hook::nop(0x739B4F, 2); // ^ same
 
+			// ^ scene entities (lamps on zmb factory)
+			utils::hook::set<BYTE>(0x6E3819, 0xEB);
+
 			//dvars::rtx_culling_tweak_mins = game::Dvar_RegisterBool(
 			//	/* name		*/ "rtx_culling_tweak_mins",
 			//	/* desc		*/ "Disable dpvs mins check (reduces culling)",
@@ -1827,7 +1830,7 @@ namespace components::sp
 
 		dvars::rtx_muzzleflash_radius = game::Dvar_RegisterFloat(
 			/* name		*/ "rtx_muzzleflash_radius",
-			/* default	*/ 8.0f,
+			/* default	*/ 5.0f,
 			/* min		*/ 0.01f,
 			/* max		*/ 100.0f,
 			/* flags	*/ game::dvar_flags::saved,
