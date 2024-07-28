@@ -51,7 +51,8 @@ If you want to buy me a coffee:
 
 <br>
 
-#### Info: 
+#### ⚠️ Info: 
+- Make sure to __DELETE__ `nvapi.dll` if you've used earlier builds of t4-rtx
 - `t4-rtx.asi` has to be loaded via an asi loader
 - For ease of use, releases and nightly builds ship with [Ultimate-ASI-Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases) (`dsound.dll`)  
 
