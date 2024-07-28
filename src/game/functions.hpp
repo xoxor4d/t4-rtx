@@ -113,6 +113,8 @@ namespace game
 		static utils::function<bool(game::gentity_s*)> G_CallSpawnEntity = 0x5465A0;
 		static utils::function<void(entityState_s*)> G_DObjUpdate = 0x54AC40;
 
+		static utils::function<void(const char* dir, const char* path, int is_lang, int lang)> FS_AddGameDirectory = 0x5DD8F0;
+
 		// db
 		extern int** DB_XAssetPool;
 		extern unsigned int* g_poolSize;

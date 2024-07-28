@@ -722,6 +722,17 @@ namespace components::sp
 		game::sp::DB_LoadXAssets(&xzone_info_stack[0], i, 0);
 	}
 
+	void fs_startup_stub()
+	{
+		if (const auto& fs_homepath = game::sp::Dvar_FindVar("fs_homepath"); fs_homepath)
+		{
+			game::sp::FS_AddGameDirectory(std::string(std::string(fs_homepath->current.string) + "\\t4rtx\\").c_str(), "_assets", 0, 0);
+		}
+
+		// og func
+		utils::hook::call<void(__cdecl)()>(0x59B990)();
+	}
+
 
 	// *
 	// fix resolution issues by removing duplicates returned by EnumAdapterModes
@@ -1535,6 +1546,8 @@ namespace components::sp
 	{
 	}
 
+	
+
 	main_module::main_module()
 	{
 #if DEBUG
@@ -1544,6 +1557,9 @@ namespace components::sp
 
 		// *
 		// general
+
+		// Remove improper quit popup
+		utils::hook::set<BYTE>(0x5FF386, 0xEB);
 
 		// hook beginning of 'RB_Draw3DInternal' to setup general stuff required for rtx-remix
 		utils::hook::nop(0x6E8B96, 8); utils::hook(0x6E8B96, rb_draw3d_internal_stub, HOOK_JUMP).install()->quick();
@@ -1563,6 +1579,11 @@ namespace components::sp
 
 		// load custom fastfile containing required assets
 		utils::hook(0x6D63A5, load_common_fast_files, HOOK_CALL).install()->quick();
+
+		// load gsc without fs_game
+		utils::hook::set<BYTE>(0x68AFB6, 0xEB);
+		// FS_AddGameDirectory 
+		utils::hook(0x5DE41D, fs_startup_stub, HOOK_CALL).install()->quick();;
 
 		// dxvk's 'EnumAdapterModes' returns a lot of duplicates and the games array only has a capacity of 256 which is not enough depending on max res. and refreshrate
 		// fix resolution issues by removing duplicates returned by EnumAdapterModes - then write the array ourselfs
