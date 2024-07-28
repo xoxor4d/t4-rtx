@@ -13,7 +13,19 @@ namespace components::sp
 		static api* get() { return p_this; }
 
 		static BRIDGEAPI_ErrorCode init();
-
 		static inline bridgeapi_Interface bridge = {};
+
+
+		// muzzleflash lights
+		struct muzzleflash_light_s
+		{
+			std::uint64_t hash;
+			std::uint8_t framecounter;
+		};
+
+		static inline muzzleflash_light_s muzzleflash_lights[12] = {};
+
+		static void bullet_fire_frame_cb();
+		static muzzleflash_light_s* get_avail_light();
 	};
 }

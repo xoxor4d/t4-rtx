@@ -74,6 +74,12 @@ namespace game
 		TECHNIQUE_COUNT = 0x3B,
 	};
 
+	struct orientation_t
+	{
+		float origin[3];
+		float axis[3][3];
+	};
+
 	struct GfxDrawSurfFields
 	{
 		unsigned __int64 objectId : 16;
@@ -2595,112 +2601,6 @@ namespace game
 		float parentInvAxis[4][3]; //OFS: 0x40 SIZE: 0x30
 	};
 
-	struct __declspec(align(8)) gentity_s
-	{
-		entityState_s s; //OFS: 0x0 SIZE: 0x118
-		entityShared_s r; //OFS: 0x118 SIZE: 0x68
-		void* gclient_s__client; //OFS: 0x180 SIZE: 0x4
-		void* actor_s__actor; //OFS: 0x184 SIZE: 0x4
-		void* sentient_s__sentient; //OFS: 0x188 SIZE: 0x4
-		void* scr_vehicle_s__scr_vehicle; //OFS: 0x18C SIZE: 0x4
-		void* TurretInfo__pTurretInfo; //OFS: 0x190 SIZE: 0x4
-		void* Destructible__destructible; //OFS: 0x194 SIZE: 0x4
-		unsigned __int16 model; //OFS: 0x198 SIZE: 0x2
-		unsigned __int8 physicsObject; //OFS: 0x19A SIZE: 0x1
-		unsigned __int8 takedamage; //OFS: 0x19B SIZE: 0x1
-		unsigned __int8 active; //OFS: 0x19C SIZE: 0x1
-		unsigned __int8 nopickup; //OFS: 0x19D SIZE: 0x1
-		unsigned __int8 handler; //OFS: 0x19E SIZE: 0x1
-		unsigned __int16 classname; //OFS: 0x1A0 SIZE: 0x2
-		unsigned __int16 script_linkName; //OFS: 0x1A2 SIZE: 0x2
-		unsigned __int16 script_noteworthy; //OFS: 0x1A4 SIZE: 0x2
-		unsigned __int16 target; //OFS: 0x1A6 SIZE: 0x2
-		int targetname; //OFS: 0x1A8 SIZE: 0x4
-		int spawnflags2; //OFS: 0x1AC SIZE: 0x4
-		int spawnflags; //OFS: 0x1B0 SIZE: 0x4
-		int flags; //OFS: 0x1B4 SIZE: 0x4
-		int clipmask; //OFS: 0x1B8 SIZE: 0x4
-		int processedFrame; //OFS: 0x1BC SIZE: 0x4
-		EntHandle parent; //OFS: 0x1C0 SIZE: 0x4
-		int nextthink; //OFS: 0x1C4 SIZE: 0x4
-		int health; //OFS: 0x1C8 SIZE: 0x4
-		int maxhealth; //OFS: 0x1CC SIZE: 0x4
-		int nexteq; //OFS: 0x1D0 SIZE: 0x4
-		int damage; //OFS: 0x1D4 SIZE: 0x4
-		flame_timed_damage_t flame_timed_damage[4]; //OFS: 0x1D8 SIZE: 0x70
-		int last_timed_radius_damage; //OFS: 0x248 SIZE: 0x4
-		int count; //OFS: 0x24C SIZE: 0x4
-		gentity_s* chain; //OFS: 0x250 SIZE: 0x4
-		gentity_s* activator; //OFS: 0x254 SIZE: 0x4
-		gentity_u u; //OFS: 0x258 SIZE: 0x60
-		EntHandle missileTargetEnt; //OFS: 0x2B8 SIZE: 0x4
-		__int16 lookAtText0; //OFS: 0x2BC SIZE: 0x2
-		__int16 lookAtText1; //OFS: 0x2BE SIZE: 0x2
-		snd_wait_t snd_wait; //OFS: 0x2C0 SIZE: 0x10
-		tagInfo_s* tagInfo; //OFS: 0x2D0 SIZE: 0x4
-		gentity_s* tagChildren; //OFS: 0x2D4 SIZE: 0x4
-		void* animscripted_s__scripted; //OFS: 0x2D8 SIZE: 0x4
-		__int16 attachTagNames[31]; //OFS: 0x2DC SIZE: 0x3E
-		__int16 attachModelNames[31]; //OFS: 0x31A SIZE: 0x3E
-		int disconnectedLinks; //OFS: 0x358 SIZE: 0x4
-		int iDisconnectTime; //OFS: 0x35C SIZE: 0x4
-		float angleLerpRate; //OFS: 0x360 SIZE: 0x4
-		int physObjId; //OFS: 0x364 SIZE: 0x4
-		XAnimTree_s* pAnimTree; //OFS: 0x368 SIZE: 0x4
-		gentity_s* nextFree; //OFS: 0x36C SIZE: 0x4
-		int scriptUse; //OFS: 0x370 SIZE: 0x4
-		int birthTime; //OFS: 0x374 SIZE: 0x4
-	};
-	STATIC_ASSERT_SIZE(gentity_s, 0x378);
-
-	struct switch_material_t
-	{
-		bool switch_material;
-		bool switch_technique;
-		bool switch_technique_type;
-
-		Material* current_material;
-		MaterialTechnique* current_technique;
-
-		Material* material;
-		MaterialTechnique* technique;
-
-		MaterialTechniqueType technique_type;
-	};
-
-	enum DB_FILE_EXISTS_PATH
-	{
-		DB_PATH_ZONE = 0,
-		DB_PATH_MAIN = 1,
-		DB_PATH_USERMAPS = 2
-	};
-
-	struct XZoneInfo
-	{
-		const char* name;
-		int allocFlags;
-		int freeFlags;
-	};
-
-	enum DemoType : __int32
-	{
-		DEMO_TYPE_NONE = 0x0,
-		DEMO_TYPE_CLIENT = 0x1,
-		DEMO_TYPE_SERVER = 0x2,
-	};
-
-	enum CubemapShot : __int32
-	{
-		CUBEMAPSHOT_NONE = 0x0,
-		CUBEMAPSHOT_RIGHT = 0x1,
-		CUBEMAPSHOT_LEFT = 0x2,
-		CUBEMAPSHOT_BACK = 0x3,
-		CUBEMAPSHOT_FRONT = 0x4,
-		CUBEMAPSHOT_UP = 0x5,
-		CUBEMAPSHOT_DOWN = 0x6,
-		CUBEMAPSHOT_COUNT = 0x7,
-	};
-
 	enum pmtype_t : __int32
 	{
 		PM_NORMAL = 0x0,
@@ -2817,6 +2717,195 @@ namespace game
 		int icon;
 	};
 
+	enum sessionState_t : __int32
+	{
+		SESS_STATE_PLAYING = 0x0,
+		SESS_STATE_DEAD = 0x1,
+		SESS_STATE_SPECTATOR = 0x2,
+		SESS_STATE_INTERMISSION = 0x3,
+	};
+
+	enum clientConnected_t : __int32
+	{
+		CON_DISCONNECTED = 0x0,
+		CON_CONNECTING = 0x1,
+		CON_CONNECTED = 0x2,
+	};
+
+	enum button_mask : __int32
+	{
+		KEY_FIRE = 0x1,
+		KEY_SPRINT = 0x2,
+		KEY_MELEE = 0x4,
+		KEY_USE = 0x8,
+		KEY_RELOAD = 0x10,
+		KEY_USERELOAD = 0x20,
+		KEY_LEANLEFT = 0x40,
+		KEY_LEANRIGHT = 0x80,
+		KEY_PRONE = 0x100,
+		KEY_CROUCH = 0x200,
+		KEY_GOSTAND = 0x400,
+		KEY_ADSMODE = 0x800,
+		KEY_TEMP = 0x1000,
+		KEY_HOLDBREATH = 0x2000,
+		KEY_FRAG = 0x4000,
+		KEY_SMOKE = 0x8000,
+		KEY_SELECTING_LOCATION = 0x10000,
+		KEY_CANCEL_LOCATION = 0x20000,
+		KEY_NIGHTVISION = 0x40000,
+		KEY_ADS = 0x80000,
+		KEY_REVERSE = 0x100000,
+		KEY_HANDBRAKE = 0x200000,
+		KEY_THROW = 0x400000,
+		KEY_INMENU = 0x800000,
+		KEY_UNK6 = 0x1000000,
+		KEY_UNK7 = 0x2000000,
+		KEY_UNK8 = 0x2000000,
+		KEY_UNK9 = 0x4000000,
+		KEY_UNK10 = 0x8000000,
+	};
+
+	struct __declspec(align(4)) usercmd_s
+	{
+		int serverTime;
+		button_mask buttons;
+		int angles[3];
+		char weapon;
+		char offHandIndex;
+		char forward;
+		char right;
+		char upmove;
+		char pitchmove;
+		char yawmove;
+		__int16 wiimoteGunPitch;
+		__int16 wiimoteGunYaw;
+		__int16 gunXOfs;
+		__int16 gunYOfs;
+		__int16 gunZOfs;
+		int meleeChargeYaw;
+		char meleeChargeDist;
+		int rollmove;
+		char selectedLocation[2];
+		__int16 weapon_buddy;
+	};
+
+	enum VehicleAnimState : __int32
+	{
+		VEHICLEANIMSTATE_IDLE = 0x0,
+		VEHICLEANIMSTATE_ENTRY = 0x1,
+		VEHICLEANIMSTATE_CHANGEPOS = 0x2,
+		VEHICLEANIMSTATE_EXIT = 0x3,
+		VEHICLEANIMSTATECOUNT = 0x4,
+	};
+
+	struct __declspec(align(4)) clientState_s
+	{
+		int clientNum;
+		team_t team;
+		int modelindex;
+		int attachModelIndex[6];
+		int attachTagIndex[6];
+		int lastDamageTime;
+		int lastStandStartTime;
+		int beingRevived;
+		int score;
+		int scoreMultiplier;
+		char name[32];
+		float maxSprintTimeMultiplier;
+		int rank;
+		int prestige;
+		char clanAbbrev[8];
+		int attachedEntNum;
+		int attachedTagIndex;
+		VehicleAnimState vehAnimState;
+		int perks;
+	};
+
+	struct __declspec(align(4)) clientSession_s
+	{
+		sessionState_t sessionState;
+		int forceSpectatorClient;
+		int status_icon;
+		int archiveTime;
+		int score;
+		int kills;
+		int assists;
+		int downs;
+		int revives;
+		int headshots;
+		int rankxp;
+		int something;
+		__int16 scriptId;
+		BYTE gap_32[2];
+		clientConnected_t connected;
+		usercmd_s cmd;
+		usercmd_s oldcmd;
+		int localClient;
+		int predictItemPickup;
+		char newnetname[32];
+		int maxHealth;
+		int enterTime;
+		int teamState;
+		int voteCount;
+		int teamVoteCount;
+		float moveSpeedScaleMultiplier;
+		int viewmodelIndex;
+		int noSpectate;
+		int teamInfo;
+		clientState_s cs;
+		int psOffsetTime;
+	};
+
+	
+
+	struct switch_material_t
+	{
+		bool switch_material;
+		bool switch_technique;
+		bool switch_technique_type;
+
+		Material* current_material;
+		MaterialTechnique* current_technique;
+
+		Material* material;
+		MaterialTechnique* technique;
+
+		MaterialTechniqueType technique_type;
+	};
+
+	enum DB_FILE_EXISTS_PATH
+	{
+		DB_PATH_ZONE = 0,
+		DB_PATH_MAIN = 1,
+		DB_PATH_USERMAPS = 2
+	};
+
+	struct XZoneInfo
+	{
+		const char* name;
+		int allocFlags;
+		int freeFlags;
+	};
+
+	enum DemoType : __int32
+	{
+		DEMO_TYPE_NONE = 0x0,
+		DEMO_TYPE_CLIENT = 0x1,
+		DEMO_TYPE_SERVER = 0x2,
+	};
+
+	enum CubemapShot : __int32
+	{
+		CUBEMAPSHOT_NONE = 0x0,
+		CUBEMAPSHOT_RIGHT = 0x1,
+		CUBEMAPSHOT_LEFT = 0x2,
+		CUBEMAPSHOT_BACK = 0x3,
+		CUBEMAPSHOT_FRONT = 0x4,
+		CUBEMAPSHOT_UP = 0x5,
+		CUBEMAPSHOT_DOWN = 0x6,
+		CUBEMAPSHOT_COUNT = 0x7,
+	};
+
 	enum he_type_t : __int32
 	{
 		HE_TYPE_FREE = 0x0,
@@ -2917,7 +3006,7 @@ namespace game
 		hudelem_flags_t flags;
 	};
 
-	struct __declspec(align(4)) playerState_s
+	struct playerState_s
 	{
 		int commandTime;
 		pmtype_t pm_type;
@@ -3058,6 +3147,132 @@ namespace game
 		int perks;
 	};
 
+	struct __declspec(align(4)) gclient_s
+	{
+		playerState_s ps;
+		clientSession_s sess;
+		int spectatorClient;
+		int noclip;
+		int ufo;
+		int bFrozen;
+		int buttons;
+		int oldbuttons;
+		int latched_buttons;
+		int buttonsSinceLastFrame;
+		float fGunPitch;
+		float fGunYaw;
+		float fGunXOfs;
+		float fGunYOfs;
+		float fGunZOfs;
+		int damage_blood;
+		float damage_from[3];
+		int damage_fromWorld;
+		int respawnTime;
+		int lastBadArcCreateTime;
+		int outWaterTime;
+		float currentAimSpreadScale;
+		gentity_s* pHitHitEnt;
+		EntHandle pLookatEnt;
+		float prevLinkedInvQuat[4];
+		bool prevLinkAnglesSet;
+		bool link_doCollision;
+		bool linkAnglesLocked;
+		float linkAnglesFrac;
+		float linkAnglesMinClamp[2];
+		float linkAnglesMaxClamp[2];
+		int inControlTime;
+		int lastTouchTime;
+		EntHandle useHoldEntity;
+		int useHoldTime;
+		int useButtonDone;
+		int bDisableAutoPickup;
+		int invulnerableExpireTime;
+		bool invulnerableActivated;
+		bool invulnerableEnabled;
+		bool playerMoved;
+		float playerLOSCheckPos[2];
+		float playerLOSCheckDir[2];
+		int playerLOSPosTime;
+		int playerADSTargetTime;
+		unsigned int lastWeapon;
+		bool previouslyFiring;
+		bool previouslyUsingNightVision;
+		int groundTiltEntNum;
+		int revive;
+		int reviveTime;
+		int lastStand;
+		int lastStandTime;
+		int switchSeatTime;
+		int lastCmdTime;
+		int inactivityTime;
+		int inactivityWarning;
+		int lastVoiceTime;
+		int lastServerTime;
+		int lastSpawnTime;
+		int damageTime;
+		float vGunSpeed[3];
+		int dropWeaponTime;
+		bool previouslyChangingWeapon;
+	};
+
+	struct __declspec(align(8)) gentity_s
+	{
+		entityState_s s; //OFS: 0x0 SIZE: 0x118
+		entityShared_s r; //OFS: 0x118 SIZE: 0x68
+		gclient_s* client; //OFS: 0x180 SIZE: 0x4
+		void* actor_s__actor; //OFS: 0x184 SIZE: 0x4
+		void* sentient_s__sentient; //OFS: 0x188 SIZE: 0x4
+		void* scr_vehicle_s__scr_vehicle; //OFS: 0x18C SIZE: 0x4
+		void* TurretInfo__pTurretInfo; //OFS: 0x190 SIZE: 0x4
+		void* Destructible__destructible; //OFS: 0x194 SIZE: 0x4
+		unsigned __int16 model; //OFS: 0x198 SIZE: 0x2
+		unsigned __int8 physicsObject; //OFS: 0x19A SIZE: 0x1
+		unsigned __int8 takedamage; //OFS: 0x19B SIZE: 0x1
+		unsigned __int8 active; //OFS: 0x19C SIZE: 0x1
+		unsigned __int8 nopickup; //OFS: 0x19D SIZE: 0x1
+		unsigned __int8 handler; //OFS: 0x19E SIZE: 0x1
+		unsigned __int16 classname; //OFS: 0x1A0 SIZE: 0x2
+		unsigned __int16 script_linkName; //OFS: 0x1A2 SIZE: 0x2
+		unsigned __int16 script_noteworthy; //OFS: 0x1A4 SIZE: 0x2
+		unsigned __int16 target; //OFS: 0x1A6 SIZE: 0x2
+		int targetname; //OFS: 0x1A8 SIZE: 0x4
+		int spawnflags2; //OFS: 0x1AC SIZE: 0x4
+		int spawnflags; //OFS: 0x1B0 SIZE: 0x4
+		int flags; //OFS: 0x1B4 SIZE: 0x4
+		int clipmask; //OFS: 0x1B8 SIZE: 0x4
+		int processedFrame; //OFS: 0x1BC SIZE: 0x4
+		EntHandle parent; //OFS: 0x1C0 SIZE: 0x4
+		int nextthink; //OFS: 0x1C4 SIZE: 0x4
+		int health; //OFS: 0x1C8 SIZE: 0x4
+		int maxhealth; //OFS: 0x1CC SIZE: 0x4
+		int nexteq; //OFS: 0x1D0 SIZE: 0x4
+		int damage; //OFS: 0x1D4 SIZE: 0x4
+		flame_timed_damage_t flame_timed_damage[4]; //OFS: 0x1D8 SIZE: 0x70
+		int last_timed_radius_damage; //OFS: 0x248 SIZE: 0x4
+		int count; //OFS: 0x24C SIZE: 0x4
+		gentity_s* chain; //OFS: 0x250 SIZE: 0x4
+		gentity_s* activator; //OFS: 0x254 SIZE: 0x4
+		gentity_u u; //OFS: 0x258 SIZE: 0x60
+		EntHandle missileTargetEnt; //OFS: 0x2B8 SIZE: 0x4
+		__int16 lookAtText0; //OFS: 0x2BC SIZE: 0x2
+		__int16 lookAtText1; //OFS: 0x2BE SIZE: 0x2
+		snd_wait_t snd_wait; //OFS: 0x2C0 SIZE: 0x10
+		tagInfo_s* tagInfo; //OFS: 0x2D0 SIZE: 0x4
+		gentity_s* tagChildren; //OFS: 0x2D4 SIZE: 0x4
+		void* animscripted_s__scripted; //OFS: 0x2D8 SIZE: 0x4
+		__int16 attachTagNames[31]; //OFS: 0x2DC SIZE: 0x3E
+		__int16 attachModelNames[31]; //OFS: 0x31A SIZE: 0x3E
+		int disconnectedLinks; //OFS: 0x358 SIZE: 0x4
+		int iDisconnectTime; //OFS: 0x35C SIZE: 0x4
+		float angleLerpRate; //OFS: 0x360 SIZE: 0x4
+		int physObjId; //OFS: 0x364 SIZE: 0x4
+		XAnimTree_s* pAnimTree; //OFS: 0x368 SIZE: 0x4
+		gentity_s* nextFree; //OFS: 0x36C SIZE: 0x4
+		int scriptUse; //OFS: 0x370 SIZE: 0x4
+		int birthTime; //OFS: 0x374 SIZE: 0x4
+	};
+	STATIC_ASSERT_SIZE(gentity_s, 0x378);
+
 	struct animCmdState_s
 	{
 		int field_0;
@@ -3071,38 +3286,6 @@ namespace game
 		int field_20;
 		int field_24;
 		int field_28;
-	};
-
-	enum VehicleAnimState : __int32
-	{
-		VEHICLEANIMSTATE_IDLE = 0x0,
-		VEHICLEANIMSTATE_ENTRY = 0x1,
-		VEHICLEANIMSTATE_CHANGEPOS = 0x2,
-		VEHICLEANIMSTATE_EXIT = 0x3,
-		VEHICLEANIMSTATECOUNT = 0x4,
-	};
-
-	struct __declspec(align(4)) clientState_s
-	{
-		int clientNum;
-		team_t team;
-		int modelindex;
-		int attachModelIndex[6];
-		int attachTagIndex[6];
-		int lastDamageTime;
-		int lastStandStartTime;
-		int beingRevived;
-		int score;
-		int scoreMultiplier;
-		char name[32];
-		float maxSprintTimeMultiplier;
-		int rank;
-		int prestige;
-		char clanAbbrev[8];
-		int attachedEntNum;
-		int attachedTagIndex;
-		VehicleAnimState vehAnimState;
-		int perks;
 	};
 
 	struct actorState_s
@@ -3143,6 +3326,31 @@ namespace game
 		int serverCommandSequence;
 	};
 
+	union cpose_u
+	{
+		char pad[136];
+	};
+
+	struct __declspec(align(4)) cpose_t
+	{
+		unsigned __int16 lightingHandle;
+		unsigned __int8 eType;
+		unsigned __int8 eTypeUnion;
+		unsigned __int8 localClientNum;
+		bool isRagdoll;
+		int ragdollHandle;
+		int physObjId;
+		int physUserBody;
+		unsigned __int8 destructiblePose;
+		int startBurnTime;
+		float wetness;
+		int cullIn;
+		float origin[3];
+		float angles[3];
+		float mins[3];
+		cpose_u u;
+	};
+
 	struct __declspec(align(4)) cg_s
 	{
 		int clientNum;
@@ -3169,8 +3377,9 @@ namespace game
 		int renderingThirdPerson;
 		void* script_camera;
 		playerState_s predictedPlayerState;
-		// ......
-	};
+		char viewModelPose_pad[0xACFB8];
+		cpose_t viewModelPose;
+	}; STATIC_ASSERT_OFFSET(cg_s, viewModelPose, 0x159CFC);
 
 	enum dvar_flags : unsigned __int16
 	{
@@ -3275,6 +3484,68 @@ namespace game
 		int controllerIndex[8]; //OFS: 0x24 SIZE: 0x20
 		int argc[8]; //OFS: 0x44 SIZE: 0x20
 		char** argv[8]; //OFS: 0x64 SIZE: 0x20
+	};
+
+	struct weaponParms
+	{
+		float forward[3];
+		float right[3];
+		float up[3];
+		float muzzleTrace[3];
+		float gunForward[3];
+		void* WeaponDef___weapDef;
+	};
+
+	struct DSkelPartBits
+	{
+		int anim[4];
+		int control[4];
+		int skel[4];
+	};
+
+	struct __declspec(align(4)) DSkel
+	{
+		DSkelPartBits partBits;
+		int timeStamp;
+		DObjAnimMat* mat;
+	};
+
+	struct DObj_s
+	{
+		XAnimTree_s* tree;
+		unsigned __int16 duplicateParts;
+		unsigned __int16 entnum;
+		unsigned __int8 duplicatePartsSize;
+		unsigned __int8 numModels;
+		unsigned __int8 numBones;
+		unsigned int ignoreCollision;
+		int locked;
+		DSkel skel;
+		float radius;
+		unsigned int hidePartBits[4];
+		char localClientIndex;
+		unsigned __int8 flags;
+		unsigned __int16 ikStateIndex;
+		XModel** models;
+	};
+
+	struct weaponInfo_s
+	{
+		DObj_s* viewModelDObj;
+		XModel* handModel;
+		XModel* gogglesModel;
+		XModel* rocketModel;
+		XModel* knifeModel;
+		unsigned __int8 weapModelIdx;
+		unsigned int partBits[4];
+		int iPrevAnim;
+		int hasAnimTree;
+		XAnimTree_s* tree;
+		int registered;
+		void* gitem_s___item;
+		char* translatedDisplayName;
+		char* translatedModename;
+		char* translatedAIOverlayDescription;
 	};
 
 	enum XAssetType : __int32

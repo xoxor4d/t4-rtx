@@ -9,6 +9,21 @@
 
 namespace utils
 {
+	std::uint64_t fnv1a_hash(const std::string& str)
+	{
+		const uint64_t FNV_prime = 1099511628211u;
+		const uint64_t offset_basis = 14695981039346656037u;
+		uint64_t hash = offset_basis;
+
+		for (const char c : str)
+		{
+			hash ^= static_cast<uint64_t>(c);
+			hash *= FNV_prime;
+		}
+
+		return hash;
+	}
+	
 	int try_stoi(const std::string& str, const int& default_return_val)
 	{
 		int ret = default_return_val;

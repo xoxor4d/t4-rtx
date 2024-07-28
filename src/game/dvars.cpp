@@ -19,4 +19,7 @@ namespace dvars
 	game::dvar_s* r_showCellIndex = nullptr;
 
 	game::dvar_s* rtx_water_uv_scale = nullptr;
+	game::dvar_s* rtx_muzzleflash_duration = nullptr;
+	game::dvar_s* rtx_muzzleflash_radiance = nullptr;
+	game::dvar_s* rtx_muzzleflash_radius = nullptr;
 }

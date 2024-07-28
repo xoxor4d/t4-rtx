@@ -35,6 +35,7 @@ namespace game
 		DB_LoadXAssets_t DB_LoadXAssets = DB_LoadXAssets_t(0x48E7B0);
 
 		scr_const_t* scr_const = reinterpret_cast<scr_const_t*>(0x1F33B90);
+		game::weaponInfo_s* cg_weaponsArray = reinterpret_cast<game::weaponInfo_s*>(0x3463C40);
 
 		void Cbuf_AddText(const char* text /*eax*/)
 		{
@@ -149,6 +150,55 @@ namespace game
 				call	R_AddCmdDrawText_func;
 				add		esp, 0x24;
 			}
+		}
+
+		int G_DObjGetWorldTagPos(int scr_const_tag, int ent_num, float* pos_out)
+		{
+			const static uint32_t G_DObjGetWorldTagPos_func = 0x54E6A0;
+			__asm
+			{
+				push	pos_out;
+				push	ent_num;
+				mov		eax, scr_const_tag;
+				call	G_DObjGetWorldTagPos_func;
+				add		esp, 8;
+			}
+		}
+
+		int DObjGetBoneIndex(DObj_s* obj /*ecx*/, int tag_name, BYTE* bone_index)
+		{
+			const static uint32_t func_addr = 0x60C420;
+			int result = 0;
+			__asm
+			{
+				push	bone_index;
+				push	tag_name;
+				mov		ecx, obj;
+				call	func_addr;
+				add		esp, 8;
+				mov		result, eax;
+			}
+
+			return result;
+		}
+
+		int CG_DObjGetWorldBoneMatrix(cpose_t* pose /*eax*/, int bone_index /*ecx*/, DObj_s* obj /*edi*/, float* axis, float* origin)
+		{
+			const static uint32_t func_addr = 0x442F10;
+			int result = 0;
+			__asm
+			{
+				push	origin;
+				push	axis;
+				mov		edi, obj;
+				mov		ecx, bone_index;
+				mov		eax, pose;
+				call	func_addr;
+				add		esp, 8;
+				mov		result, eax;
+			}
+
+			return result;
 		}
 
 		// #
@@ -335,6 +385,18 @@ namespace game
 
 	utils::function<dvar_s* (const char* dvarName, int type, int flags, DvarValue value, DvarLimits domain, const char* description)> Dvar_RegisterVariant;
 
+	dvar_s* Dvar_RegisterInt(const char* name, int value, int min, int max, int flags, const char* description)
+	{
+		game::DvarValue val;
+		val.integer = value;
+
+		game::DvarLimits lim;
+		lim.integer.min = min;
+		lim.integer.max = max;
+
+		return game::Dvar_RegisterVariant(name, game::dvar_type::integer, flags, val, lim, description);
+	}
+
 	dvar_s* Dvar_RegisterFloat(const char* name, float value, float min, float max, game::dvar_flags flags, const char* description)
 	{
 		game::DvarValue val = {};
@@ -345,6 +407,20 @@ namespace game
 		lim.value.max = max;
 
 		return game::Dvar_RegisterVariant(name, game::dvar_type::value, flags, val, lim, description);
+	}
+
+	dvar_s* Dvar_RegisterVec3(const char* name, float x, float y, float z, float min, float max, game::dvar_flags flags, const char* description)
+	{
+		game::DvarValue val = {};
+		val.vector[0] = x;
+		val.vector[1] = y;
+		val.vector[2] = z;
+
+		game::DvarLimits lim = {};
+		lim.vector.min = min;
+		lim.vector.max = max;
+
+		return game::Dvar_RegisterVariant(name, game::dvar_type::vec3, flags, val, lim, description);
 	}
 
 	dvar_s* Dvar_RegisterEnum(const char* dvar_name, const char** values, std::uint32_t value_count, int default_value, int flags, const char* description)

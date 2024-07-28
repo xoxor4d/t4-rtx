@@ -5,6 +5,8 @@ namespace utils
 {
 	#define VECTOR_SUBTRACT(a,b,c)	((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1],(c)[2]=(a)[2]-(b)[2])
 
+	std::uint64_t fnv1a_hash(const std::string& str);
+
 	int try_stoi(const std::string& str, const int& default_return_val = 0);
 	float try_stof(const std::string& str, const float& default_return_val = 0.0f);
 

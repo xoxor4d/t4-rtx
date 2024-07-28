@@ -88,6 +88,7 @@ namespace game
 			extern DB_LoadXAssets_t DB_LoadXAssets;
 
 		extern scr_const_t* scr_const;
+		extern game::weaponInfo_s* cg_weaponsArray;
 
 		void Cbuf_AddText(const char* text /*eax*/);
 		void Vec2UnpackTexCoords(unsigned int packed, float* texcoord_out /*ecx*/);
@@ -100,6 +101,10 @@ namespace game
 
 		extern void draw_text_with_engine(float x, float y, float scale_x, float scale_y, const char* font, const float* color, const char* text);
 		extern void R_AddCmdDrawTextASM(const char* text, int max_chars, void* font, float x, float y, float x_scale, float y_scale, float rotation, const float* color, int style);
+
+		extern int G_DObjGetWorldTagPos(int scr_const_tag, int ent_num, float* pos_out);
+		extern int DObjGetBoneIndex(game::DObj_s* obj /*ecx*/, int tag_name, BYTE* bone_index);
+		extern int CG_DObjGetWorldBoneMatrix(game::cpose_t* pose /*eax*/, int bone_index /*ecx*/, game::DObj_s* obj /*edi*/, float* axis, float* origin);
 
 		extern void R_AddCellSurfacesAndCullGroupsInFrustumDelayed(GfxCell* cell /*eax*/, DpvsPlane* planes /*edi*/, int planeCount, int frustumPlaneCount); // ASM
 		extern void R_VisitPortals(int plane_count /*eax*/, GfxCell* cell, DpvsPlane* parent_plane, DpvsPlane* planes); // ASM
@@ -189,7 +194,9 @@ namespace game
 	extern GfxBackEndData* get_backenddata();
 
 	void Cmd_AddCommand(const char* name, void(*callback)(), cmd_function_s* data, char);
+	dvar_s* Dvar_RegisterInt(const char* name, int value, int min, int max, int flags, const char* description);
 	dvar_s* Dvar_RegisterFloat(const char* name, float value, float min, float max, game::dvar_flags flags, const char* description);
+	dvar_s* Dvar_RegisterVec3(const char* name, float x, float y, float z, float min, float max, game::dvar_flags flags, const char* description);
 	dvar_s* Dvar_RegisterEnum(const char* dvar_name, const char** values, std::uint32_t value_count, int default_value, int flags, const char* description);
 	dvar_s* Dvar_RegisterBool(const char* name, const char* description, bool value, int flags);
 

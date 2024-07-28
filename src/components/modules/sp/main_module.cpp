@@ -205,6 +205,7 @@ namespace components::sp
 		dev->SetRenderState(D3DRS_LIGHTING, FALSE);
 
 		main_module::force_dvars_on_frame();
+		api::bullet_fire_frame_cb();
 
 		if (!flags::has_flag("no_fog"))
 		{
@@ -1810,6 +1811,32 @@ namespace components::sp
 			/* max		*/ 100.0f,
 			/* flags	*/ game::dvar_flags::saved,
 			/* desc		*/ "UV scale of water surfaces (global scalar)");
+
+		dvars::rtx_muzzleflash_duration = game::Dvar_RegisterInt(
+			/* name		*/ "rtx_muzzleflash_duration",
+			/* default	*/ 1,
+			/* min		*/ 0,
+			/* max		*/ 60,
+			/* flags	*/ game::dvar_flags::saved,
+			/* desc		*/ "lifetime of muzzleflash sphere lights");
+
+		dvars::rtx_muzzleflash_radiance = game::Dvar_RegisterVec3(
+			/* name		*/ "rtx_muzzleflash_radiance",
+			/* x		*/ 40.0f,
+			/* y		*/ 30.0f,
+			/* z		*/ 20.0f,
+			/* min		*/ 0.01f,
+			/* max		*/ 1000.0f,
+			/* flags	*/ game::dvar_flags::saved,
+			/* desc		*/ "radiance of muzzleflash sphere light");
+
+		dvars::rtx_muzzleflash_radius = game::Dvar_RegisterFloat(
+			/* name		*/ "rtx_muzzleflash_radius",
+			/* default	*/ 5.0f,
+			/* min		*/ 0.01f,
+			/* max		*/ 100.0f,
+			/* flags	*/ game::dvar_flags::saved,
+			/* desc		*/ "radius of muzzleflash sphere light");
 
 		// ------------------------------------------------------------------------
 
