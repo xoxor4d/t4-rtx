@@ -46,10 +46,14 @@ If you want to buy me a coffee:
 
 2) Download the latest t4-rtx `github actions` build:  
   Release-binaries-t4-rtx - https://github.com/xoxor4d/t4-rtx/actions 
-  - Drop `nvapi.dll` and the contents of the `assets` folder into your CoDWaW root directory and start the game.  
+  - Drop `t4-rtx.asi` and the contents of the `assets` folder into your CoDWaW root directory and start the game.  
   The in-game console should show `t4-rtx {version} >` if the dll was loaded correctly.
 
 <br>
+
+#### Info: 
+- `t4-rtx.asi` has to be loaded via an asi loader
+- For ease of use, releases and nightly builds ship with [Ultimate-ASI-Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases) (`dsound.dll`)  
 
 ____
 
@@ -125,7 +129,14 @@ ____
   🔸 Tweak sunlight / color, skybox and fog settings   
   🔸 Override culling per portal / cell (to fix light or shadow culling - dvar `r_showCellIndex`)   
   🔸 Spawn unique anchor meshes that can be used to attach unique prims and lights to  
-  🔸 Ability to load multiple remix config's per map
+  🔸 Ability to load multiple remix config's per map (`root/t4rtx/map_configs`)
+
+
+<br>
+
+- E. Assets Folder :: `root/t4rtx`
+
+  - The `_assets` folder can be used to override certain game assets like gsc files without requiring a mod
 
 <br>
 
@@ -143,14 +154,9 @@ ____
   - use commandline arguments like `c:\path\CoDWaW.exe +set r_fullscreen 0`
   - or edit your player config (`appdata/local/Activision/CoDWaW/players/yourprofile`)
 
-#### t4-rtx is not being loaded
-1. Download [asiloader](https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases) (the non x64 variant)
-2. Rename the downloaded file to `dsound.dll` and place it into the cod5 root folder
-3. Rename `nvapi.dll` to `nvapi.asi` or any other name as long as it ends with `.asi`
-4. Start the game
-
 #### Other issues
 - ~~Captures loaded in the toolkit don't work correctly (UTF8 error), look [here](https://github.com/xoxor4d/t4-rtx/wiki/Home-%E2%80%90-General-Tips-%E2%80%90-Troubleshooting-%E2%80%90-etc)~~ (should be fixed)
+- Using the remix toolkit currently requires you to have __no__ whitespaces in your game path
 - Black main menu? Make sure the shadermodel dvar is set to 3.0 
 
 <br>
@@ -158,7 +164,7 @@ ____
 ## Compiling yourself:
 1. Setup `COD5_ROOT` environment variable with path to your cod5 directory (optional)
 2. Run `generate-buildfiles_vs22.bat` to generate build files (build folder)
-3. Compile and copy `nvapi.dll` (renamed t4-rtx.dll) to your CoDWaW root folder  
+3. Compile and copy `t4-rtx.asi` (renamed t4-rtx.dll) to your CoDWaW root folder  
    - ^ automatically happens if you setup `COD5_ROOT`
 
 <br>

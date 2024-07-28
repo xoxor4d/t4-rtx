@@ -45,7 +45,7 @@ jobs:
 
       - name: Move build files 
         run: |
-          move build/bin/${{matrix.configuration}}/nvapi.dll ./
+          move build/bin/${{matrix.configuration}}/t4-rtx.asi ./
           move build/bin/${{matrix.configuration}}/t4-rtx.pdb ./
 
       - name: Upload ${{matrix.configuration}}-binaries-t4-rtx
@@ -53,7 +53,7 @@ jobs:
         with:
           name: ${{matrix.configuration}}-binaries-t4-rtx
           path: |
-            ./nvapi.dll
+            ./t4-rtx.asi
             ./t4-rtx.pdb
             ./assets/
   

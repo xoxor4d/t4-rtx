@@ -357,8 +357,8 @@ workspace "t4-rtx"
 		-- Post-build
 		postbuildcommands {
 			"echo ----------------------------",
-			"echo Rename \"t4-rtx.dll\" to \"nvapi.dll\"",
-			"MOVE /Y \"$(TargetDir)t4-rtx.dll\" \"$(TargetDir)nvapi.dll\"",
+			"echo Rename \"t4-rtx.dll\" to \"t4-rtx.asi\"",
+			"MOVE /Y \"$(TargetDir)t4-rtx.dll\" \"$(TargetDir)t4-rtx.asi\"",
 		}
 
 		dependencies.imports()
