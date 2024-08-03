@@ -93,6 +93,9 @@ namespace utils
 	game::vec_t	distance(const game::vec3_t p1, const game::vec3_t p2);
 	void scale3(const game::vec3_t v1, float scalar, game::vec3_t out);
 
+	void vinterp_to(float* output, int vector_size, const float* current, const float* target, const float delta_time, const float interpolation_speed);
+	float finterp_to(const float current, const float target, const float delta_time, const float interpolation_speed);
+
 	void byte3_pack_rgba(const float* from, unsigned char* to);
 	void byte4_pack_rgba(const float* from, char* to);
 

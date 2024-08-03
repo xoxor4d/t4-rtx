@@ -55,9 +55,12 @@ namespace game
 
 		extern r_global_permanent_t* rgp;
 		extern GfxBuffers* gfx_buf;
-		extern game::cg_s* cgs;
+		extern cg_s* cgs;
 
-		extern game::DpvsGlob* dpvsGlob;
+		extern clientUIActive_s* clientUI;
+		extern clientActive_s* client;
+
+		extern DpvsGlob* dpvsGlob;
 
 		extern CmdArgs* cmd_args;
 		extern cmd_function_s** cmd_ptr;

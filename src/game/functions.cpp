@@ -22,6 +22,9 @@ namespace game
 		game::GfxBuffers* gfx_buf = reinterpret_cast<game::GfxBuffers*>(0x42C2000);
 		game::cg_s* cgs = reinterpret_cast<game::cg_s*>(0x34732B8);
 
+		game::clientUIActive_s* clientUI = reinterpret_cast<game::clientUIActive_s*>(0x305841C);
+		game::clientActive_s* client = reinterpret_cast<game::clientActive_s*>(0x3058528);
+
 		game::DpvsGlob* dpvsGlob = reinterpret_cast<game::DpvsGlob*>(0x3DA8D80);
 
 		CmdArgs* cmd_args = reinterpret_cast<CmdArgs*>(0x1F41670);

@@ -18,6 +18,7 @@ namespace components
 			_register(new sp::main_module());
 			_register(new sp::fixed_function());
 			_register(new sp::api());
+			_register(new sp::remix_vars());
 			
 		}
 

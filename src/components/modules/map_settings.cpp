@@ -58,7 +58,10 @@ namespace components
 						if (sp::api::bridge.initialized)
 						{
 							// reload rtx.conf without hash vars
-							open_and_set_var_config("rtx.conf", true, "");
+							//open_and_set_var_config("rtx.conf", true, "");
+
+							// resets all modified variables back to rtx.conf level
+							sp::remix_vars::get()->reset_all_modified();
 
 							// auto apply {map_name}.conf (if it exists)
 							open_and_set_var_config(s.mapname + ".conf");
@@ -96,7 +99,10 @@ namespace components
 					if (sp::api::bridge.initialized)
 					{
 						// reload rtx.conf without hash vars
-						open_and_set_var_config("rtx.conf", true, "");
+						//open_and_set_var_config("rtx.conf", true, "");
+
+						// resets all modified variables back to rtx.conf level
+						sp::remix_vars::get()->reset_all_modified();
 					}
 				}
 
@@ -301,14 +307,31 @@ namespace components
 					utils::trim(pair[0]);
 					utils::trim(pair[1]);
 
-					if (ignore_hashes && pair[0].contains("Textures") && pair[1].contains("0x"))
+					if (ignore_hashes && pair[1].starts_with("0x"))
+					{
+						continue;
+					}
+
+					if (pair[1].empty())
 					{
 						continue;
 					}
 
 					//sp::api::bridge.DebugPrint(utils::va("Set config var: %s to: %s", pair[0].c_str(), pair[1].c_str()));
-					DEBUG_PRINT(utils::va("[DEBUG] Set rtx var: %s to: %s\n", pair[0].c_str(), pair[1].c_str()));
-					sp::api::bridge.SetConfigVariable(pair[0].c_str(), pair[1].c_str());
+					//
+					//DEBUG_PRINT(utils::va("[DEBUG] Set rtx var: %s to: %s\n", pair[0].c_str(), pair[1].c_str()));
+					//sp::api::bridge.SetConfigVariable(pair[0].c_str(), pair[1].c_str());
+
+					const auto& vars = sp::remix_vars::get();
+					const auto o = vars->get_option(pair[0].c_str());
+
+					if (o)
+					{
+						const auto& v = vars->string_to_option_value(o->second.type, pair[1]);
+						vars->set_option(o, v, true);
+
+						DEBUG_PRINT("[MAP-SETTINGS/OPEN-SET-CONF] Set rtx level var: %s to: %s\n", o->first.c_str(), pair[1].c_str());
+					}
 				}
 			}
 
@@ -384,24 +407,29 @@ namespace components
 			while (std::getline(file, input))
 			{
 				// ignore comment
-				if (utils::starts_with(input, "//"))
+				if (input.starts_with("//"))
 				{
 					continue;
 				}
 
-				if (parse_mode == SETTINGS && utils::starts_with(input, "#CULL"))
+				if (input.empty())
+				{
+					continue;
+				}
+
+				if (parse_mode == SETTINGS && input.starts_with("#CULL"))
 				{
 					parse_mode = CULL;
 					continue;
 				}
 
-				if (parse_mode == CULL && utils::starts_with(input, "#MARKER"))
+				if (parse_mode == CULL && input.starts_with("#MARKER"))
 				{
 					parse_mode = MARKER;
 					continue;
 				}
 
-				if (parse_mode == MARKER && utils::starts_with(input, "#API_CONFIGVARS"))
+				if (parse_mode == MARKER && input.starts_with("#API_CONFIGVARS"))
 				{
 					parse_mode = API_VARS;
 					continue;
@@ -463,13 +491,13 @@ namespace components
 			}
 		});
 
-		command::add("mapsettings_reload_rtx_conf", [this](const command::params&)
-		{
-			if (game::is_sp && sp::api::bridge.initialized)
-			{
-				// reload rtx.conf without hash vars
-				open_and_set_var_config("rtx.conf", true, "");
-			}
-		});
+		//command::add("mapsettings_reload_rtx_conf", [this](const command::params&)
+		//{
+		//	if (game::is_sp && sp::api::bridge.initialized)
+		//	{
+		//		// reload rtx.conf without hash vars
+		//		open_and_set_var_config("rtx.conf", true, "");
+		//	}
+		//});
 	}
 }

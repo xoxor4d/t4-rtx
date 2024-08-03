@@ -39,7 +39,8 @@
 #pragma comment(lib, "d3dx9.lib")
 
 #if DEBUG
-	#define DEBUG_PRINT(_MSG) if constexpr (DEBUG) { printf(_MSG); }
+	//#define DEBUG_PRINT(_MSG) if constexpr (DEBUG) { printf(_MSG); }
+	#define DEBUG_PRINT(_MSG, ...) if constexpr (DEBUG) { printf(_MSG, ##__VA_ARGS__); }
 	#define DEBUG_ASSERT(cond, msg, ...) if constexpr (DEBUG) { assert((cond) || !fprintf(stderr, (msg "\n"), ##__VA_ARGS__)); }
 #else
 	#define DEBUG_PRINT(_MSG)

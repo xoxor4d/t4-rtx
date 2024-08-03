@@ -740,6 +740,62 @@ namespace utils
 		out[2] = v1[2] * scalar;
 	}
 
+	// https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Core/Private/Math/UnrealMath.cpp
+	void vinterp_to(float* output, int vector_size, const float* current, const float* target, const float delta_time, const float interpolation_speed)
+	{
+		if (output)
+		{
+			// If no interp speed, jump to target value
+			if (interpolation_speed <= 0.0f)
+			{
+				utils::copy(target, output, vector_size);
+				return;
+			}
+
+			for (auto i = 0; i < vector_size && i < 4; i++)
+			{
+				// distance to reach
+				const float distance = target[i] - current[i];
+
+				// If distance is too small, just set the desired location
+				if (distance * distance < 1.e-8f)
+				{
+					output[i] = target[i];
+					continue;
+				}
+
+				// Delta Move, Clamp so we do not over shoot.
+				const float delta_move = distance * std::clamp(delta_time * interpolation_speed, 0.0f, 1.0f);
+
+				output[i] = current[i] + delta_move;
+			}
+		}
+	}
+
+	// https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Core/Private/Math/UnrealMath.cpp
+	float finterp_to(const float current, const float target, const float delta_time, const float interpolation_speed)
+	{
+		// If no interp speed, jump to target value
+		if (interpolation_speed <= 0.0f)
+		{
+			return target;
+		}
+
+		// distance to reach
+		const float distance = target - current;
+
+		// If distance is too small, just set the desired location
+		if (distance * distance < 1.e-8f)
+		{
+			return target;
+		}
+
+		// Delta Move, Clamp so we do not over shoot.
+		const float delta_move = distance * std::clamp(delta_time * interpolation_speed, 0.0f, 1.0f);
+
+		return current + delta_move;
+	}
+
 	void byte3_pack_rgba(const float* from, unsigned char* to)
 	{
 		for (auto i = 0; i < 3; i++)

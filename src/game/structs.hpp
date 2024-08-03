@@ -10,6 +10,43 @@ namespace game
 	typedef vec_t vec3_t[3];
 	typedef vec_t vec4_t[4];
 
+	enum connstate_t : __int32
+	{
+		CA_DISCONNECTED = 0x0,
+		CA_CINEMATIC = 0x1,
+		CA_UICINEMATIC = 0x2,
+		CA_LOGO = 0x3,
+		CA_CONNECTING = 0x4,
+		CA_CHALLENGING = 0x5,
+		CA_CONNECTED = 0x6,
+		CA_SENDINGSTATS = 0x7,
+		CA_LOADING = 0x8,
+		CA_PRIMED = 0x9,
+		CA_ACTIVE = 0xA,
+		CA_MAP_RESTART = 0xB,
+	};
+
+	enum KeyCatcherFlag_t : __int32
+	{
+		KEY_CATCHER_FLAG_CONSOLE = 0x1,
+		KEY_CATCHER_FLAG_LOCATION_SELECTION = 0x8,
+		KEY_CATCHER_FLAG_IN_POPUP = 0x10,
+		KEY_CATCHER_FLAG_CHAT = 0x20,
+	};
+
+	struct clientUIActive_s
+	{
+		char active;
+		char isRunning;
+		char cgameInitialized;
+		char cgameInitCalled;
+		int mapPreloaded;
+		KeyCatcherFlag_t keyCatchers;
+		int displayHUDWithKeycatchUI;
+		connstate_t connectionState;
+		int nextScrollTime;
+	};
+
 	enum MaterialTechniqueType
 	{
 		TECHNIQUE_DEPTH_PREPASS = 0x0,
@@ -3380,6 +3417,42 @@ namespace game
 		char viewModelPose_pad[0xACFB8];
 		cpose_t viewModelPose;
 	}; STATIC_ASSERT_OFFSET(cg_s, viewModelPose, 0x159CFC);
+
+	struct __declspec(align(4)) clSnapshot_s
+	{
+		int valid;
+		int snapFlags;
+		int serverTime;
+		int messageNum;
+		int deltaNum;
+		int ping;
+		int whatistthis;
+		playerState_s ps;
+		int numEntities;
+		int numClients;
+		int numActors;
+		int parseEntitiesNum;
+		int parseClientsNum;
+		int parseActorsNum;
+		int parseAnimCmdsNum;
+		int numAnimCmds;
+		int serverCommandSequence;
+	};
+
+	struct __declspec(align(4)) clientActive_s
+	{
+		char usingAds;
+		int timeoutcount;
+		clSnapshot_s snap;
+		char alwaysFalse;
+		int serverTime;
+		int oldServerTime;
+		int oldFrameServerTime;
+		int serverTimeDelta;
+		int oldSnapServerTime;
+		int extrapolatedSnapshot;
+		int newSnapshots;
+	};
 
 	enum dvar_flags : unsigned __int16
 	{
