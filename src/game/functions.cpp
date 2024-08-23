@@ -17,6 +17,7 @@ namespace game
 		DxGlobals* dx = reinterpret_cast<DxGlobals*>(0x3BF3B04);
 		clipMap_t* cm = reinterpret_cast<clipMap_t*>(0x1F41A00);
 		GfxWorld* gfx_world = reinterpret_cast<GfxWorld*>(0x3DCB4E0);
+		ComWorld* com_world = reinterpret_cast<ComWorld*>(0x1F551F0);
 
 		r_global_permanent_t* rgp = reinterpret_cast<r_global_permanent_t*>(0x3BF1880);
 		game::GfxBuffers* gfx_buf = reinterpret_cast<game::GfxBuffers*>(0x42C2000);
@@ -37,8 +38,110 @@ namespace game
 		DB_EnumXAssets_FastFile_t DB_EnumXAssets_FastFile = DB_EnumXAssets_FastFile_t(0x48D560);
 		DB_LoadXAssets_t DB_LoadXAssets = DB_LoadXAssets_t(0x48E7B0);
 
-		scr_const_t* scr_const = reinterpret_cast<scr_const_t*>(0x1F33B90);
 		game::weaponInfo_s* cg_weaponsArray = reinterpret_cast<game::weaponInfo_s*>(0x3463C40);
+		scr_const_t* scr_const = reinterpret_cast<scr_const_t*>(0x1F33B90);
+
+		int* Scr_GetNumParamArray = reinterpret_cast<int*>(0x3BD471C);
+		int* Scr_GetTypeArray = reinterpret_cast<int*>(0x3BD4710);
+		int* gScrMemTreePub_mtbuffer = reinterpret_cast <int*>(0x3702390);
+		int* level_time = reinterpret_cast<int*>(0x18F5D88 + 0x1040); // level_locals_s time
+		std::uint32_t* level_num_entities = reinterpret_cast<std::uint32_t*>(0x18F5D88 + 0xC); // level_locals_s num_entities
+		game::gentity_s* g_entities = reinterpret_cast<game::gentity_s*>(0x176C6F0);
+
+		BuiltinMethod Scr_GetMethod(const char** pName, int* typ)
+		{
+			BuiltinMethod answer;
+			const static uint32_t Scr_GetMethod_func = 0x530630;
+			__asm
+			{
+				mov		edi, typ;
+				mov		esi, pName;
+				call	Scr_GetMethod_func;
+				mov		answer, eax;
+			}
+
+			return answer;
+		}
+
+		int Scr_GetNumParams(int scrInstance)
+		{
+			return Scr_GetNumParamArray[4296 * scrInstance];
+		}
+
+		int Scr_GetType(int scrInstance, unsigned int paramNum)
+		{
+			return *reinterpret_cast<int*>(Scr_GetTypeArray[4296 * scrInstance] - 8 * paramNum + 4);
+		}
+
+		const char* Scr_GetString(int scrInstance, unsigned int paramNum)
+		{
+			char* result = nullptr;
+			unsigned int str_pos_in_glob = 0;
+			const static uint32_t Scr_GetString_func = 0x699F30;
+			__asm
+			{
+				push	paramNum;
+				mov		eax, scrInstance;
+				call	Scr_GetString_func;
+				add		esp, 4;
+				mov		str_pos_in_glob, eax;
+			}
+
+			if (str_pos_in_glob)
+			{
+				result = reinterpret_cast<char*>(gScrMemTreePub_mtbuffer[scrInstance] + 12 * str_pos_in_glob + 4);
+			}
+
+			return const_cast<const char*>(result);
+		}
+
+		int Scr_GetInt(int scrInstance, unsigned int paramNum)
+		{
+			int result;
+			const static uint32_t Scr_GetInt_func = 0x699C50;
+			__asm
+			{
+				mov		ecx, paramNum;
+				mov		eax, scrInstance;
+				call	Scr_GetInt_func;
+				mov		result, eax;
+			}
+
+			return result;
+		}
+
+		float Scr_GetFloat(int scrInstance, unsigned int paramNum)
+		{
+			float result;
+			const static uint32_t Scr_GetFloat_func = 0x699E90;
+			__asm
+			{
+				mov		 ecx, paramNum;
+				mov		 eax, scrInstance;
+				call	 Scr_GetFloat_func;
+
+				// for double
+				//cvtss2sd xmm0, xmm0; // to double precision
+				//movsd	 result, xmm0; // move scalar double precision
+
+				movss result, xmm0;
+			}
+
+			return result;
+		}
+
+		void Scr_GetVector(int scrInstance, float* vectorValue, unsigned int paramNum)
+		{
+			const static uint32_t Scr_GetVector_func = 0x69A220;
+			__asm
+			{
+				push	paramNum;
+				mov		ecx, vectorValue;
+				mov		eax, scrInstance;
+				call	Scr_GetVector_func;
+				add		esp, 4;
+			}
+		}
 
 		void Cbuf_AddText(const char* text /*eax*/)
 		{

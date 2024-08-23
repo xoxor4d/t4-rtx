@@ -213,10 +213,32 @@ namespace components::sp
 			const float fog_start = 1.0f;
 
 			dev->SetRenderState(D3DRS_FOGENABLE, TRUE);
-			dev->SetRenderState(D3DRS_FOGCOLOR, s->fog_color.packed);
+
+			// #TODO - needs csc func 'SetVolFog' impl. in scripting
+			/*if (const auto& o = remix_vars::get_custom_option("#FOG_COL"); o)
+			{
+				dev->SetRenderState(D3DRS_FOGCOLOR, D3DCOLOR_XRGB(
+						(int)(o->second.current.vector[0] * 255.0f), 
+						(int)(o->second.current.vector[1] * 255.0f), 
+						(int)(o->second.current.vector[2] * 255.0f)));
+			}
+			else*/
+			{
+				dev->SetRenderState(D3DRS_FOGCOLOR, s->fog_color.packed);
+			}
+
 			dev->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
 			dev->SetRenderState(D3DRS_FOGSTART, *(DWORD*)&fog_start);
-			dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)&s->fog_distance);
+
+			// #TODO - needs csc func 'SetVolFog' impl. in scripting
+			/*if (const auto& o = remix_vars::get_custom_option("#FOG_DIST"); o)
+			{
+				dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)&o->second.current.value);
+			}
+			else*/
+			{
+				dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)&s->fog_distance);
+			}
 		}
 
 		if (!flags::has_flag("no_sun"))
@@ -1539,6 +1561,10 @@ namespace components::sp
 	void main_module::on_map_load()
 	{
 		map_settings::get()->set_settings_for_loaded_map();
+		remix_vars::custom_options.clear();
+		remix_vars::interpolate_stack.clear();
+
+		api::on_map_load();
 	}
 
 	// > fixed_function::free_fixed_function_buffers_stub
@@ -1546,7 +1572,6 @@ namespace components::sp
 	{
 	}
 
-	
 
 	main_module::main_module()
 	{

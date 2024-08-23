@@ -48,6 +48,7 @@ namespace components
 			game::vec3_t	sun_direction = { 75.0f, -15.0f, -35.0f };
 			game::vec3_t	sun_color = { 255.0f, 255.0f, 255.0f };
 			float			sun_intensity = 1.0f;
+			
 			int				sky_index = 0;
 			std::vector<cell_settings_s> cell_settings;
 			bool			cell_overrides_exist = false;
@@ -55,11 +56,20 @@ namespace components
 			std::vector<std::string> api_var_configs;
 		};
 
-		static inline const map_settings_s* settings() { return &m_loaded_map_settings; }
+		struct map_settings_reset_s
+		{
+			game::vec3_t	sun_direction = { 75.0f, -15.0f, -35.0f };
+			game::vec3_t	sun_color = { 255.0f, 255.0f, 255.0f };
+			float			sun_intensity = 1.0f;
+		};
+
+		static inline map_settings_s* settings() { return &m_loaded_map_settings; }
+		static inline map_settings_reset_s* setting_resets() { return &m_loaded_map_setting_resets; }
 		void set_settings_for_loaded_map(bool reload_settings = false);
 
 	private:
 		static inline map_settings_s m_loaded_map_settings = {};
+		static inline map_settings_reset_s m_loaded_map_setting_resets = {};
 		static inline std::vector<map_settings_s> m_settings;
 		static inline std::vector<std::string> m_args;
 

@@ -22,4 +22,9 @@ namespace dvars
 	extern game::dvar_s* rtx_muzzleflash_duration;
 	extern game::dvar_s* rtx_muzzleflash_radiance;
 	extern game::dvar_s* rtx_muzzleflash_radius;
+
+	extern game::dvar_s* rtx_primarylight_tweak_radiance;
+	extern game::dvar_s* rtx_primarylight_tweak_radius;
+	extern game::dvar_s* rtx_primarylight_tweak_softness;
+	extern game::dvar_s* rtx_primarylight_tweak_exp;
 }

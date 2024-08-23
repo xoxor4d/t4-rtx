@@ -38,13 +38,13 @@ intro_screen()
 	wait(2);
 	
 	iprintlnbold("TEST!");
+	printConsole("Custom func test!");
 }
 
 bad_area_fixes()
 {
 	thread disable_stances_in_zones();
 }
-
 
 // do point->distance checks and volume checks
 disable_stances_in_zones()
@@ -53,6 +53,7 @@ disable_stances_in_zones()
  	
  	for (i = 0; i < players.size; i++)
  	{
+		//players[i] thread fog1();
  		players[i] thread fix_hax();
 		players[i] thread fix_couch_stuckspot();
  		//players[i] thread in_bad_zone_watcher();	
@@ -60,7 +61,29 @@ disable_stances_in_zones()
  	}
 }
 
+fog1()
+{
+	self endon("disconnect");
+	self endon("death");
 
+	while(1)
+	{
+		wait(0.05);
+
+		if ( self UseButtonPressed() )
+		{
+			iprintlnbold("Dog Start!");
+			SetVolFog( 229.0, 200.0, 380.0, 200.0, 0.16, 0.204, 0.274, 7 );
+			wait(2);
+		}
+		else if ( self MeleeButtonPressed() )
+		{
+			iprintlnbold("Dog End!");
+			SetVolFog( 404.39, 1543.52, 460.33, -244.014, 0.65, 0.84, 0.79, 6 );
+			wait(2);
+		}
+	}
+}
 
 
 //Chris_P - added additional checks for some hax/exploits on the stairs, by the grenade bag and on one of the columns/pillars

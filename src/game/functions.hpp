@@ -52,6 +52,7 @@ namespace game
 		extern DxGlobals* dx;
 		extern clipMap_t* cm;
 		extern GfxWorld* gfx_world;
+		extern ComWorld* com_world;
 
 		extern r_global_permanent_t* rgp;
 		extern GfxBuffers* gfx_buf;
@@ -90,8 +91,24 @@ namespace game
 		typedef void(*DB_LoadXAssets_t)(XZoneInfo* zoneInfo, unsigned int zone_count, int sync);
 			extern DB_LoadXAssets_t DB_LoadXAssets;
 
-		extern scr_const_t* scr_const;
 		extern game::weaponInfo_s* cg_weaponsArray;
+		extern scr_const_t* scr_const;
+		extern int* Scr_GetNumParamArray;
+		extern int* Scr_GetTypeArray;
+		extern int* gScrMemTreePub_mtbuffer;
+		extern int* level_time;
+		extern std::uint32_t* level_num_entities;
+		extern game::gentity_s* g_entities;
+
+		static utils::function<BuiltinFunction(const char**, int*)> Scr_GetFunction = 0x52F0B0;
+		extern game::BuiltinMethod Scr_GetMethod(const char** pName, int* typ);
+
+		extern int Scr_GetNumParams(int scrInstance);
+		extern int Scr_GetType(int scrInstance, unsigned int paramNum);
+		extern const char* Scr_GetString(int scrInstance, unsigned int paramNum);
+		extern int Scr_GetInt(int scrInstance, unsigned int paramNum);
+		extern float Scr_GetFloat(int scrInstance, unsigned int paramNum);
+		extern void Scr_GetVector(int scrInstance, float* vectorValue, unsigned int paramNum);
 
 		void Cbuf_AddText(const char* text /*eax*/);
 		void Vec2UnpackTexCoords(unsigned int packed, float* texcoord_out /*ecx*/);

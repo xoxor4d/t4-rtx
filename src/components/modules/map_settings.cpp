@@ -120,6 +120,10 @@ namespace components
 					}
 				}
 			}
+
+			utils::copy(settings()->sun_direction, setting_resets()->sun_direction, 3);
+			utils::copy(settings()->sun_color, setting_resets()->sun_color, 3);
+			setting_resets()->sun_intensity = settings()->sun_intensity;
 		}
 	}
 

@@ -358,55 +358,6 @@ namespace utils
 		out[2] = 0.0f;
 	}
 
-	void vectoangles(const game::vec3_t value1, game::vec3_t angles)
-	{
-		float forward;
-		float yaw, pitch;
-
-		if (value1[1] == 0.0f && value1[0] == 0.0f)
-		{
-			yaw = 0.0f;
-			if (value1[2] > 0.0f)
-			{
-				pitch = 90.0f;
-			}
-			else 
-			{
-				pitch = 270.0f;
-			}
-		}
-		else 
-		{
-			if (value1[0]) 
-			{
-				yaw = (atan2(value1[1], value1[0]) * 180.0f / M_PI);
-			}
-			else if (value1[1] > 0.0f)
-			{
-				yaw = 90.0f;
-			}
-			else 
-			{
-				yaw = 270.0f;
-			}
-			if (yaw < 0.0f)
-			{
-				yaw += 360.0f;
-			}
-
-			forward = sqrt(value1[0] * value1[0] + value1[1] * value1[1]);
-			pitch = (atan2(value1[2], forward) * 180.0f / M_PI);
-			if (pitch < 0.0f)
-			{
-				pitch += 360.0f;
-			}
-		}
-
-		angles[PITCH] = -pitch;
-		angles[YAW] = yaw;
-		angles[ROLL] = 0.0f;
-	}
-
 	float vectosignedpitch(float* vec)
 	{
 		auto signed_vec = [](const float v, const float less_zero, const float other) -> float
@@ -652,13 +603,13 @@ namespace utils
 		game::vec3_t right, roll_angles, tvec;
 
 
-		vectoangles(axis[0], angles);
+		vector_to_angles(axis[0], angles);
 		vec3_copy(axis[1], right);
 
 		rotate_point_around_vector(tvec, axisDefault[2], right, -angles[YAW]);
 		rotate_point_around_vector(right, axisDefault[1], tvec, -angles[PITCH]);
 
-		vectoangles(right, roll_angles);
+		vector_to_angles(right, roll_angles);
 		roll_angles[PITCH] = angle_normalize180(roll_angles[PITCH]);
 
 		if (dot_product(right, axisDefault[1]) < 0) 
@@ -721,6 +672,16 @@ namespace utils
 		(*axis)[8] = 1.0f - (xx + yy);
 	}
 
+	game::vec_t length_squared2(const game::vec2_t v)
+	{
+		return (v[0] * v[0] + v[1] * v[1]);
+	}
+
+	game::vec_t length2(const game::vec2_t v)
+	{
+		return sqrtf(length_squared2(v));
+	}
+
 	game::vec_t length(const game::vec3_t v)
 	{
 		return (game::vec_t)sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
@@ -738,6 +699,61 @@ namespace utils
 		out[0] = v1[0] * scalar;
 		out[1] = v1[1] * scalar;
 		out[2] = v1[2] * scalar;
+	}
+
+	void vector_to_angles(const game::vec3_t v1, game::vec3_t angles)
+	{
+		float yaw, pitch;
+
+		if (v1[1] == 0.0f && v1[0] == 0.0f)
+		{
+			yaw = 0.0f;
+			if (v1[2] > 0)
+			{
+				pitch = 90.0f;
+			}
+			else
+			{
+				pitch = 270.0f;
+			}
+		}
+		else
+		{
+			if (v1[0])
+			{
+				yaw = atan2(v1[1], v1[0]) * 180.0f / M_PI;
+			}
+			else if (v1[1] > 0)
+			{
+				yaw = 90.0f;
+			}
+			else
+			{
+				yaw = 270.0f;
+			}
+
+			if (yaw < 0)
+			{
+				yaw += 360.0f;
+			}
+
+			const float forward = length2(v1);
+			pitch = atan2(v1[2], forward) * 180.0f / M_PI;
+
+			if (pitch < 0)
+			{
+				pitch += 360.0f;
+			}
+		}
+
+		angles[PITCH] = -pitch;
+		angles[YAW] = yaw;
+		angles[ROLL] = 0.0f;
+	}
+
+	bool float_equal(const float a, const float b, const float eps)
+	{
+		return std::fabs(a - b) < eps;
 	}
 
 	// https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Core/Private/Math/UnrealMath.cpp
@@ -830,6 +846,14 @@ namespace utils
 
 			to[i] = (char)pack;
 		}
+	}
+
+	void byte4_unpack_rgba(const char* from, float* to)
+	{
+		to[0] = (float)*((unsigned __int8*)from + 0) * 0.0039215689f;
+		to[1] = (float)*((unsigned __int8*)from + 1) * 0.0039215689f;
+		to[2] = (float)*((unsigned __int8*)from + 2) * 0.0039215689f;
+		to[3] = (float)*((unsigned __int8*)from + 3) * 0.0039215689f;
 	}
 
 	namespace fs

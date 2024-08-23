@@ -22,4 +22,9 @@ namespace dvars
 	game::dvar_s* rtx_muzzleflash_duration = nullptr;
 	game::dvar_s* rtx_muzzleflash_radiance = nullptr;
 	game::dvar_s* rtx_muzzleflash_radius = nullptr;
+
+	game::dvar_s* rtx_primarylight_tweak_radiance = nullptr;
+	game::dvar_s* rtx_primarylight_tweak_radius = nullptr;
+	game::dvar_s* rtx_primarylight_tweak_softness = nullptr;
+	game::dvar_s* rtx_primarylight_tweak_exp = nullptr;
 }

@@ -1410,6 +1410,34 @@ namespace game
 		Material* waterMaterial; //OFS: 0x31C SIZE: 0x4
 	};
 
+	struct ComPrimaryLight
+	{
+		unsigned __int8 type;
+		unsigned __int8 canUseShadowMap;
+		unsigned __int8 exponent;
+		char priority;
+		__int16 cullDist;
+		float color[3];
+		float dir[3];
+		float origin[3];
+		float radius;
+		float cosHalfFovOuter;
+		float cosHalfFovInner;
+		float cosHalfFovExpanded;
+		float rotationLimit;
+		float translationLimit;
+		char* defName;
+	};
+
+	struct ComWorld
+	{
+		char* name;
+		int isInUse;
+		unsigned int primaryLightCount;
+		ComPrimaryLight* primaryLights;
+		// ...
+	};
+
 	struct SavedScreenParams
 	{
 		float s0; //OFS: 0x0 SIZE: 0x4
@@ -3453,6 +3481,57 @@ namespace game
 		int extrapolatedSnapshot;
 		int newSnapshots;
 	};
+
+	enum scriptInstance_t : int
+	{
+		SCRIPTINSTANCE_SERVER = 0x0,
+		SCRIPTINSTANCE_CLIENT = 0x1,
+		SCRIPT_INSTANCE_MAX = 0x2,
+	};
+
+	enum VariableType
+	{
+		VAR_UNDEFINED = 0x0,
+		VAR_BEGIN_REF = 0x1,
+		VAR_POINTER = 0x1,
+		VAR_STRING = 0x2,
+		VAR_ISTRING = 0x3,
+		VAR_VECTOR = 0x4,
+		VAR_END_REF = 0x5,
+		VAR_FLOAT = 0x5,
+		VAR_INTEGER = 0x6,
+		VAR_CODEPOS = 0x7,
+		VAR_PRECODEPOS = 0x8,
+		VAR_FUNCTION = 0x9,
+		VAR_BUILTIN_FUNCTION = 0xA,
+		VAR_BUILTIN_METHOD = 0xB,
+		VAR_STACK = 0xC,
+		VAR_ANIMATION = 0xD,
+		VAR_PRE_ANIMATION = 0xE,
+		VAR_THREAD = 0xF,
+		VAR_NOTIFY_THREAD = 0x10,
+		VAR_TIME_THREAD = 0x11,
+		VAR_CHILD_THREAD = 0x12,
+		VAR_OBJECT = 0x13,
+		VAR_DEAD_ENTITY = 0x14,
+		VAR_ENTITY = 0x15,
+		VAR_ARRAY = 0x16,
+		VAR_DEAD_THREAD = 0x17,
+		VAR_COUNT = 0x18,
+		VAR_FREE = 0x18,
+		VAR_THREAD_LIST = 0x19,
+		VAR_ENDON_LIST = 0x1A,
+		VAR_TOTAL_COUNT = 0x1B,
+	};
+
+	struct scr_entref_s
+	{
+		unsigned short entnum;
+		unsigned short classnum;
+	};
+
+	typedef void(__cdecl* BuiltinFunction)();
+	typedef void(__cdecl* BuiltinMethod)(scr_entref_s);
 
 	enum dvar_flags : unsigned __int16
 	{

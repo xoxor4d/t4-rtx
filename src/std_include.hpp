@@ -39,11 +39,15 @@
 #pragma comment(lib, "d3dx9.lib")
 
 #if DEBUG
-	//#define DEBUG_PRINT(_MSG) if constexpr (DEBUG) { printf(_MSG); }
-	#define DEBUG_PRINT(_MSG, ...) if constexpr (DEBUG) { printf(_MSG, ##__VA_ARGS__); }
+	#define DEBUG_PRINT(_MSG, ...) if constexpr (DEBUG) { \
+		auto now = std::chrono::system_clock::now(); \
+		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000; \
+		auto ts = std::format("{:%T}:{:03}", std::chrono::floor<std::chrono::seconds>(now), ms.count()); \
+		OutputDebugStringA(utils::va("[%s] " _MSG, ts.c_str(), ##__VA_ARGS__)); }
+
 	#define DEBUG_ASSERT(cond, msg, ...) if constexpr (DEBUG) { assert((cond) || !fprintf(stderr, (msg "\n"), ##__VA_ARGS__)); }
 #else
-	#define DEBUG_PRINT(_MSG)
+	#define DEBUG_PRINT(_MSG, ...)
 	#define DEBUG_ASSERT(cond, msg, ...)
 #endif
 

@@ -120,8 +120,45 @@ namespace components::sp
 		}
 	}
 
+
+	// #
+	// other api lights
+
+	void api::track_and_draw_light_hash(std::uint64_t hash)
+	{
+		api_lights.insert(hash);
+	}
+
+	void api::remove_and_destroy_light(std::uint64_t hash)
+	{
+		api_lights.erase(hash);
+		bridge.DestroyLight(hash);
+	}
+
+	void endscene_callback()
+	{
+		for (const auto& hash : api::api_lights)
+		{
+			api::bridge.DrawLightInstance(hash);
+		}
+	}
+
 	// -----------------------------
 	// -----------------------------
+
+	// called from main_module::on_map_load()
+	void api::on_map_load()
+	{
+		if (api::is_initialized())
+		{
+			api_lights.clear();
+		}
+	}
+
+	bool api::is_initialized()
+	{
+		return bridge.initialized;
+	}
 
 	BRIDGEAPI_ErrorCode api::init()
 	{
@@ -131,6 +168,7 @@ namespace components::sp
 		if (status == BRIDGEAPI_ERROR_CODE_SUCCESS && bridge.initialized)
 		{
 			bridge.RegisterDevice();
+			bridge.RegisterEndSceneCallback(endscene_callback);
 		}
 
 		return status;
@@ -147,5 +185,37 @@ namespace components::sp
 
 		// hook bullet fire to spawn muzzleflash lights
 		utils::hook(0x4E6904, bullet_fire_stub, HOOK_JUMP).install()->quick();
+
+		dvars::rtx_primarylight_tweak_radiance = game::Dvar_RegisterFloat(
+			/* name		*/ "rtx_primarylight_tweak_radiance",
+			/* default	*/ 10.0f,
+			/* minVal	*/ -10000.0f,
+			/* maxVal	*/ 10000.0f,
+			/* flags	*/ game::dvar_flags::none,
+			/* desc		*/ "Radiance scalar for rtx primary lights");
+
+		dvars::rtx_primarylight_tweak_radius = game::Dvar_RegisterFloat(
+			/* name		*/ "rtx_primarylight_tweak_radius",
+			/* default	*/ 0.0f,
+			/* minVal	*/ -10000.0f,
+			/* maxVal	*/ 10000.0f,
+			/* flags	*/ game::dvar_flags::none,
+			/* desc		*/ "Radius offset for rtx primary lights");
+
+		dvars::rtx_primarylight_tweak_softness = game::Dvar_RegisterFloat(
+			/* name		*/ "rtx_primarylight_tweak_softness",
+			/* default	*/ 0.0f,
+			/* minVal	*/ 0.2f,
+			/* maxVal	*/ M_PI,
+			/* flags	*/ game::dvar_flags::none,
+			/* desc		*/ "Softness for rtx primary lights");
+
+		dvars::rtx_primarylight_tweak_exp = game::Dvar_RegisterFloat(
+			/* name		*/ "rtx_primarylight_tweak_exp",
+			/* default	*/ 0.0f,
+			/* minVal	*/ 0.0f,
+			/* maxVal	*/ 10.0f,
+			/* flags	*/ game::dvar_flags::none,
+			/* desc		*/ "Expo for rtx primary lights");
 	}
 }

@@ -29,6 +29,7 @@ namespace components
 #include "modules/sp/fixed_function.hpp"
 #include "modules/sp/api.hpp"
 #include "modules/sp/remix_vars.hpp"
+#include "modules/sp/scripting.hpp"
 
 #include "modules/mp/main_module.hpp"
 #include "modules/mp/fixed_function.hpp"

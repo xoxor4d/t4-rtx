@@ -89,15 +89,21 @@ namespace utils
 	void copy(const game::vec_t* in, game::vec_t* out, int size);
 	void angle_vectors(const game::vec3_t angles, game::vec3_t forward, game::vec3_t right, game::vec3_t up);
 
+	float vector_normalize(game::vec3_t v);
+
 	game::vec_t	length(const game::vec3_t v);
 	game::vec_t	distance(const game::vec3_t p1, const game::vec3_t p2);
 	void scale3(const game::vec3_t v1, float scalar, game::vec3_t out);
+	void vector_to_angles(const game::vec3_t v1, game::vec3_t angles);
+
+	bool float_equal(float a, float b, float eps = 1.e-6f);
 
 	void vinterp_to(float* output, int vector_size, const float* current, const float* target, const float delta_time, const float interpolation_speed);
 	float finterp_to(const float current, const float target, const float delta_time, const float interpolation_speed);
 
 	void byte3_pack_rgba(const float* from, unsigned char* to);
 	void byte4_pack_rgba(const float* from, char* to);
+	void byte4_unpack_rgba(const char* from, float* to);
 
 	namespace fs
 	{
