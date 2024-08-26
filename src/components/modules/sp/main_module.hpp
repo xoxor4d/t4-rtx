@@ -33,6 +33,7 @@ namespace components::sp
 
 		static void on_map_load();
 		static void on_map_shutdown();
+		static void on_set_cgame_time();
 
 		enum SKY : std::uint32_t
 		{

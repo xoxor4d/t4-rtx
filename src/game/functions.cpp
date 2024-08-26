@@ -47,6 +47,8 @@ namespace game
 		int* level_time = reinterpret_cast<int*>(0x18F5D88 + 0x1040); // level_locals_s time
 		std::uint32_t* level_num_entities = reinterpret_cast<std::uint32_t*>(0x18F5D88 + 0xC); // level_locals_s num_entities
 		game::gentity_s* g_entities = reinterpret_cast<game::gentity_s*>(0x176C6F0);
+		game::centity_s* cg_entitiesArray = reinterpret_cast<game::centity_s*>(0x35D39F0);
+		game::fake_centity_s* cg_fakeEntitiesArray = reinterpret_cast<game::fake_centity_s*>(0x339CC38);
 
 		BuiltinMethod Scr_GetMethod(const char** pName, int* typ)
 		{

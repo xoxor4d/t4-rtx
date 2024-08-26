@@ -7,7 +7,7 @@ namespace components
 	public:
 		component() {};
 		virtual ~component() {};
-		virtual const char* get_name() { return "unknown"; };
+		virtual const char* get_name() { return "unknown"; }
 	};
 
 	class loader
@@ -18,9 +18,9 @@ namespace components
 		static void _register(component* component);
 
 		static utils::memory::allocator* get_alloctor();
+		static std::vector<component*> components_;
 
 	private:
-		static std::vector<component*> components_;
 		static utils::memory::allocator mem_allocator_;
 	};
 }
@@ -30,6 +30,7 @@ namespace components
 #include "modules/sp/api.hpp"
 #include "modules/sp/remix_vars.hpp"
 #include "modules/sp/scripting.hpp"
+#include "modules/sp/lights.hpp"
 
 #include "modules/mp/main_module.hpp"
 #include "modules/mp/fixed_function.hpp"

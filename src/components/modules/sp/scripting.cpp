@@ -6,6 +6,8 @@ namespace components::sp
 {
 	std::unordered_map<std::string, scripting::scr_func> scripting::script_functions;
 	std::unordered_map<std::string, scripting::scr_meth> scripting::script_methods;
+	std::unordered_map<std::string, scripting::scr_func> scripting::script_client_functions;
+	std::unordered_map<std::string, scripting::scr_meth> scripting::script_client_methods;
 
 	void scripting::add_function(const char* name, game::BuiltinFunction func, int type)
 	{
@@ -25,6 +27,24 @@ namespace components::sp
 		script_methods.insert_or_assign(utils::str_to_lower(name), to_add);
 	}
 
+	void scripting::add_client_function(const char* name, game::BuiltinFunction func, int type)
+	{
+		scr_func to_add;
+		to_add.func = func;
+		to_add.type = type;
+
+		script_client_functions.insert_or_assign(utils::str_to_lower(name), to_add);
+	}
+
+	void scripting::add_client_method(const char* name, game::BuiltinMethod func, int type)
+	{
+		scr_meth to_add;
+		to_add.func = func;
+		to_add.type = type;
+
+		script_client_methods.insert_or_assign(utils::str_to_lower(name), to_add);
+	}
+
 	game::BuiltinFunction scripting::scr_get_function_hook(const char** name, int* type)
 	{
 		if (const auto f = script_functions.find(*name); f != script_functions.end())
@@ -36,6 +56,17 @@ namespace components::sp
 		return game::sp::Scr_GetFunction(name, type);
 	}
 
+	game::BuiltinFunction scripting::cscr_get_function_hook(const char** name, int* type)
+	{
+		if (const auto f = script_client_functions.find(*name); f != script_client_functions.end())
+		{
+			*type = f->second.type;
+			return f->second.func;
+		}
+
+		return game::sp::CScr_GetFunction(name, type);
+	}
+
 	game::BuiltinMethod scripting::scr_get_method_hook(const char** name, int* type)
 	{
 		if (const auto m = script_methods.find(*name); m != script_methods.end())
@@ -45,6 +76,17 @@ namespace components::sp
 		}
 
 		return game::sp::Scr_GetMethod(name, type);
+	}
+
+	game::BuiltinMethod scripting::cscr_get_method_hook(const char** name, int* type)
+	{
+		if (const auto m = script_client_methods.find(*name); m != script_client_methods.end())
+		{
+			*type = m->second.type;
+			return m->second.func;
+		}
+
+		return game::sp::CScr_GetMethod(name, type);
 	}
 
 	__declspec(naked) void scripting::scr_get_method_stub()
@@ -67,31 +109,22 @@ namespace components::sp
 
 		utils::hook(0x682DAF, scr_get_function_hook, HOOK_CALL).install()->quick();
 		utils::hook(0x683043, scr_get_method_stub, HOOK_CALL).install()->quick();
-
-		add_function("printConsole", []()
-		{
-			if (game::sp::Scr_GetNumParams(game::SCRIPTINSTANCE_SERVER) < 1)
-			{
-				return;
-			}
-
-			const char* to_print = game::sp::Scr_GetString(game::SCRIPTINSTANCE_SERVER, 0);
-			if (!to_print)
-			{
-				return;
-			}
-
-			game::sp::Com_PrintMessage(0, to_print, 0);
-		});
+		utils::hook(0x682DC0, cscr_get_function_hook, HOOK_CALL).install()->quick();
+		utils::hook(0x68305C, cscr_get_method_hook, HOOK_CALL).install()->quick();
 
 		// override og funcs
-
 
 		// SetLightIntensity
 		/*add_method("setLightIntensity", [](game::scr_entref_s ref)
 		{
 			int x = ref.entnum;
 			DEBUG_PRINT("[GSC] SetLightIntensity called!\n")
+		});*/
+
+		/*add_client_method("setLightIntensity", [](game::scr_entref_s ref)
+		{
+			int x = ref.entnum;
+			DEBUG_PRINT("[CSC] SetLightIntensity called!\n")
 		});*/
 
 		add_function("lerpSunDirection", []()
@@ -101,7 +134,6 @@ namespace components::sp
 
 			game::sp::Scr_GetVector(game::SCRIPTINSTANCE_SERVER, from, 0);
 			game::sp::Scr_GetVector(game::SCRIPTINSTANCE_SERVER, to, 1u);
-			//const auto t = Scr_GetFloat(game::SCRIPTINSTANCE_SERVER, 2u) * 1000.0f + static_cast<float>(*game::sp::level_time);
 			const auto t = Scr_GetFloat(game::SCRIPTINSTANCE_SERVER, 2u);
 
 			// correct axis for remix
@@ -175,25 +207,19 @@ namespace components::sp
 			}
 		});
 
-#if 0 // would need to replace cscr SetVolFog func and not the gsc variant for it to make sense (dog round) - cba
-		add_function("SetVolFog", []()
+		// optimized for dog round so might not look good if this is used somewhere else?
+		add_client_function("SetVolFog", []()
 		{
 			if (api::is_initialized())
 			{
-				const float start_dist = Scr_GetFloat(game::SCRIPTINSTANCE_SERVER, 0u);
-				const float halfway_dist = Scr_GetFloat(game::SCRIPTINSTANCE_SERVER, 1u);
-				//const float halfway_height = Scr_GetFloat(game::SCRIPTINSTANCE_SERVER, 2u);
-				//const float base_height = Scr_GetFloat(game::SCRIPTINSTANCE_SERVER, 3u);
-				//const float red = Scr_GetFloat(game::SCRIPTINSTANCE_SERVER, 4u);
-				//const float green = Scr_GetFloat(game::SCRIPTINSTANCE_SERVER, 5u);
-				//const float blue = Scr_GetFloat(game::SCRIPTINSTANCE_SERVER, 6u);
-				const float transition_time = Scr_GetFloat(game::SCRIPTINSTANCE_SERVER, 7u);
-
-				//remix_vars::option_value remap_dist_min = { .value = start_dist };
-				//remix_vars::option_value remap_dist_max = { .value = halfway_dist /** 5.0f*/ };
-				//remix_vars::add_smooth_interpolate_entry(nullptr, remap_dist_min, (uint32_t)game::sp::cgs->time, transition_time, "rtx.fogRemapMaxDistanceMin");
-				//remix_vars::add_smooth_interpolate_entry(nullptr, remap_dist_max, (uint32_t)game::sp::cgs->time, transition_time, "rtx.fogRemapMaxDistanceMax");
-
+				const float start_dist = Scr_GetFloat(game::SCRIPTINSTANCE_CLIENT, 0u);
+				const float halfway_dist = Scr_GetFloat(game::SCRIPTINSTANCE_CLIENT, 1u);
+				//const float halfway_height = Scr_GetFloat(game::SCRIPTINSTANCE_CLIENT, 2u);
+				//const float base_height = Scr_GetFloat(game::SCRIPTINSTANCE_CLIENT, 3u);
+				//const float red = Scr_GetFloat(game::SCRIPTINSTANCE_CLIENT, 4u);
+				//const float green = Scr_GetFloat(game::SCRIPTINSTANCE_CLIENT, 5u);
+				//const float blue = Scr_GetFloat(game::SCRIPTINSTANCE_CLIENT, 6u);
+				const float transition_time = Scr_GetFloat(game::SCRIPTINSTANCE_CLIENT, 7u);
 
 				// # create custom option with start settings
 				remix_vars::option_s v = { remix_vars::OPTION_TYPE_FLOAT, {} };
@@ -217,10 +243,15 @@ namespace components::sp
 				{
 					if (transition_time > 0.0f)
 					{
-						remix_vars::option_value goal = { .value = (halfway_dist * 2.0f - start_dist) * 3.0f };
-						goal.value = goal.value < 1800.0f ? 1800.0f : goal.value;
+						float end_dist = halfway_dist * 2.0f - start_dist;
+							  end_dist = end_dist < 1200.0f ? 1200.0f : end_dist;
+							  end_dist = utils::float_to_range(end_dist, 1200.0f, 2600.0f, 400.0f, 3500.0f);
+
+						remix_vars::option_value goal = { .value = end_dist };
+						//goal.value = goal.value < 1300.0f ? 1300.0f : goal.value;
 
 						remix_vars::add_smooth_interpolate_entry(o, goal, (uint32_t)game::sp::cgs->time, transition_time);
+						DEBUG_PRINT("[SetVolFog-LERP] Lerp to: %.2f\n", goal.value);
 					}
 				}
 
@@ -260,6 +291,5 @@ namespace components::sp
 #endif
 			}
 		});
-#endif
 	}
 }

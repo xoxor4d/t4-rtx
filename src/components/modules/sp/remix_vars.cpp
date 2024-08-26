@@ -496,9 +496,15 @@ namespace components::sp
 		}
 	}
 
+	void remix_vars::on_map_load()
+	{
+		remix_vars::custom_options.clear();
+		remix_vars::interpolate_stack.clear();
+	}
+
 	// Interpolates all variables on the 'interpolate_stack' and removes them once they reach their goal. \n
-	// Called once per client frame (CL_Frame - after updating the delta time).
-	void on_set_cgame_time()
+	// Called once per client frame (main_module::on_set_cgame_time()) (CL_Frame - after updating the delta time).
+	void remix_vars::on_client_frame()
 	{
 		if (game::sp::clientUI->connectionState == game::CA_ACTIVE)
 		{
@@ -633,129 +639,6 @@ namespace components::sp
 					}
 				}
 			}
-
-			for (auto i = 1u; i < game::sp::com_world->primaryLightCount; i++)
-			{
-				const auto pl = &game::sp::com_world->primaryLights[i];
-
-				if (pl->radius == 0.0f)
-				{
-					continue;
-				}
-
-				x86::remixapi_LightInfo l = {};
-				{
-					l.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
-					l.hash = utils::fnv1a_hash("primary_light" + std::to_string(i));
-					l.radiance =
-					{
-						pl->color[0] * pl->radius * dvars::rtx_primarylight_tweak_radiance->current.value, // radius * 10?
-						pl->color[1] * pl->radius * dvars::rtx_primarylight_tweak_radiance->current.value,
-						pl->color[2] * pl->radius * dvars::rtx_primarylight_tweak_radiance->current.value,
-					};
-
-					l.radiance.x *= 1.2f;
-				}
-
-				x86::remixapi_LightInfoSphereEXT s = {};
-				{
-					s.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO_SPHERE_EXT;
-					s.position = { pl->origin[0], pl->origin[1], pl->origin[2], };
-					s.radius = 1.0f + dvars::rtx_primarylight_tweak_radius->current.value; //pl->radius == 0.0f ? 0.3f : pl->radius * 0.2f;
-
-					//s.radius = dvars::rtx_primarylight_tweak_radius->current.value;
-
-					s.shaping_hasvalue = pl->radius != 0.0f;
-					if (s.shaping_hasvalue)
-					{
-						s.shaping_value.direction.x = pl->dir[0];
-						s.shaping_value.direction.y = pl->dir[1];
-						s.shaping_value.direction.z = pl->dir[2];
-						utils::scale3(&s.shaping_value.direction.x, -1.0f, &s.shaping_value.direction.x);
-
-						const float phi = acos(pl->cosHalfFovOuter);
-						s.shaping_value.coneAngleDegrees = phi * (180.0f / M_PI);
-
-						const float theta = acos(pl->cosHalfFovInner);
-						s.shaping_value.coneSoftness = std::cos(theta / 2.0f) - std::cos(phi);
-
-						//s.shaping_value.coneSoftness = dvars::rtx_primarylight_tweak_softness->current.value;
-						s.shaping_value.focusExponent = dvars::rtx_primarylight_tweak_exp->current.value;
-
-
-					}
-				}
-
-				api::bridge.DestroyLight(l.hash);
-				if (api::bridge.CreateSphereLight(&l, &s))
-				{
-					api::track_and_draw_light_hash(l.hash);
-				}
-			}
-
-#if 1		// no effect on makin - there are no primary lights (besides the sun) used on mak?
-			// game ent loop
-			for (auto i = 0u; i < *game::sp::level_num_entities; i++)
-			{
-				const auto e = &game::sp::g_entities[i];
-				if (e /*&& e->r.inuse*/ && e->s.eType == game::ET_PRIMARY_LIGHT)
-				{
-					const auto pl = &e->s.lerp.u.primaryLight;
-
-					game::vec4_t unpacked_col = {};
-					utils::byte4_unpack_rgba(pl->colorAndExp, unpacked_col);
-
-					x86::remixapi_LightInfo l = {};
-					{
-						l.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
-						l.hash = i;
-						l.radiance =
-						{
-							unpacked_col[0] * pl->intensity,
-							unpacked_col[1] * pl->intensity,
-							unpacked_col[2] * pl->intensity,
-						};
-					}
-
-					x86::remixapi_LightInfoSphereEXT s = {};
-					{
-						s.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO_SPHERE_EXT;
-						s.position = { e->r.currentOrigin[0], e->r.currentOrigin[1], e->r.currentOrigin[2], };
-						s.radius = pl->radius;
-
-						//s.shaping_hasvalue = light_use_shaping[ls];
-						//if (s.shaping_hasvalue)
-						//{
-						//	// ensure the direction is normalized
-						//	utils::vector::normalize_to((float*)&light_shaping[ls].direction, (float*)&s.shaping_value.direction);
-						//	s.shaping_value.coneAngleDegrees = light_shaping[ls].coneAngleDegrees;
-						//	s.shaping_value.coneSoftness = light_shaping[ls].coneSoftness;
-						//	s.shaping_value.focusExponent = light_shaping[ls].focusExponent;
-						//}
-					}
-
-					api::bridge.DestroyLight(i);
-					api::bridge.CreateSphereLight(&l, &s);
-				}
-			}
-#endif
-		}
-	}
-
-	__declspec(naked) void on_set_cgame_time_stub()
-	{
-		const static uint32_t CL_SetCGameTime_func = 0x63C6C0;
-		const static uint32_t retn_addr = 0x644BA5;
-		__asm
-		{
-			// stock func
-			call	CL_SetCGameTime_func;
-
-			pushad;
-			call	on_set_cgame_time;
-			popad;
-
-			jmp		retn_addr;
 		}
 	}
 
@@ -768,9 +651,6 @@ namespace components::sp
 			remix_vars::get()->parse_rtx_options();
 		}, scheduler::main);
 
-		// CL_SetCGameTime, called every client frame
-		utils::hook(0x644BA0, on_set_cgame_time_stub, HOOK_JUMP).install()->quick();
-
 		// --------
 
 //#if DEBUG
@@ -779,6 +659,7 @@ namespace components::sp
 			if (game::is_sp)
 			{
 				options.clear();
+				custom_options.clear();
 				remix_vars::parse_rtx_options();
 			}
 		});

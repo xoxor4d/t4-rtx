@@ -97,9 +97,12 @@ namespace utils
 	void vector_to_angles(const game::vec3_t v1, game::vec3_t angles);
 
 	bool float_equal(float a, float b, float eps = 1.e-6f);
+	bool point_in_bounds(const float* v, const float* mins, const float* maxs);
 
 	void vinterp_to(float* output, int vector_size, const float* current, const float* target, const float delta_time, const float interpolation_speed);
 	float finterp_to(const float current, const float target, const float delta_time, const float interpolation_speed);
+	//float float_to_range(const float original_start, const float original_end, const float new_start, const float new_end, const float value);
+	float float_to_range(const float value, const float x1, const float y1, const float x2, const float y2);
 
 	void byte3_pack_rgba(const float* from, unsigned char* to);
 	void byte4_pack_rgba(const float* from, char* to);

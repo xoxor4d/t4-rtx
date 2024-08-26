@@ -86,6 +86,9 @@ namespace components::sp
 		static void				parse_rtx_options();
 		static void				parse_and_apply_conf_with_lerp(const std::string& conf_name, INTERPOLATE_TYPE style, float duration_or_speed);
 
+		static void				on_map_load();
+		static void				on_client_frame();
+
 		struct interpolate_entry_s
 		{
 			option_handle option;

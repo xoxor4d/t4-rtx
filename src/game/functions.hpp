@@ -99,9 +99,14 @@ namespace game
 		extern int* level_time;
 		extern std::uint32_t* level_num_entities;
 		extern game::gentity_s* g_entities;
+		extern game::centity_s* cg_entitiesArray;
+		extern game::fake_centity_s* cg_fakeEntitiesArray; // 339CC38
 
 		static utils::function<BuiltinFunction(const char**, int*)> Scr_GetFunction = 0x52F0B0;
 		extern game::BuiltinMethod Scr_GetMethod(const char** pName, int* typ);
+
+		static utils::function<BuiltinFunction(const char**, int*)> CScr_GetFunction = 0x66EA30;
+		static utils::function<BuiltinMethod(const char**, int*)> CScr_GetMethod = 0x671110;
 
 		extern int Scr_GetNumParams(int scrInstance);
 		extern int Scr_GetType(int scrInstance, unsigned int paramNum);

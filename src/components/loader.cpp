@@ -20,6 +20,7 @@ namespace components
 			_register(new sp::api());
 			_register(new sp::remix_vars());
 			_register(new sp::scripting());
+			_register(new sp::lights());
 			
 		}
 

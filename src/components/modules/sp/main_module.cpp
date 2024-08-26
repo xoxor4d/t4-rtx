@@ -205,12 +205,12 @@ namespace components::sp
 		dev->SetRenderState(D3DRS_LIGHTING, FALSE);
 
 		main_module::force_dvars_on_frame();
-		api::bullet_fire_frame_cb();
+		//lights::bullet_fire_frame_cb();
 
 		if (!flags::has_flag("no_fog"))
 		{
 			const auto s = map_settings::settings();
-			const float fog_start = 1.0f;
+			const float fog_start = dvars::rtx_fog_start ? dvars::rtx_fog_start->current.value : 1.0f;
 
 			dev->SetRenderState(D3DRS_FOGENABLE, TRUE);
 
@@ -231,11 +231,11 @@ namespace components::sp
 			dev->SetRenderState(D3DRS_FOGSTART, *(DWORD*)&fog_start);
 
 			// #TODO - needs csc func 'SetVolFog' impl. in scripting
-			/*if (const auto& o = remix_vars::get_custom_option("#FOG_DIST"); o)
+			if (const auto& o = remix_vars::get_custom_option("#FOG_DIST"); o)
 			{
 				dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)&o->second.current.value);
 			}
-			else*/
+			else
 			{
 				dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)&s->fog_distance);
 			}
@@ -243,20 +243,18 @@ namespace components::sp
 
 		if (!flags::has_flag("no_sun"))
 		{
-			{
-				const auto s = map_settings::settings();
+			const auto s = map_settings::settings();
 
-				D3DLIGHT9 light = {};
-				light.Type = D3DLIGHT_DIRECTIONAL;
-				light.Diffuse.r = s->sun_color[0] * s->sun_intensity;
-				light.Diffuse.g = s->sun_color[1] * s->sun_intensity;
-				light.Diffuse.b = s->sun_color[2] * s->sun_intensity;
+			D3DLIGHT9 light = {};
+			light.Type = D3DLIGHT_DIRECTIONAL;
+			light.Diffuse.r = s->sun_color[0] * s->sun_intensity;
+			light.Diffuse.g = s->sun_color[1] * s->sun_intensity;
+			light.Diffuse.b = s->sun_color[2] * s->sun_intensity;
 
-				D3DXVec3Normalize((D3DXVECTOR3*)&light.Direction, (const D3DXVECTOR3*)&s->sun_direction);
+			D3DXVec3Normalize((D3DXVECTOR3*)&light.Direction, (const D3DXVECTOR3*)&s->sun_direction);
 
-				dev->SetLight(0, &light);
-				dev->LightEnable(0, TRUE);
-			}
+			dev->SetLight(0, &light);
+			dev->LightEnable(0, TRUE);
 		}
 
 		if (dvars::rtx_sky_follow_player && dvars::rtx_sky_follow_player->current.enabled)
@@ -1560,16 +1558,39 @@ namespace components::sp
 	// > fixed_function::init_fixed_function_buffers_stub
 	void main_module::on_map_load()
 	{
-		map_settings::get()->set_settings_for_loaded_map();
-		remix_vars::custom_options.clear();
-		remix_vars::interpolate_stack.clear();
-
+		map_settings::on_map_load();
+		remix_vars::on_map_load();
 		api::on_map_load();
+		lights::on_map_load();
 	}
 
 	// > fixed_function::free_fixed_function_buffers_stub
 	void main_module::on_map_shutdown()
 	{
+	}
+
+	// CL_SetCGameTime, called every client frame
+	void main_module::on_set_cgame_time()
+	{
+		remix_vars::on_client_frame();
+		lights::on_client_frame();
+	}
+
+	__declspec(naked) void on_set_cgame_time_stub()
+	{
+		const static uint32_t CL_SetCGameTime_func = 0x63C6C0;
+		const static uint32_t retn_addr = 0x644BA5;
+		__asm
+		{
+			// stock func
+			call	CL_SetCGameTime_func;
+
+			pushad;
+			call	main_module::on_set_cgame_time;
+			popad;
+
+			jmp		retn_addr;
+		}
 	}
 
 
@@ -1882,6 +1903,14 @@ namespace components::sp
 			/* flags	*/ game::dvar_flags::saved,
 			/* desc		*/ "radius of muzzleflash sphere light");
 
+		dvars::rtx_fog_start = game::Dvar_RegisterFloat(
+			/* name		*/ "rtx_fog_start",
+			/* default	*/ 1.0f,
+			/* min		*/ 0.001f,
+			/* max		*/ 100000.0f,
+			/* flags	*/ game::dvar_flags::none,
+			/* desc		*/ "Fog start dist");
+
 		// ------------------------------------------------------------------------
 
 #ifdef GIT_DESCRIBE
@@ -1913,6 +1942,9 @@ namespace components::sp
 
 		// no forward/backslash for console cmds
 		//utils::hook::nop(0x493DEF, 5);
+
+		// CL_SetCGameTime, called every client frame
+		utils::hook(0x644BA0, on_set_cgame_time_stub, HOOK_JUMP).install()->quick();
 
 		command::add("rtx_sky", [](command::params p)
 		{

@@ -3482,6 +3482,50 @@ namespace game
 		int newSnapshots;
 	};
 
+	struct centity_s
+	{
+		cpose_t pose;
+		entityState_s nextState;
+		LerpEntityState currentState;
+		int previousEventSequence;
+		int miscTime;
+		int lastMuzzleFlash;
+		float lightingOrigin[3];
+		XAnimTree_s* tree;
+		void* Destructible___destructible;
+		void* NitrousVehicle___nitrousVeh;
+		void* canimscripted_s___scripted;
+		void* cLinkInfo_s___linkInfo;
+		void* cgVehicle_s____vehicleInfo;
+		int nextRippleTime;
+		int numBulletImpacts;
+		unsigned __int16 attachModelNames[2];
+		unsigned __int16 attachTagNames[2];
+		float originError[3];
+		float anglesError[3];
+		int firstAnimationTime;
+		unsigned __int32 applyLeftHandIK : 1;
+		unsigned __int32 nextValid : 1;
+		unsigned __int32 bMuzzleFlash : 1;
+		unsigned __int32 bTrailMade : 1;
+		unsigned __int32 isBurning : 1;
+		unsigned __int32 skipBloodImpacts : 1;
+		unsigned __int32 scriptThreaded : 1;
+		unsigned __int32 clientRumbleLoop : 1;
+		unsigned __int32 leftFootstep : 1;
+		unsigned __int32 rightFootstep : 1;
+		unsigned __int32 didOverheatFx : 1;
+		unsigned __int32 originAnglesError : 1;
+	};
+
+	struct __declspec(align(4)) fake_centity_s
+	{
+		unsigned int flags;
+		void* snd_alias_t___soundAliasPtr;
+		centity_s cent;
+		char soundAlias[64];
+	};
+
 	enum scriptInstance_t : int
 	{
 		SCRIPTINSTANCE_SERVER = 0x0,
@@ -3528,6 +3572,7 @@ namespace game
 	{
 		unsigned short entnum;
 		unsigned short classnum;
+		unsigned short client;
 	};
 
 	typedef void(__cdecl* BuiltinFunction)();

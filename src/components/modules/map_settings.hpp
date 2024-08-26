@@ -12,6 +12,8 @@ namespace components
 		static inline map_settings* p_this = nullptr;
 		static map_settings* get() { return p_this; }
 
+		static void on_map_load();
+
 		enum PARSE_MODE : std::uint32_t
 		{
 			SETTINGS,

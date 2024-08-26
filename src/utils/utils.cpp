@@ -756,6 +756,26 @@ namespace utils
 		return std::fabs(a - b) < eps;
 	}
 
+	bool point_in_bounds(const float* v, const float* mins, const float* maxs)
+	{
+		if (!v || !mins || !maxs)
+		{
+			return false;
+		}
+		
+		if (mins[0] > v[0] || v[0] > maxs[0])
+		{
+			return false;
+		}
+
+		if (mins[1] > v[1] || v[1] > maxs[1])
+		{
+			return false;
+		}
+
+		return mins[2] <= v[2] && v[2] <= maxs[2];
+	}
+
 	// https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Core/Private/Math/UnrealMath.cpp
 	void vinterp_to(float* output, int vector_size, const float* current, const float* target, const float delta_time, const float interpolation_speed)
 	{
@@ -810,6 +830,30 @@ namespace utils
 		const float delta_move = distance * std::clamp(delta_time * interpolation_speed, 0.0f, 1.0f);
 
 		return current + delta_move;
+	}
+
+	/*float float_to_range(const float original_start, const float original_end, const float new_start, const float new_end, const float value)
+	{
+		if (float_equal(value, original_start))
+		{
+			return new_start;
+		}
+
+		if (float_equal(value, original_end))
+		{
+			return new_end;
+		}
+
+		const float org_diff = original_end - original_start;
+		const float new_diff = new_end - new_start;
+
+		return (new_diff / org_diff) * value + new_start;
+	}*/
+
+	// scales the value from the range [x1, y1] to the range [x2, y2]
+	float float_to_range(const float value, const float x1, const float y1, const float x2, const float y2)
+	{
+		return (value - x1) / (y1 - x1) * (y2 - x2) + x2;
 	}
 
 	void byte3_pack_rgba(const float* from, unsigned char* to)

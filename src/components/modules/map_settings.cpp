@@ -466,6 +466,11 @@ namespace components
 		return false;
 	}
 
+	void map_settings::on_map_load()
+	{
+		map_settings::get()->set_settings_for_loaded_map();
+	}
+
 	map_settings::map_settings()
 	{
 		command::add("mapsettings_update", [this](const command::params&)
