@@ -40,7 +40,7 @@ If you want to buy me a coffee:
 #### B. Manual way but always up-to-date:
 
 1) Download and install the latest full [release](https://github.com/xoxor4d/t4-rtx/releases) of t4-rtx as described above.  
-  Required as it currently comes with a custom build of [`bridge-remix`](https://github.com/xoxor4d/bridge-remix/tree/feature/bridge-api-squashed) (api features)
+  Download my latest [`bridge-remix`](https://github.com/xoxor4d/bridge-remix/actions) nightly. It includes necessary api functionality used by t4-rtx which will eventually merged into the official bridge ([Pull Request](https://github.com/NVIDIAGameWorks/bridge-remix/pull/12))
 
 <br>
 
@@ -96,17 +96,17 @@ ____
 	🟩 `rtx_fx_cull_elem_draw_radius` :: fx elements inside this radius around the player are not culled
 
   #### General dvars:
-  🟩 `r_aspectRatio` :: **AUTO** is truly auto now and supports any aspect ratio
+  🟩 `r_aspectRatio` :: **AUTO** is truly auto now and supports any aspect ratio  
   🟩 `r_forceLod` :: force all models to a specific LOD  
 	🟩 `r_lodScaleRigid` :: adjust static model draw distances (lower values increase draw distance)  
 	🟩 `r_showTess` :: draws material info (incl. all image names) of surfaces (geometry / models)  
 	🟩 `r_showTessDist` :: adjust draw distance of ^ info text  
-  🟩 `r_showTessSkin` :: show info for skinned meshes
+  🟩 `r_showTessSkin` :: show info for skinned meshes  
 	🟩 `r_showCellIndex` :: show portal index info (useful for manual culling overrides via map settings)  
     
   #### Dvars that should only be changed if you know what you are doing:
   🟧 `rtx_sky_follow_player` :: sky will follow the player (helps with culling)  
-  🟧 `r_warm_dpvs` :: disable all culling if true (not recommended - use `rtx_disable_world_culling`)
+  🟧 `r_warm_dpvs` :: disable all culling if true (not recommended - use `rtx_disable_world_culling`)  
   🟧 `r_warm_static` :: unlimited draw distance for static models if true (not recommended, use `r_lodScaleRigid`)
 
   #### Culling dvars when `old_anti_culling` flag is set (or in `MP`):
@@ -116,9 +116,9 @@ ____
 <br>
 
 - C. Console commands:  
-  - `export_entities` :: export map entities and static models (misc_models) to `t4rtx/entity-export/mapname.map`  
+  - `export_entities` :: export map entities / misc_models to `t4rtx/entity-export`  
   - `mapsettings_update` :: reload map settings  
-  - `mapsettings_get_defaults` :: prints sun direction, color and intensity in map_settings format based on the stock map settings
+  - `mapsettings_get_defaults` :: prints sun dir/color/intensity in map_settings format based on the stock map settings
   - `unlockall` :: unlock all sp missions
   - `noborder` & `windowed` :: switch between borderless and normal windowed mode  
     - (set dvars `vid_xpos 0` and `vid_ypos 0` to put the window in the top left corner) 
