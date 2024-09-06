@@ -19,6 +19,12 @@ namespace game
 		GfxWorld* gfx_world = reinterpret_cast<GfxWorld*>(0x3DCB4E0);
 		ComWorld* com_world = reinterpret_cast<ComWorld*>(0x1F551F0);
 
+		// scene_sceneDObjCount - 0x3D6988C
+		// scene_sceneDObj - 0x3D698FE
+		// scene_sceneModelCount - 0x3D8A490
+		// scene_sceneModel - 0x3D8A4B0
+
+
 		r_global_permanent_t* rgp = reinterpret_cast<r_global_permanent_t*>(0x3BF1880);
 		game::GfxBuffers* gfx_buf = reinterpret_cast<game::GfxBuffers*>(0x42C2000);
 		game::cg_s* cgs = reinterpret_cast<game::cg_s*>(0x34732B8);

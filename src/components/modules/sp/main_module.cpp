@@ -379,6 +379,68 @@ namespace components::sp
 		}
 	}
 
+	void main_module::show_smodel_names(const game::GfxViewParms* view_parms)
+	{
+		const auto data = game::get_backenddata();
+		for (auto s = 0u; s < game::sp::gfx_world->dpvs.smodelCount; s++)
+		{
+			const auto smodel = &game::sp::gfx_world->dpvs.smodelDrawInsts[s];
+			if (utils::distance(view_parms->origin, smodel->placement.origin) <= 1000.0f)
+			{
+				const game::vec3_t pos = { smodel->placement.origin[0], smodel->placement.origin[1], smodel->placement.origin[2] + 4.0f };
+
+				game::sp::R_AddDebugString(
+					&data->debugGlobals,
+					pos,
+					game::COLOR_WHITE,
+					0.25f,
+					smodel->model->name);
+			}
+		}
+
+		const auto sceneModelCount = *reinterpret_cast<uint32_t*>(0x3D8A490);
+		const auto* sceneModel = reinterpret_cast<game::GfxSceneModel*>(0x3D8A494);
+		for (auto m = 0u; m < sceneModelCount; m++)
+		{
+			const auto scene_model = &sceneModel[m];
+			if (utils::distance(view_parms->origin, scene_model->placement.base.origin) <= 1000.0f)
+			{
+				const game::vec3_t pos = { scene_model->placement.base.origin[0], scene_model->placement.base.origin[1], scene_model->placement.base.origin[2] + 4.0f };
+
+				game::sp::R_AddDebugString(
+					&data->debugGlobals,
+					pos,
+					game::COLOR_RED,
+					0.25f,
+					scene_model->model->name);
+			}
+		}
+
+		const auto sceneDObjCount = *reinterpret_cast<uint32_t*>(0x3D6988C);
+		const auto* sceneDObj = reinterpret_cast<game::GfxSceneEntity*>(0x3D69890);
+		for (auto o = 0u; o < sceneDObjCount; o++)
+		{
+			const auto dobj = &sceneDObj[o];
+			if (utils::distance(view_parms->origin, dobj->placement.base.origin) <= 1000.0f)
+			{
+				game::vec3_t pos = { dobj->placement.base.origin[0], dobj->placement.base.origin[1], dobj->placement.base.origin[2] + 4.0f };
+
+				for (auto sub = 0u; sub < static_cast<std::uint8_t>(dobj->obj->numModels); sub++)
+				{
+					game::sp::R_AddDebugString(
+						&data->debugGlobals,
+						pos,
+						game::COLOR_GREEN,
+						0.25f,
+						dobj->obj->models[sub]->name);
+
+					pos[0] -= 2.5f;
+					pos[2] -= 5.0f;
+				}
+			}
+		}
+	}
+
 	// ------------------------
 
 	bool is_valid_technique_for_type(const game::Material* mat, const game::MaterialTechniqueType type)
@@ -1555,6 +1617,31 @@ namespace components::sp
 	// *
 	// Event stubs
 
+	void additional_debug(game::GfxViewParms* view_parms)
+	{
+		if (dvars::r_showModelNames && dvars::r_showModelNames->current.enabled)
+		{
+			main_module::show_smodel_names(view_parms);
+		}
+	}
+
+	// additional_debug :: hook RB_DrawDebug call to implement additional debug functions
+	__declspec(naked) void RB_EndSceneRendering_stub()
+	{
+		const static uint32_t RB_DrawDebug_func = 0x73B1E0;
+		__asm
+		{
+			pushad;
+			push	[0x463E0C0]; // gfxCmdBufSourceState.viewParms
+			call	additional_debug;
+			add		esp, 4;
+			popad;
+
+			call	RB_DrawDebug_func;
+			retn;
+		}
+	}
+
 	// > fixed_function::init_fixed_function_buffers_stub
 	void main_module::on_map_load()
 	{
@@ -1825,6 +1912,8 @@ namespace components::sp
 
 		// debug visualizations: disable need for enabled developer dvar 
 		utils::hook::nop(0x6E6528, 2);
+		// hook RB_DrawDebug call in RB_EndSceneRendering to implement additional debug functions
+		utils::hook(0x6E6536, RB_EndSceneRendering_stub, HOOK_CALL).install()->quick();
 
 		dvars::fx_cull_elem_draw_radius = game::Dvar_RegisterFloat(
 			"fx_cull_elem_draw_radius",
@@ -1866,6 +1955,12 @@ namespace components::sp
 		dvars::r_showCellIndex = game::Dvar_RegisterBool(
 			/* name		*/ "r_showCellIndex",
 			/* desc		*/ "draw cell index at the center of current cell (useful for map_settings)",
+			/* default	*/ false,
+			/* flags	*/ game::dvar_flags::none);
+
+		dvars::r_showModelNames = game::Dvar_RegisterBool(
+			/* name		*/ "r_showModelNames",
+			/* desc		*/ "Draw model names",
 			/* default	*/ false,
 			/* flags	*/ game::dvar_flags::none);
 

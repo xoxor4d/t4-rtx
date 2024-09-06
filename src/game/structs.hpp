@@ -3726,6 +3726,52 @@ namespace game
 		XModel** models;
 	};
 
+	struct GfxSkinnedXModelSurfs
+	{
+		void* firstSurf;
+	};
+
+	struct GfxSceneEntityCull
+	{
+		volatile unsigned int state;
+		float mins[3];
+		float maxs[3];
+		char lods[32];
+		GfxSkinnedXModelSurfs skinnedSurfs;
+	};
+
+	union GfxSceneEntityInfo
+	{
+		cpose_t* pose;
+		unsigned __int16* cachedLightingHandle;
+	};
+
+	struct __declspec(align(4)) GfxSceneEntity
+	{
+		float lightingOrigin[3];
+		GfxScaledPlacement placement;
+		GfxSceneEntityCull cull;
+		unsigned __int16 gfxEntIndex;
+		unsigned __int16 entnum;
+		DObj_s* obj;
+		GfxSceneEntityInfo info;
+		char reflectionProbeIndex;
+	};
+
+	struct __declspec(align(4)) GfxSceneModel
+	{
+		XModelDrawInfo info;
+		XModel* model;
+		DObj_s* obj;
+		GfxScaledPlacement placement;
+		unsigned __int16 gfxEntIndex;
+		unsigned __int16 entnum;
+		float radius;
+		unsigned __int16* cachedLightingHandle;
+		float lightingOrigin[3];
+		char reflectionProbeIndex;
+	};
+
 	struct weaponInfo_s
 	{
 		DObj_s* viewModelDObj;

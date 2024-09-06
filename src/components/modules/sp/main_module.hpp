@@ -30,6 +30,7 @@ namespace components::sp
 
 		static void force_dvars_on_frame();
 		static void rb_show_tess(game::GfxCmdBufSourceState* source, game::GfxCmdBufState* state, const float* center, const char* name, const float* color, game::DebugGlobals* manual_debug_glob = nullptr);
+		static void show_smodel_names(const game::GfxViewParms* view_parms);
 
 		static void on_map_load();
 		static void on_map_shutdown();
