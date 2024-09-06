@@ -28,7 +28,7 @@ mainDebug()
 	}
 	thread debug_bayonet();
 
-	thread debugDvars();
+	//thread debugDvars();
 	precacheShader( "white" );
 	thread debugColorFriendlies();
 	
@@ -722,7 +722,7 @@ debugDvars()
 		setdvar("debug_character_count","off");
 		
 //	thread hatmodel();	
-	thread debug_character_count();
+	//thread debug_character_count();
 
 	// MikeD (11/2/2007): Show's the player's position
 	level thread debug_show_viewpos();
@@ -1101,8 +1101,9 @@ hatmodel()
 	#/
 }
 
-debug_character_count()
+ debug_character_count()
 {
+	/*
 	//drones
 	drones = NewDebugHudElem();
 	drones.alignX = "left";
@@ -1205,7 +1206,8 @@ debug_character_count()
 		
 		wait 0.25;
 	}
-}
+	*/
+} 
 
 debug_nuke()
 {

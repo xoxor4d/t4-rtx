@@ -27,18 +27,6 @@ main()
 	// If you want to modify/add to the weapons table, please copy over the _zombiemode_weapons init_weapons() and paste it here.
 	// I recommend putting it in it's own function...
 	// If not a MOD, you may need to provide new localized strings to reflect the proper cost.
-
-	//level thread intro_screen();
-}
-
-intro_screen()
-{
-
-	flag_wait( "all_players_connected" );
-	wait(2);
-	
-	iprintlnbold("TEST!");
-	printConsole("Custom func test!");
 }
 
 bad_area_fixes()
@@ -61,7 +49,7 @@ disable_stances_in_zones()
  	}
 }
 
-fog1()
+/* fog1()
 {
 	self endon("disconnect");
 	self endon("death");
@@ -83,7 +71,7 @@ fog1()
 			wait(2);
 		}
 	}
-}
+} */
 
 
 //Chris_P - added additional checks for some hax/exploits on the stairs, by the grenade bag and on one of the columns/pillars
