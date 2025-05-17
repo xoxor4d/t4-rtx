@@ -27,7 +27,7 @@
 #include <unordered_set>
 #include <cassert>
 #include <queue>
-#include <bridge_c.h>
+#include <bridge_remix_api.h>
 
 #pragma warning(push)
 #pragma warning(disable: 26495)

@@ -21,8 +21,9 @@ namespace components::sp
 
 		struct game_primary_light_s
 		{
-			x86::remixapi_LightInfo l;
-			x86::remixapi_LightInfoSphereEXT s;
+			remixapi_LightInfoSphereEXT ext = {};
+			remixapi_LightInfo info = {};
+			remixapi_LightHandle handle = nullptr;
 			game::ComPrimaryLight* og_light;
 			std::uint32_t index;
 			bool tracked;
@@ -32,8 +33,9 @@ namespace components::sp
 
 		struct fx_omni_light_s
 		{
-			x86::remixapi_LightInfo l;
-			x86::remixapi_LightInfoSphereEXT s;
+			remixapi_LightInfoSphereEXT ext = {};
+			remixapi_LightInfo info = {};
+			remixapi_LightHandle handle = nullptr;
 			bool new_or_matched_previous_frame;
 		};
 		static inline std::vector<fx_omni_light_s> m_fx_omni_lights = {};
@@ -57,9 +59,9 @@ namespace components::sp
 		// #
 		// api light hash tracking and drawing
 
-		static void light_hash_track_and_draw(std::uint64_t hash);
-		static void light_hash_untrack_and_destroy(std::uint64_t hash);
+		static void light_hash_track_and_draw(remixapi_LightHandle handle);
+		static void light_hash_untrack_and_destroy(remixapi_LightHandle handle);
 
-		static inline std::unordered_set<std::uint64_t> m_api_light_hashes = {};
+		static inline std::unordered_set<remixapi_LightHandle> m_api_light_handles = {};
 	};
 }

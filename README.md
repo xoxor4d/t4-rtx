@@ -1,8 +1,8 @@
-<h1 align="center">CoD-WaW (cod5) rtx-remix compatibility mod</h1>
+<h1 align="center">CoD-WaW (CoD5) RTX Remix Compatibility Mod</h1>
 
 <div align="center" markdown="1"> 
 
-This client modification is specifically made for nvidia's [rtx-remix](https://github.com/NVIDIAGameWorks/rtx-remix).  
+This client modification is specifically made for Nvidia's [RTX Remix](https://github.com/NVIDIAGameWorks/rtx-remix).  
 How does a shader based game work with remix? By manually reimplementing fixed function rendering :) 
 
 __SP__ is feature complete - __MP__ is working but not up-to-date.
@@ -12,18 +12,20 @@ __SP__ is feature complete - __MP__ is working but not up-to-date.
 
 <div align="center" markdown="1">
 
-![img](img/01.jpg)
+![img](.github/img/01.jpg)
+
+![img](.github/img/02.jpg)
 
 ### __[ Remix Compatibility Features ]__   
-tweak sunlight, fog and skybox per map  
-remix friendly culling and the ability to manually override culling per portal  
+Tweak sunlight, fog and skybox per map  
+Remix friendly culling and the ability to manually override culling per portal  
 3D is fully rendered via the fixed-function pipeline  
-spawning of unique anchor meshes to attach prims to  
-per map loading of remix config's to set remix variables
+Spawning of unique anchor meshes to attach prims to  
+Per map loading of remix config's to set remix variables
 
 <br>
 
-If you want to buy me a coffee:  
+You can support me on [Patreon](www.patreon.com/c/xoxor4d) or on [Coffee](https://ko-fi.com/xoxor4d):  
 
 [![ko-fi](https://xoxor4d.github.io/assets/img/social/kofi.png)](https://ko-fi.com/xoxor4d)
 </div>
@@ -191,8 +193,7 @@ https://community.pcgamingwiki.com/files/file/714-call-of-duty-world-at-war-repl
 
 <div align="center" markdown="1">
 	
-![img](img/03.jpg)
-![img](img/02.jpg)
-	
+![img](.github/img/03.jpg)
+
 
 </div>

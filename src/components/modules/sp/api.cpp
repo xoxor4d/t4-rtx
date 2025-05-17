@@ -1,4 +1,5 @@
 #include "std_include.hpp"
+#include "bridge_remix_api.h"
 
 using namespace game::sp;
 
@@ -16,18 +17,19 @@ namespace components::sp
 
 	bool api::is_initialized()
 	{
-		return bridge.initialized;
+		return get()->m_initialized;
 	}
 
-	BRIDGEAPI_ErrorCode api::init()
+
+	remixapi_ErrorCode api::init()
 	{
-		const auto status = bridgeapi_initialize(&bridge);
+		const auto status = remixapi::bridge_initRemixApi(&bridge);
 		game::sp::Com_PrintMessage(0, utils::va("[BridgeApi] bridgeapi_initialize() : %s \n", !status ? "success" : utils::va("error : %d", status)), 0);
 
-		if (status == BRIDGEAPI_ERROR_CODE_SUCCESS && bridge.initialized)
+		if (status == REMIXAPI_ERROR_CODE_SUCCESS) 
 		{
-			bridge.RegisterDevice();
-			bridge.RegisterEndSceneCallback(endscene_callback);
+			remixapi::bridge_setRemixApiCallbacks(nullptr, endscene_callback, nullptr);
+			get()->m_initialized = true;
 		}
 
 		return status;

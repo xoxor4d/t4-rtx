@@ -55,7 +55,7 @@ namespace components
 							}
 						}
 
-						if (sp::api::bridge.initialized)
+						if (sp::api::is_initialized())
 						{
 							// reload rtx.conf without hash vars
 							//open_and_set_var_config("rtx.conf", true, "");
@@ -96,7 +96,7 @@ namespace components
 						m_loaded_map_settings.sun_intensity = world->sunParse.sunLight;
 					}
 
-					if (sp::api::bridge.initialized)
+					if (sp::api::is_initialized())
 					{
 						// reload rtx.conf without hash vars
 						//open_and_set_var_config("rtx.conf", true, "");

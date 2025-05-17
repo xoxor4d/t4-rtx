@@ -1,4 +1,5 @@
 #pragma once
+#include "remix/remix_c.h"
 
 namespace components::sp
 {
@@ -14,7 +15,8 @@ namespace components::sp
 
 		static void on_map_load();
 		static bool is_initialized();
-		static BRIDGEAPI_ErrorCode init();
-		static inline bridgeapi_Interface bridge = {};
+		static remixapi_ErrorCode init();
+		static inline remixapi_Interface bridge = {};
+		bool m_initialized;
 	};
 }

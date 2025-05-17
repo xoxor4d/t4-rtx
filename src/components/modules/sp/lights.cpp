@@ -44,35 +44,43 @@ namespace components::sp
 							game::vec4_t unpacked_col = {};
 							utils::byte4_unpack_rgba(pl_ent->colorAndExp, unpacked_col);
 
-							entry.l.radiance =
+							//entry.info.sType 
+							entry.info.radiance =
 							{
 								unpacked_col[0] * pl_ent->radius * dvars::rtx_primarylight_radiance->current.value * pl_ent->intensity * 1.3f,
 								unpacked_col[1] * pl_ent->radius * dvars::rtx_primarylight_radiance->current.value * pl_ent->intensity,
 								unpacked_col[2] * pl_ent->radius * dvars::rtx_primarylight_radiance->current.value * pl_ent->intensity,
 							};
 
-							entry.s.position = { e->currentState.pos.trBase[0], e->currentState.pos.trBase[1], e->currentState.pos.trBase[2], };
+							entry.ext.position = { e->currentState.pos.trBase[0], e->currentState.pos.trBase[1], e->currentState.pos.trBase[2], };
 
-							entry.s.shaping_hasvalue = pl_ent->radius != 0.0f;
-							if (entry.s.shaping_hasvalue)
+							entry.ext.shaping_hasvalue = pl_ent->radius != 0.0f;
+							if (entry.ext.shaping_hasvalue)
 							{
-								utils::angle_vectors(e->pose.angles, &entry.s.shaping_value.direction.x, nullptr, nullptr);
+								utils::angle_vectors(e->pose.angles, &entry.ext.shaping_value.direction.x, nullptr, nullptr);
 
 								const float phi = acos(pl_ent->cosHalfFovOuter);
-								entry.s.shaping_value.coneAngleDegrees = phi * (180.0f / M_PI);
+								entry.ext.shaping_value.coneAngleDegrees = phi * (180.0f / M_PI);
 
 								const float theta = acos(pl_ent->cosHalfFovInner);
-								entry.s.shaping_value.coneSoftness = std::cos(theta / 2.0f) - std::cos(phi);
+								entry.ext.shaping_value.coneSoftness = std::cos(theta / 2.0f) - std::cos(phi);
 
-								entry.s.shaping_value.focusExponent = dvars::rtx_primarylight_exp->current.value;
+								entry.ext.shaping_value.focusExponent = dvars::rtx_primarylight_exp->current.value;
 							}
 
-							api::bridge.DestroyLight(entry.l.hash);
-							if (api::bridge.CreateSphereLight(&entry.l, &entry.s))
+							entry.info.pNext = &entry.ext;
+
+							if (entry.handle)
+							{
+								api::bridge.DestroyLight(entry.handle);
+								entry.handle = nullptr;
+							}
+							
+							if (api::bridge.CreateLight(&entry.info, &entry.handle))
 							{
 								if (!entry.tracked)
 								{
-									lights::light_hash_track_and_draw(entry.l.hash);
+									lights::light_hash_track_and_draw(entry.handle);
 									entry.tracked = true;
 								}
 							}
@@ -93,14 +101,49 @@ namespace components::sp
 
 			// also do g_entities?
 
+
+			//auto ext = remixapi_LightInfoSphereEXT
+			//{
+			//	.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO_SPHERE_EXT,
+			//	.pNext = nullptr,
+			//	.position = remixapi_Float3D {0, 0, 0 },
+			//	.radius = 1.2f,
+			//	.shaping_hasvalue = FALSE,
+			//	.shaping_value = {},
+			//	.volumetricRadianceScale = 5.0f,
+			//};
+
+			//if (ext.shaping_hasvalue)
+			//{
+			//	// ensure the direction is normalized
+			//	ext.shaping_value.direction = { 0, 0, 1 };
+			//	ext.shaping_value.coneAngleDegrees = 45.0f;
+			//	ext.shaping_value.coneSoftness = 0.2f;
+			//	ext.shaping_value.focusExponent = 0;
+			//}
+
+			//const float lscale = 15.0f;
+
+			//auto info = remixapi_LightInfo
+			//{
+			//	.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO,
+			//	.pNext = &ext,
+			//	.hash = 12345678,
+			//	.radiance = remixapi_Float3D { 50, 50, 50 },
+			//};
+
+			//remixapi_LightHandle test = nullptr;
+			//api::bridge.CreateLight(&info, &test);
+
+
 			// create lights that have no entity attached
 			for (auto& light : m_game_primary_lights)
 			{
-				if (light.index && light.s.radius > 0.0f && !light.has_entity && !light.tracked)
+				if (light.index && light.ext.radius > 0.0f && !light.has_entity && !light.tracked)
 				{
-					if (api::bridge.CreateSphereLight(&light.l, &light.s))
+					if (api::bridge.CreateLight(&light.info, &light.handle))
 					{
-						lights::light_hash_track_and_draw(light.l.hash);
+						lights::light_hash_track_and_draw(light.handle);
 						light.tracked = true;
 					}
 				}
@@ -120,42 +163,44 @@ namespace components::sp
 		{
 			const auto pl = &game::sp::com_world->primaryLights[i];
 
-			game_primary_light_s entry = {};
+			//game_primary_light_s entry = {};
+			auto& entry = m_game_primary_lights.emplace_back();
 			entry.index = i;
 			entry.og_light = pl;
 
-			entry.l.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
-			entry.l.hash = utils::fnv1a_hash("primary_light" + std::to_string(i));
-			entry.l.radiance =
+			entry.ext.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO_SPHERE_EXT;
+			entry.ext.pNext = nullptr;
+			entry.ext.position = remixapi_Float3D { pl->origin[0], pl->origin[1], pl->origin[2], };
+			entry.ext.radius = 1.0f + dvars::rtx_primarylight_radius->current.value;
+
+			entry.ext.shaping_hasvalue = pl->radius != 0.0f;
+			if (entry.ext.shaping_hasvalue)
+			{
+				entry.ext.shaping_value.direction.x = pl->dir[0];
+				entry.ext.shaping_value.direction.y = pl->dir[1];
+				entry.ext.shaping_value.direction.z = pl->dir[2];
+				utils::scale3(&entry.ext.shaping_value.direction.x, -1.0f, &entry.ext.shaping_value.direction.x);
+
+				const float phi = acos(pl->cosHalfFovOuter);
+				entry.ext.shaping_value.coneAngleDegrees = phi * (180.0f / M_PI);
+
+				const float theta = acos(pl->cosHalfFovInner);
+				entry.ext.shaping_value.coneSoftness = std::cos(theta / 2.0f) - std::cos(phi);
+
+				//s.shaping_value.coneSoftness = dvars::rtx_primarylight_tweak_softness->current.value;
+				entry.ext.shaping_value.focusExponent = dvars::rtx_primarylight_exp->current.value;
+				entry.ext.volumetricRadianceScale = 0.0f;
+			}
+
+			entry.info.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
+			entry.info.pNext = &entry.ext;
+			entry.info.hash = utils::fnv1a_hash("plight" + std::to_string(i));
+			entry.info.radiance = remixapi_Float3D
 			{
 				pl->color[0] * pl->radius * dvars::rtx_primarylight_radiance->current.value * 1.3f,
 				pl->color[1] * pl->radius * dvars::rtx_primarylight_radiance->current.value,
 				pl->color[2] * pl->radius * dvars::rtx_primarylight_radiance->current.value,
 			};
-
-			entry.s.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO_SPHERE_EXT;
-			entry.s.position = { pl->origin[0], pl->origin[1], pl->origin[2], };
-			entry.s.radius = 1.0f + dvars::rtx_primarylight_radius->current.value;
-
-			entry.s.shaping_hasvalue = pl->radius != 0.0f;
-			if (entry.s.shaping_hasvalue)
-			{
-				entry.s.shaping_value.direction.x = pl->dir[0];
-				entry.s.shaping_value.direction.y = pl->dir[1];
-				entry.s.shaping_value.direction.z = pl->dir[2];
-				utils::scale3(&entry.s.shaping_value.direction.x, -1.0f, &entry.s.shaping_value.direction.x);
-
-				const float phi = acos(pl->cosHalfFovOuter);
-				entry.s.shaping_value.coneAngleDegrees = phi * (180.0f / M_PI);
-
-				const float theta = acos(pl->cosHalfFovInner);
-				entry.s.shaping_value.coneSoftness = std::cos(theta / 2.0f) - std::cos(phi);
-
-				//s.shaping_value.coneSoftness = dvars::rtx_primarylight_tweak_softness->current.value;
-				entry.s.shaping_value.focusExponent = dvars::rtx_primarylight_exp->current.value;
-			}
-
-			m_game_primary_lights.emplace_back(entry);
 		}
 	}
 
@@ -164,11 +209,19 @@ namespace components::sp
 	{
 		if (api::is_initialized())
 		{
-			for (const auto hash : m_api_light_hashes)
+
+			/*for (auto it = m_api_light_handles.begin(); it != m_api_light_handles.end(); ) {
 			{
-				api::bridge.DestroyLight(hash);
+					api::bridge.DestroyLight(*it);
+					it = m_api_light_handles.erase(it);
+			}*/
+
+			for (auto handle : m_api_light_handles) 
+			{
+				api::bridge.DestroyLight(handle);
+				handle = nullptr;
 			}
-			m_api_light_hashes.clear();
+			m_api_light_handles.clear();
 		}
 
 		lights::create_primary_lights_for_map();
@@ -179,9 +232,11 @@ namespace components::sp
 	{
 		lights::check_added_fx_omnilights();
 
-		for (const auto& hash : m_api_light_hashes)
+		for (const auto& handle : m_api_light_handles)
 		{
-			api::bridge.DrawLightInstance(hash);
+			if (handle) {
+				api::bridge.DrawLightInstance(handle);
+			}
 		}
 	}
 
@@ -189,19 +244,21 @@ namespace components::sp
 	 * Submit light for drawing
 	 * @param hash	Hash of light
 	 */
-	void lights::light_hash_track_and_draw(const std::uint64_t hash)
+	void lights::light_hash_track_and_draw(remixapi_LightHandle handle)
 	{
-		m_api_light_hashes.insert(hash);
+		m_api_light_handles.insert(handle);
 	}
 
 	/**
 	 * Disable light drawing and destroy light
 	 * @param hash	Hash of light
 	 */
-	void lights::light_hash_untrack_and_destroy(const std::uint64_t hash)
+	void lights::light_hash_untrack_and_destroy(remixapi_LightHandle handle)
 	{
-		m_api_light_hashes.erase(hash);
-		api::bridge.DestroyLight(hash);
+
+		m_api_light_handles.erase(handle);
+		api::bridge.DestroyLight(handle);
+		handle = nullptr;
 	}
 
 	// #
@@ -218,7 +275,7 @@ namespace components::sp
 			// so delete this light as it was either created with a new hash or simply not spawned by the game
 			if (!it->new_or_matched_previous_frame)
 			{
-				lights::light_hash_untrack_and_destroy(it->l.hash);
+				lights::light_hash_untrack_and_destroy(it->handle);
 				it = m_fx_omni_lights.erase(it);
 			}
 			else
@@ -261,26 +318,34 @@ namespace components::sp
 				const float sdist = dvars::rtx_fxlight_hash_dist ? dvars::rtx_fxlight_hash_dist->current.value : 30.0f;
 
 				// bounds from previous position
-				const game::vec3_t mins = { light.s.position.x - sdist, light.s.position.y - sdist, light.s.position.z - sdist };
-				const game::vec3_t maxs = { light.s.position.x + sdist, light.s.position.y + sdist, light.s.position.z + sdist };
+				const game::vec3_t mins = { light.ext.position.x - sdist, light.ext.position.y - sdist, light.ext.position.z - sdist };
+				const game::vec3_t maxs = { light.ext.position.x + sdist, light.ext.position.y + sdist, light.ext.position.z + sdist };
 
 				if (utils::point_in_bounds(gfxlight->origin, mins, maxs))
 				{
 					// update light properties
 
-					light.l.radiance =
+					light.info.radiance =
 					{
 						gfxlight->color[0] * gfxlight->radius * dvars::rtx_primarylight_radiance->current.value * 1.3f,
 						gfxlight->color[1] * gfxlight->radius * dvars::rtx_primarylight_radiance->current.value,
 						gfxlight->color[2] * gfxlight->radius * dvars::rtx_primarylight_radiance->current.value,
 					};
 
-					light.s.position = { gfxlight->origin[0], gfxlight->origin[1], gfxlight->origin[2], };
-					light.s.radius = 1.0f + dvars::rtx_primarylight_radius->current.value;
+					light.ext.position = { gfxlight->origin[0], gfxlight->origin[1], gfxlight->origin[2], };
+					light.ext.radius = 1.0f + dvars::rtx_primarylight_radius->current.value;
+
+					light.info.pNext = &light.ext;
 
 					// update remix light
-					api::bridge.DestroyLight(light.l.hash);
-					if (api::bridge.CreateSphereLight(&light.l, &light.s))
+
+					if (light.handle)
+					{
+						api::bridge.DestroyLight(light.handle);
+						light.handle = nullptr;
+					}
+					
+					if (api::bridge.CreateLight(&light.info, &light.handle))
 					{
 						light.new_or_matched_previous_frame = true;
 						matched_light = true;
@@ -294,30 +359,33 @@ namespace components::sp
 			{
 				lights::fx_omni_light_s entry = {};
 
-				entry.l.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
+				entry.info.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO;
+				entry.info.pNext = nullptr;
 
 				// works okay
-				entry.l.hash = utils::fnv1a_hash("fxlight" + std::to_string((int)orient->origin[0]) + std::to_string((int)orient->origin[1]) + std::to_string((int)orient->origin[2]));
+				entry.info.hash = utils::fnv1a_hash("fxlight" + std::to_string((int)orient->origin[0]) + std::to_string((int)orient->origin[1]) + std::to_string((int)orient->origin[2]));
 
-				//entry.l.hash = utils::fnv1a_hash("fx_omni_light" + std::to_string(elem_addr));
-				//entry.l.hash = utils::fnv1a_hash("fx_omni_light" + std::to_string(light_num));
+				//entry.info.hash = utils::fnv1a_hash("fx_omni_light" + std::to_string(elem_addr));
+				//entry.info.hash = utils::fnv1a_hash("fx_omni_light" + std::to_string(light_num));
 
-				entry.l.radiance =
+				entry.info.radiance =
 				{
 					gfxlight->color[0] * gfxlight->radius * dvars::rtx_primarylight_radiance->current.value * 1.3f,
 					gfxlight->color[1] * gfxlight->radius * dvars::rtx_primarylight_radiance->current.value,
 					gfxlight->color[2] * gfxlight->radius * dvars::rtx_primarylight_radiance->current.value,
 				};
 
-				entry.s.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO_SPHERE_EXT;
-				entry.s.position = { gfxlight->origin[0], gfxlight->origin[1], gfxlight->origin[2], };
-				entry.s.radius = 1.0f /*+ (gfxlight->radius * 0.01f)*/ + dvars::rtx_primarylight_radius->current.value;
+				entry.ext.sType = REMIXAPI_STRUCT_TYPE_LIGHT_INFO_SPHERE_EXT;
+				entry.ext.position = { gfxlight->origin[0], gfxlight->origin[1], gfxlight->origin[2], };
+				entry.ext.radius = 1.0f /*+ (gfxlight->radius * 0.01f)*/ + dvars::rtx_primarylight_radius->current.value;
 
 				entry.new_or_matched_previous_frame = true;
 
-				if (api::bridge.CreateSphereLight(&entry.l, &entry.s))
+				entry.info.pNext = &entry.ext;
+
+				if (api::bridge.CreateLight(&entry.info, &entry.handle))
 				{
-					lights::light_hash_track_and_draw(entry.l.hash);
+					lights::light_hash_track_and_draw(entry.handle);
 					lights::m_fx_omni_lights.emplace_back(entry);
 				}
 			}
@@ -479,9 +547,8 @@ namespace components::sp
 		{
 			if (api::is_initialized())
 			{
-				for (const auto& light : m_game_primary_lights)
-				{
-					lights::light_hash_untrack_and_destroy(light.l.hash);
+				for (const auto& light : m_game_primary_lights) {
+					lights::light_hash_untrack_and_destroy(light.handle);
 				}
 
 				lights::create_primary_lights_for_map();
@@ -491,8 +558,7 @@ namespace components::sp
 		// #
 		// fx omni lights
 
-		utils::hook::nop(0x6DA761, 7);
-			 utils::hook(0x6DA761, R_AddOmniLightToScene_stub, HOOK_JUMP).install()->quick();
+		utils::hook::nop(0x6DA761, 7); utils::hook(0x6DA761, R_AddOmniLightToScene_stub, HOOK_JUMP).install()->quick();
 
 		// #
 		// muzzleflash lights

@@ -86,7 +86,7 @@ namespace components::sp
 	 */
 	bool remix_vars::set_option(option_handle o, const option_value& v, const bool is_level_setting)
 	{
-		if (o && api::bridge.initialized)
+		if (o && api::is_initialized())
 		{
 			o->second.current = v;
 
@@ -144,7 +144,7 @@ namespace components::sp
 	 */
 	bool remix_vars::reset_option(option_handle o, const bool reset_to_level_state)
 	{
-		if (o && api::bridge.initialized)
+		if (o && api::is_initialized())
 		{
 			o->second.current = reset_to_level_state ? o->second.reset_level : o->second.reset;
 
@@ -170,7 +170,7 @@ namespace components::sp
 	 */
 	void remix_vars::reset_all_modified(const bool reset_to_level_state)
 	{
-		if (api::bridge.initialized)
+		if (api::is_initialized())
 		{
 			auto count = 0u;
 			for (auto& o : options)
