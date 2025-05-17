@@ -25,14 +25,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check out files
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
           fetch-depth: 0
           lfs: false
 
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.1
+        uses: microsoft/setup-msbuild@v2
 
       - name: Generate project files
         run: tools/premake5 vs2022
@@ -45,11 +45,11 @@ jobs:
 
       - name: Move build files 
         run: |
-          move build/bin/${{matrix.configuration}}/t4-rtx.asi ./
-          move build/bin/${{matrix.configuration}}/t4-rtx.pdb ./
+          move build/bin/${{matrix.configuration}}/t4-rtx.asi ./assets/
+          move build/bin/${{matrix.configuration}}/t4-rtx.pdb ./assets/
 
       - name: Upload ${{matrix.configuration}}-binaries-t4-rtx
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{matrix.configuration}}-binaries-t4-rtx
           path: |
